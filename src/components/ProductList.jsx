@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ProductCard from "./ProductCard";
+import CheckoutForm from "./CheckoutForm";
 
 function ProductList() {
   const [products , setProduct] = useState([
@@ -7,6 +8,7 @@ function ProductList() {
   { id: 2, name: "Kaptura", price: 25000 },
   { id: 3, name: "Viatu", price: 60000 }
 ]);
+
 
 // search
 const [search, setSearch] = useState("");
@@ -16,7 +18,14 @@ const filteredProducts = products.filter((product) => product.name.toLowerCase()
 const[cart , setCart] = useState([]);
 
 function handleAddToCart(product) {
-    setCart([...cart, product]);
+    const found = cart.find((item) => item.id === product.id);
+
+    if(found){
+        setCart(cart.map((item) => item.id === product.id ? {...item, quantity: item.quantity + 1} : item));
+    }  else {
+        setCart([...cart, {...product, quantity:1}]);
+    }
+
 }
 
 function handleRemoveFromCart(index) {
@@ -50,6 +59,7 @@ return (
             <ProductCard
                         id={product.id} 
                         name={product.name}
+                        quantity={product.quantity}
                         price={product.price}
             />
             <button onClick={() => handleDelete(product.id)}>Delete</button>
@@ -60,13 +70,16 @@ return (
         <h3>Cart ({cart.length})</h3>
         {cart.map((item, index) => (
             <p key={index}>
-                {item.name} - {item.price.toLocaleString()} TZS
+                {item.name} x{item.quantity}-{" "} - {(item.price * item.quantity).toLocaleString()} TZS
                 <button onClick={() => handleRemoveFromCart(index)}>Delete</button>
             </p>
         ))}
         <p>
-            Total : {cart.reduce((sum, item) => sum + item.price, 0).toLocaleString()}  TZS
+            Total : {cart.reduce((sum, item) => sum + item.price*item.quantity, 0).toLocaleString()}  TZS
         </p>
+
+
+        <CheckoutForm cart={cart} setCart={setCart} />
         
     </div>
 );

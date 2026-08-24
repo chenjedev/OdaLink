@@ -1,7 +1,7 @@
-function ProductCard({id , name, price}) {
+function ProductCard({id , name, price, quantity}) {
     return(
         <div>
-            <p>{id} : {name} - {price.toLocaleString()} TZS</p>
+            <p>{id} : {name} x{quantity} - {price.toLocaleString()} TZS</p>
         </div>
     );
 }
