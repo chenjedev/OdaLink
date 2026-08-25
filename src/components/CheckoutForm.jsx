@@ -1,12 +1,11 @@
 import { useState } from "react";
 
 
-function CheckoutForm({cart , setCart}) {
+function CheckoutForm({cart , setCart, cartTotal}) {
     const[phone, setPhone] = useState("");
     const[name, setName] = useState("");
     const isInvalid = name.trim() === "" || phone.trim() === "" || cart.length === 0 ;
-    const cartSummary = cart.map((item) => (`${item.name} x ${item.quantity} - (${(item.price * item.quantity).toLocaleString()}) `)).join(" , ");
-    const totalCartPrice = cart.reduce((sum , item) => sum + item.price * item.quantity, 0).toLocaleString();
+    const cartSummary = cart.map((item) => (`${item.name}  ${item.quantity} - (${(item.price * item.quantity).toLocaleString()}) `)).join(" , ");
 
     function handleSubmit(e) {
         e.preventDefault();
@@ -18,7 +17,7 @@ function CheckoutForm({cart , setCart}) {
 
         alert(`Order sent successfully for ${name} (${phone})\n ` + 
               `items : ${cartSummary}\n  ` +
-               `Total:  ${totalCartPrice}` );
+               `Total:  ${cartTotal}` );
 
         setName("");
         setPhone("");
@@ -33,12 +32,12 @@ function CheckoutForm({cart , setCart}) {
              
             {cart.map((item, index) => (
                 <p key={index}>
-                    {item.name} x{item.quantity}-{" "}- {(item.price * item.quantity).toLocaleString()} TZS
+                    {item.name} {item.quantity}-{" "}- {(item.price * item.quantity).toLocaleString()} TZS
                 </p>
 
             ))}
 
-            <p> Total : {cart.reduce((sum, item) => sum + item.price*item.quantity, 0).toLocaleString()}  TZS</p>
+            <p> Total : {cartTotal.toLocaleString()}  TZS</p>
             
             <button type="submit" disabled={isInvalid}>Submit</button>
           </form>

@@ -1,13 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ProductCard from "./ProductCard";
 import CheckoutForm from "./CheckoutForm";
 
 function ProductList() {
-  const [products , setProduct] = useState([
-  { id: 1, name: "Simu ya Tecno", price: 450000 },
-  { id: 2, name: "Kaptura", price: 25000 },
-  { id: 3, name: "Viatu", price: 60000 }
-]);
+  const [products , setProduct] = useState([]);
+
+  useEffect(() => {
+    
+                 fetch(`https://fakestoreapi.com/products`)
+                 .then((res) => res.json())
+                 .then((data) => 
+                 { const formated = data.map((item) => ({id: item.id, name: item.title, price: item.price})); 
+                  setProduct(formated);
+                  setLoading(false);
+                  })
+                  .catch((err) => {
+                    setError("Failed to load product");
+                    setLoading(false);
+                });
+            
+        }, []);
+        
 
 
 // search
@@ -15,7 +28,14 @@ const [search, setSearch] = useState("");
 const filteredProducts = products.filter((product) => product.name.toLowerCase().includes(search.toLowerCase()));
 
 // carts
-const[cart , setCart] = useState([]);
+const[cart , setCart] = useState( () => {
+    const saved = localStorage.getItem("cart");
+    return saved? JSON.parse(saved) : [];    
+});
+
+useEffect (() => {
+    localStorage.setItem("cart", JSON.stringify(cart));
+}, [cart]);
 
 function handleAddToCart(product) {
     const found = cart.find((item) => item.id === product.id);
@@ -32,6 +52,8 @@ function handleRemoveFromCart(index) {
     setCart(cart.filter((_, i) => i !== index));
 }
 
+const totalCartPrice = cart.reduce((sum, item) => sum + item.price*item.quantity, 0);
+
 // products
   function handleAdd() {
        const newProduct = { id: Date.now() , name: "Laptop", price: 750000 };
@@ -43,16 +65,25 @@ function handleRemoveFromCart(index) {
     setProduct(products.filter((product) => product.id !== id));
   }
 
+// loading and error
+const[loading , setLoading] = useState(true);
+const[error, setError] = useState(null);
 
 return (
     <div>
+
+        {loading && <p>Loading products....</p>}
+        {error && <p style={{color: "red"}}>{error}</p>}
+        {!loading && !error && filteredProducts.length === 0 && <p>No product found</p>}
+
+
         <h2>Total products : ({filteredProducts.length})</h2>
 
         <input type="text" placeholder="Search product..." value={search} onChange={(e) => setSearch(e.target.value)}></input>
 
         <button onClick={handleAdd}>Add Product</button>
         
-        {filteredProducts.length === 0 && <p>No product found</p>}
+       
 
         {filteredProducts.map((product) => (
             <div key={product.id}>
@@ -70,16 +101,15 @@ return (
         <h3>Cart ({cart.length})</h3>
         {cart.map((item, index) => (
             <p key={index}>
-                {item.name} x{item.quantity}-{" "} - {(item.price * item.quantity).toLocaleString()} TZS
+                {item.name} {item.quantity}-{" "} - {(item.price * item.quantity).toLocaleString()} TZS
                 <button onClick={() => handleRemoveFromCart(index)}>Delete</button>
             </p>
         ))}
         <p>
-            Total : {cart.reduce((sum, item) => sum + item.price*item.quantity, 0).toLocaleString()}  TZS
+            Total :  {totalCartPrice.toLocaleString()}  TZS
         </p>
 
-
-        <CheckoutForm cart={cart} setCart={setCart} />
+        <CheckoutForm cart={cart} setCart={setCart} cartTotal={totalCartPrice} />
         
     </div>
 );
