@@ -25,7 +25,7 @@ function CheckoutForm({cart , setCart, cartTotal}) {
     }
 
     return(
-        <div>
+        <div className="checkout-box">
           <form onSubmit={handleSubmit}>
             <input type="text" placeholder="eg. John Doe" value={name} onChange={(e) => setName(e.target.value)}></input>
             <input type="text" placeholder="eg, 0712345678" value={phone} onChange={(e) => setPhone(e.target.value)}></input>

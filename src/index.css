@@ -1,0 +1,189 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: system-ui, -apple-system, Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
+  background: #f4f5f7;
+  color: #222;
+  line-height: 1.4;
+}
+
+h1,
+h2,
+h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+p {
+  margin: 6px 0;
+}
+
+/* ---------- Inputs ---------- */
+input {
+  padding: 10px 12px;
+  margin: 6px 0;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 320px;
+  font-size: 14px;
+  background: #fff;
+}
+
+input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+/* ---------- Buttons ---------- */
+button {
+  cursor: pointer;
+  padding: 8px 14px;
+  margin: 4px 4px 4px 0;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+}
+
+button:hover {
+  background: #f3f4f6;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Primary-looking submit */
+button[type="submit"] {
+  background: #4f46e5;
+  color: #fff;
+  border-color: #4f46e5;
+  margin-top: 10px;
+}
+
+button[type="submit"]:hover:not(:disabled) {
+  background: #4338ca;
+}
+
+/* ---------- Search row ---------- */
+.search {
+  margin-bottom: 16px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.search input {
+  margin: 0;
+}
+
+/* ---------- Product list ---------- */
+
+.product-list, .order-logic {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.product-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px 16px;
+  max-width: 560px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  display: grid;
+  grid-column: span 2;
+}
+
+.product-card p {
+  margin-bottom: 10px;
+}
+
+/* ---------- Cart ---------- */
+.cart-box {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 20px 0;
+  max-width: 560px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  display: grid;
+  grid-column: span 5;
+}
+
+.cart-box h3 {
+  margin-bottom: 10px;
+}
+
+.cart-box p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.cart-box p:last-of-type {
+  border-bottom: none;
+}
+
+/* ---------- Checkout ---------- */
+.checkout-box {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  max-width: 560px;
+  display: grid;
+  grid-column: span 5;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.checkout-box form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.checkout-box input {
+  max-width: 100%;
+}
+
+/* ---------- Status text ---------- */
+.error {
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.loading {
+  color: #6b7280;
+}
+
+/* ---------- App shell (optional) ---------- */
+.app {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.app-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.section-title {
+  font-size: 18px;
+  margin-top: 8px;
+}

@@ -4,6 +4,8 @@ import CheckoutForm from "./CheckoutForm";
 
 function ProductList() {
   const [products , setProduct] = useState([]);
+  const[loading , setLoading] = useState(true);
+  const[error, setError] = useState(null);
 
   useEffect(() => {
     
@@ -65,12 +67,10 @@ const totalCartPrice = cart.reduce((sum, item) => sum + item.price*item.quantity
     setProduct(products.filter((product) => product.id !== id));
   }
 
-// loading and error
-const[loading , setLoading] = useState(true);
-const[error, setError] = useState(null);
+
 
 return (
-    <div>
+    <div >
 
         {loading && <p>Loading products....</p>}
         {error && <p style={{color: "red"}}>{error}</p>}
@@ -79,14 +79,16 @@ return (
 
         <h2>Total products : ({filteredProducts.length})</h2>
 
+<div className="search">
         <input type="text" placeholder="Search product..." value={search} onChange={(e) => setSearch(e.target.value)}></input>
 
         <button onClick={handleAdd}>Add Product</button>
         
-       
+        </div>
+       <div  className="product-list">
 
         {filteredProducts.map((product) => (
-            <div key={product.id}>
+            <div key={product.id} className="product-card">
             <ProductCard
                         id={product.id} 
                         name={product.name}
@@ -97,7 +99,12 @@ return (
             <button onClick={() => handleAddToCart(product)}>Add To Cart</button>
             </div>
         ))}
+</div>
 
+<div className="order-logic">
+
+
+<div className="cart-box">
         <h3>Cart ({cart.length})</h3>
         {cart.map((item, index) => (
             <p key={index}>
@@ -109,8 +116,13 @@ return (
             Total :  {totalCartPrice.toLocaleString()}  TZS
         </p>
 
+    </div>
+   
+   <div className="checkout-box">
         <CheckoutForm cart={cart} setCart={setCart} cartTotal={totalCartPrice} />
-        
+    </div>    
+
+</div>
     </div>
 );
 

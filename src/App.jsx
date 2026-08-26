@@ -4,7 +4,7 @@ import Toggle from "./components/Toggle";
 function App(){
   return(
     <div>
-      <h1>OrderWa</h1>
+      <h1 className="app-title">OrderWa</h1>
       <Toggle />
     </div>
   )
