@@ -1,20 +1,25 @@
 import Link from "next/link";
 import "./globals.css";
-export default function RootLayout({children}) {
+
+export default function RootLayout({children}: {children: React.ReactNode}) {
   return(
-    <html>
+    <html lang="en">
       <body>
-
-            <nav className="nav">
-                <Link href="/">Home</Link>
-                <Link href="/login">Login</Link>
-                <Link href="/dashboard">Dashboard</Link>
+        <header className="site-header">
+          <div className="nav">
+            <Link href="/" className="brand">
+              <span className="brand-mark">O</span>
+              <span className="brand-name">OrderWa</span>
+            </Link>
+            <nav className="nav-links">
+              <Link href="/">Home</Link>
+              <Link href="/dashboard">Dashboard</Link>
+              <Link href="/login" className="nav-login">Login</Link>
             </nav>
-
-            <main>{children}</main>
-
-            <footer className="footer">2026 OrderWa</footer>
+          </div>
+        </header>
+        <main>{children}</main>
       </body>
-      </html>
+    </html>
   );
 }
