@@ -21,7 +21,7 @@ export default function HomePage() {
             place — name, items, phone, total.
           </p>
           <div className="hero-buttons">
-            <Link href="/login" className="btn-primary">
+            <Link href="/signup" className="btn-primary">
               Start for  free
             </Link>
             <Link href="/store/demo" className="btn-secondary">
@@ -269,7 +269,7 @@ export default function HomePage() {
               <li>Basic dashboard</li>
               <li>WhatsApp contact</li>
             </ul>
-            <Link href="/login" className="btn-secondary price-btn">Start free trial</Link>
+            <Link href="/signup" className="btn-secondary price-btn">Start free trial</Link>
           </div>
           <div className="price-card featured">
             <span className="price-tag">Most popular</span>
@@ -282,7 +282,7 @@ export default function HomePage() {
               <li>Payments integration</li>
               <li>Priority support</li>
             </ul>
-            <Link href="/login" className="btn-primary price-btn">Get started</Link>
+            <Link href="/signup" className="btn-primary price-btn">Get started</Link>
           </div>
           <div className="price-card">
             <h3>Business</h3>
@@ -294,7 +294,7 @@ export default function HomePage() {
               <li>Advanced reports</li>
               <li>Dedicated support</li>
             </ul>
-            <Link href="/login" className="btn-secondary price-btn">Contact us</Link>
+            <Link href="/signup" className="btn-secondary price-btn">Contact us</Link>
           </div>
         </div>
       </section>
@@ -345,7 +345,7 @@ export default function HomePage() {
         <h2>Ready to organize your orders?</h2>
         <p>Join hundreds of businesses taking WhatsApp orders the easy way.</p>
         <div className="cta-buttons">
-          <Link href="/login" className="btn-primary">
+          <Link href="/signup" className="btn-primary">
              Start for  free
           </Link>
           <a
@@ -362,22 +362,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="footer">
-        <div className="footer-inner">
-          <div className="footer-brand">
-            <span className="brand-mark">O</span>
-            <span className="brand-name">OrderWa</span>
-          </div>
-          <p className="footer-tag">WhatsApp orders, organized.</p>
-          <div className="footer-links">
-            <Link href="/login">Login</Link>
-            <Link href="/dashboard">Dashboard</Link>
-            <Link href="/store/demo">Demo store</Link>
-          </div>
-          <p className="footer-copy">© 2026 OrderWa. All rights reserved.</p>
-        </div>
-      </footer>
+     
     </div>
   );
 }

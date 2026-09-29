@@ -429,6 +429,7 @@ button[type="submit"]:hover:not(:disabled) {
 .hero {
   text-align: center;
   padding: 72px 0 88px;
+  margin-top: -70px;
 }
 
 .hero-inner {
