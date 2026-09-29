@@ -1,0 +1,44 @@
+.dash-nav{
+    position:sticky;
+    top:0;
+    height:100vh;
+    align-self: flex-start;
+    display:flex;
+    overflow-y:auto;
+    flex-direction:column;
+    width:220px;
+    padding:24px 16px;
+    border-right: 1px solid #e5e7eb;
+}
+
+.dash-nav a{
+    text-decoration:none;
+    color:black;
+}
+
+.dash-nav a.active{
+    background: greenyellow;
+    font-weight:600;
+}
+
+.shell{
+    
+    display:flex;
+    min-height:100vh;
+}
+
+.main{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+    padding : 24px 16px;
+}
+
+.topbar{
+    position:sticky;
+    top:0;
+    overflow:hidden;
+    z-index: 10;             
+  background: #ffffff;      
+}

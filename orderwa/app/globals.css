@@ -429,7 +429,7 @@ button[type="submit"]:hover:not(:disabled) {
 .hero {
   text-align: center;
   padding: 72px 0 88px;
-  margin-top: -70px;
+  margin-top: -25px;
 }
 
 .hero-inner {
@@ -1252,12 +1252,13 @@ button[type="submit"]:hover:not(:disabled) {
   align-items: center;
   justify-content: center;
   padding: 40px 20px;
-  font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  
 }
 
 .auth-card {
   width: 100%;
   max-width: 400px;
+  margin-top: -50px;
 }
 
 .register-form,
