@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+
 const UserIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -58,7 +59,7 @@ const SpinnerIcon = () => (
   </svg>
 );
 
-function LoginPage() {
+function SignUpPage() {
   const [mode, setMode] = useState("register"); // "register" | "login"
 
   const [name, setName] = useState("");
@@ -94,7 +95,7 @@ function LoginPage() {
   if (email.trim() === "") missingFields.push("email");
   if (password.length < 6) missingFields.push("a password (6+ characters)");
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setIsSubmitting(true);
     setError("");
@@ -111,7 +112,34 @@ function LoginPage() {
       return;
     }
 
-    // UI only — no database
+    const { data, error: authError } = await supabase.auth.signUp({
+      email: email.trim(),
+      password: password,
+    });
+
+    if (authError) {
+      setError(authError.message);
+      setSuccess(false);
+      setIsSubmitting(false);
+      return;
+    }
+
+    const { error: dbError } = await supabase.from("users").insert([
+      {
+        id: data.user.id,
+        name: name.trim(),
+        phone: phone.trim(),
+        email: email.trim(),
+      },
+    ]);
+
+    if (dbError) {
+      setError(dbError.message);
+      setSuccess(false);
+      setIsSubmitting(false);
+      return;
+    }
+
     setSuccess(true);
     setName("");
     setPhone("");
@@ -122,25 +150,32 @@ function LoginPage() {
     setTimeout(() => setSuccess(false), 3000);
   }
 
-  function handleLogin(e) {
+  async function handleLogin(e) {
     e.preventDefault();
     setIsLoggingIn(true);
     setLoginError("");
     setLoginSuccess(false);
 
-    if (loginEmail.trim() === "" || loginPassword.length < 6) {
-      setLoginError("Please enter email and password");
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: loginEmail.trim(),
+      password: loginPassword,
+    });
+
+    if (error) {
+      setLoginError("Email or password is incorrect");
       setIsLoggingIn(false);
       return;
     }
 
-    // UI only — no database
     setLoginSuccess(true);
     setLoginEmail("");
     setLoginPassword("");
     setLoginError("");
     setIsLoggingIn(false);
     setTimeout(() => setLoginSuccess(false), 3000);
+
+    // optional: use data.user later for redirect
+    console.log("Logged in:", data.user.email);
   }
 
   function switchToLogin() {
@@ -158,82 +193,7 @@ function LoginPage() {
   return (
     <div className="register-page">
       <div className="auth-card">
-        {mode === "login" ? (
-          <form className="login-form" onSubmit={handleLogin}>
-            <h2 className="register-title">
-              <LockIcon /> Login
-            </h2>
-
-            <div className="form-group">
-              <label>
-                <MailIcon /> Email
-              </label>
-              <input
-                type="email"
-                placeholder="eg. johndoe@gmail.com"
-                value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>
-                <LockIcon /> Password
-              </label>
-              <div className="input-with-action">
-                <input
-                  type={showLoginPassword ? "text" : "password"}
-                  placeholder="eg. 123456"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                />
-                <button
-                  type="button"
-                  className="input-action-btn"
-                  onClick={() => setShowLoginPassword((v) => !v)}
-                  aria-label={
-                    showLoginPassword ? "Hide password" : "Show password"
-                  }
-                >
-                  {showLoginPassword ? <EyeOffIcon /> : <EyeIcon />}
-                </button>
-              </div>
-            </div>
-
-            {loginSuccess && (
-              <div className="success-box">
-                <CheckCircleIcon /> Login successful!
-              </div>
-            )}
-
-            {loginError && (
-              <p className="form-error">
-                <AlertIcon /> {loginError}
-              </p>
-            )}
-
-            <button type="submit" disabled={isInvalidLogin || isLoggingIn}>
-              {isLoggingIn ? (
-                <>
-                  <SpinnerIcon /> Logging in...
-                </>
-              ) : (
-                "Login"
-              )}
-            </button>
-
-            <p className="auth-switch">
-              Don&apos;t have an account?{" "}
-              <button
-                type="button"
-                className="auth-switch-btn"
-                onClick={switchToRegister}
-              >
-                Create account
-              </button>
-            </p>
-          </form>
-        ) : (
+        {mode === "register" ? (
           <form className="register-form" onSubmit={handleSubmit}>
             <h2 className="register-title">Create Account</h2>
 
@@ -255,7 +215,7 @@ function LoginPage() {
               </label>
               <input
                 type="text"
-                placeholder="eg. 07XXXXXXXX"
+                placeholder="eg. 0712345678"
                 value={phone}
                 maxLength={10}
                 inputMode="numeric"
@@ -337,12 +297,85 @@ function LoginPage() {
 
             <p className="auth-switch">
               Already have an account?{" "}
+              <button type="button" className="auth-switch-btn" onClick={switchToLogin}>
+                Login to your account
+              </button>
+            </p>
+          </form>
+        ) : (
+          <form className="login-form" onSubmit={handleLogin}>
+            <h2 className="register-title">
+              <LockIcon /> Login
+            </h2>
+
+            <div className="form-group">
+              <label>
+                <MailIcon /> Email
+              </label>
+              <input
+                type="email"
+                placeholder="eg. johndoe@gmail.com"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>
+                <LockIcon /> Password
+              </label>
+              <div className="input-with-action">
+                <input
+                  type={showLoginPassword ? "text" : "password"}
+                  placeholder="eg. 123456"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="input-action-btn"
+                  onClick={() => setShowLoginPassword((v) => !v)}
+                  aria-label={
+                    showLoginPassword ? "Hide password" : "Show password"
+                  }
+                >
+                  {showLoginPassword ? <EyeOffIcon /> : <EyeIcon />}
+                </button>
+              </div>
+            </div>
+
+            {loginSuccess && (
+              <div className="success-box">
+                <CheckCircleIcon /> Login successful!
+              </div>
+            )}
+
+            {loginError && (
+              <p className="form-error">
+                <AlertIcon /> {loginError}
+              </p>
+            )}
+
+            <button type="submit" disabled={isInvalidLogin || isLoggingIn}>
+              {isLoggingIn ? (
+                <>
+                  <SpinnerIcon /> Logging in...
+                </>
+              ) : (
+                "Login"
+              )}
+            </button>
+
+            {/* <p className="helper-link">Forgot password?</p> */}
+
+            <p className="auth-switch">
+              Don&apos;t have an account?{" "}
               <button
                 type="button"
                 className="auth-switch-btn"
-                onClick={switchToLogin}
+                onClick={switchToRegister}
               >
-                Login to your account
+                Create account
               </button>
             </p>
           </form>
@@ -352,4 +385,4 @@ function LoginPage() {
   );
 }
 
-export default LoginPage;
+export default SignUpPage;

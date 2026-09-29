@@ -1,11 +1,15 @@
+"use client";
+
+import Image from "next/image";
+
 function ProductCard({ id, name, price, image }) {
   return (
     <div>
       {image && (
-        <img src={image} alt={name} />
+        <Image src={image} alt={name} width={320} height={160} />
       )}
       <p className="product-price">
-        $ {Number(price).toLocaleString()}
+        TZS {Number(price).toLocaleString()}
       </p>
       <p className="product-name">
         {name}

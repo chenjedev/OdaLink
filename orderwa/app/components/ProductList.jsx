@@ -1,42 +1,35 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
+import productsData from "../lib/products";
 import ProductCard from "./ProductCard";
 import CheckoutForm from "./CheckoutForm";
 
-function ProductList() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+function ProductList({ shopSlug }) {
+  const [products, setProducts] = useState(productsData);
   const [search, setSearch] = useState("");
+  const [cart, setCart] = useState([]);
+  const [cartLoaded, setCartLoaded] = useState(false);
 
-  const [cart, setCart] = useState(() => {
-    const saved = localStorage.getItem("cart");
-    return saved ? JSON.parse(saved) : [];
-  });
-
+  // Load cart from localStorage (browser only)
   useEffect(() => {
-    fetch("https://fakestoreapi.com/products")
-      .then((res) => res.json())
-      .then((data) => {
-        const formatted = data.map((item) => ({
-          id: item.id,
-          name: item.title,
-          price: item.price,
-          image: item.image,
-        }));
-        setProducts(formatted);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("Failed to load products");
-        setLoading(false);
-      });
+    try {
+      const saved = localStorage.getItem("cart");
+      if (saved) {
+        setCart(JSON.parse(saved));
+      }
+    } catch {
+      setCart([]);
+    }
+    setCartLoaded(true);
   }, []);
 
+  // Save cart only after first load
   useEffect(() => {
+    if (!cartLoaded) return;
     localStorage.setItem("cart", JSON.stringify(cart));
-  }, [cart]);
+  }, [cart, cartLoaded]);
 
   const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(search.toLowerCase())
@@ -72,6 +65,7 @@ function ProductList() {
       id: Date.now(),
       name: "Laptop",
       price: 750000,
+      image: "",
     };
     setProducts([...products, newProduct]);
   }
@@ -82,98 +76,85 @@ function ProductList() {
 
   return (
     <div className="app">
-  
+      {shopSlug && (
+        <p className="shop-label">Shop: {shopSlug}</p>
+      )}
 
-      {loading && (
-        <div className="loading-wrap">
-          <div className="three-body">
-            <div className="three-body__dot"></div>
-            <div className="three-body__dot"></div>
-            <div className="three-body__dot"></div>
-          </div>
-          <p className="loading">Loading products...</p>
+      <h2>Total products: ({filteredProducts.length})</h2>
+
+      <div className="search">
+        <input
+          type="text"
+          placeholder="Search product..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      
+     
         </div>
-      )}
 
-      {error && <p className="error">{error}</p>}
+      {filteredProducts.length === 0 && <p>No product found</p>}
 
-      {!loading && !error && filteredProducts.length === 0 && (
-        <p>No product found</p>
-      )}
-
-      {!loading && !error && (
-        <>
-          <h2>Total products: ({filteredProducts.length})</h2>
-
-          <div className="search">
-            <input
-              type="text"
-              placeholder="Search product..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+      <div className="product-list">
+        {filteredProducts.map((product) => (
+          <div key={product.id} className="product-card">
+            <ProductCard
+              id={product.id}
+              name={product.name}
+              price={product.price}
+              image={product.image}
             />
-            <button onClick={handleAdd}>Add Product</button>
-          </div>
 
-          <div className="product-list">
-            {filteredProducts.map((product) => (
-              <div key={product.id} className="product-card">
-                <ProductCard
-                  id={product.id}
-                  name={product.name}
-                  price={product.price}
-                  image={product.image}
+            
+
+            <button type="button" onClick={() => handleAddToCart(product)}>
+              Add To Cart
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div className="order-logic">
+        <div className="cart-box">
+          <h3>Cart ({cart.length})</h3>
+
+          {cart.length === 0 && <p>Cart is empty</p>}
+
+          {cart.map((item, index) => (
+            <p key={`${item.id}-${index}`}>
+              {item.image ? (
+                <Image
+                  src={item.image}
+                  alt={item.name}
+                  width={50}
+                  height={50}
+                  style={{ objectFit: "contain", marginRight: 8 }}
                 />
-                <button onClick={() => handleDelete(product.id)}>
-                  Delete
-                </button>
-                <button onClick={() => handleAddToCart(product)}>
-                  Add To Cart
-                </button>
-              </div>
-            ))}
-          </div>
+              ) : null}
+              {item.name} x{item.quantity} —{" "}
+              {(item.price * item.quantity).toLocaleString()} TZS
+              <button
+                type="button"
+                onClick={() => handleRemoveFromCart(index)}
+              >
+                Delete
+              </button>
+            </p>
+          ))}
 
-          <div className="order-logic">
-            <div className="cart-box">
-              <h3>Cart ({cart.length})</h3>
+          <p>
+            <strong>Total: {totalCartPrice.toLocaleString()} TZS</strong>
+          </p>
+        </div>
 
-              {cart.length === 0 && <p>Cart is empty</p>}
-
-              {cart.map((item, index) => (
-                <p key={item.id}>
-                  {item.image && (
-      <img
-        src={item.image}
-        alt={item.name}
-        width={50}
-        height={50}
-        style={{ objectFit: "contain" }}
-      />
-    )}            
-                   {item.name} x{item.quantity} —{" "}
-                  {(item.price * item.quantity).toLocaleString()} TZS
-                  <button onClick={() => handleRemoveFromCart(index)}>
-                    Delete
-                  </button>
-                </p>
-              ))}
-
-              <p>
-                <strong>Total: {totalCartPrice.toLocaleString()} TZS</strong>
-              </p>
-            </div>
-
-            <div className="checkout-box">
-              <CheckoutForm
-                cart={cart}
-                setCart={setCart}
-                cartTotal={totalCartPrice}
-              />
-            </div>
-          </div>
-        </>
-      )}
+        <div className="checkout-box">
+          <CheckoutForm
+            cart={cart}
+            setCart={setCart}
+            cartTotal={totalCartPrice}
+          />
+        </div>
+      </div>
     </div>
   );
 }

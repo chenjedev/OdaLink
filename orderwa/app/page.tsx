@@ -22,7 +22,7 @@ export default function HomePage() {
           </p>
           <div className="hero-buttons">
             <Link href="/login" className="btn-primary">
-              Get started — it&apos;s free
+              Start for  free
             </Link>
             <Link href="/store/demo" className="btn-secondary">
               View demo store
@@ -346,11 +346,11 @@ export default function HomePage() {
         <p>Join hundreds of businesses taking WhatsApp orders the easy way.</p>
         <div className="cta-buttons">
           <Link href="/login" className="btn-primary">
-            Get started — it&apos;s free
+             Start for  free
           </Link>
           <a
             className="btn-whatsapp"
-            href="https://wa.me/1234567890?text=Hi%2C%20I%20want%20to%20know%20more%20about%20OrderWa"
+            href="https://wa.me/255659148967?text=Hi%2C%20I%20want%20to%20know%20more%20about%20OrderWa"
             target="_blank"
             rel="noopener noreferrer"
           >
