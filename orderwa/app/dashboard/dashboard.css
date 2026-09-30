@@ -14,11 +14,15 @@
 .dash-nav a{
     text-decoration:none;
     color:black;
+    padding:10px 16px;
 }
 
 .dash-nav a.active{
-    background: greenyellow;
+    border-left: 2px solid  black;
     font-weight:600;
+    color:black;
+    padding:10px 16px;
+    width:190px;
 }
 
 .shell{

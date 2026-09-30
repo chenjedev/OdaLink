@@ -3,7 +3,10 @@
 function Orders(){
     return(
         <div>
-            <p>Orders comming soon ...</p>
+            <h1>Orders</h1>
+            <p>Orders coming soon ...</p>
+
+            <div style={{ height: "2000px" }}>test</div>
         </div>
     );
 }

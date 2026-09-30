@@ -28,7 +28,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
           <p className="footer-tag">WhatsApp orders, organized.</p>
           <div className="footer-links">
             <Link href="/login">Login</Link>
-            <Link href="/signup">Start free</Link>
+            <Link href="/dashboard">Dashboard</Link>
             <Link href="/store/demo">Demo store</Link>
           </div>
           <p className="footer-copy">© 2026 OrderWa. All rights reserved.</p>
