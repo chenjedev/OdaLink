@@ -7,7 +7,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
         <div className="nav">
           <Link href="/" className="brand">
             <span className="brand-mark">O</span>
-            <span className="brand-name">OrderWa</span>
+            <span className="brand-name">OdaLink</span>
           </Link>
           <nav className="nav-links">
             <Link href="/">Home</Link>
@@ -31,7 +31,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
             <Link href="/dashboard">Dashboard</Link>
             <Link href="/store/demo">Demo store</Link>
           </div>
-          <p className="footer-copy">© 2026 OrderWa. All rights reserved.</p>
+          <p className="footer-copy">© 2026 OdaLink. All rights reserved.</p>
         </div>
       </footer>
     </>
