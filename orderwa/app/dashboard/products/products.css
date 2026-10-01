@@ -1,0 +1,69 @@
+.products-page{
+    margin:10px 20px;
+}
+
+.products-table {
+  width: 100%;
+  padding: 80px 24px;
+  border-collapse: collapse;
+  align-items:center;
+  margin:0 auto;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px ;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.products-table th,
+.products-table td 
+{
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+  transition: background-color 0.25s ease;
+}
+
+.products-table tbody tr:hover td {
+  background: #f9fafb;  
+}
+
+.add-product-btn{
+    display:flex;
+    align-items:right;
+    background-color:black;
+    color:white;
+}
+
+.add-product-btn:hover{
+    background-color:grey;
+}
+
+.product-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+
+.no-prod {
+  text-align: center !important;
+  padding: 24px;
+  color: #6b7280;
+}
+
+
+/* ORDERS */
+    .badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;     /* pill */
+  font-size: 0.8rem;
+  font-weight: 600;
+  border:none;
+}
+
+.badge-pending   { background: #fef3c7; color: #b45309; }  
+.badge-confirmed { background: #dbeafe; color: #1d4ed8; }  
+.badge-delivered { background: #dcfce7; color: #15803d; }  
+.badge-cancelled { background: #fee2e2; color: #b91c1c; }
