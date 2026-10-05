@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import AddProduct from "../../components/dashboard/AddProduct";
 
 const products = [
     {id:14345, name:"jordan-4", category:"shoes", price:62000,  image:"",  stock:21 }, 
@@ -10,6 +11,7 @@ const products = [
 export default function ProductPage(){
 
     const [search , setSearch] = useState("");
+    const [showForm , setShowForm] = useState(false);
 
     const filtered = products.filter((p) => 
      p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -21,19 +23,30 @@ export default function ProductPage(){
         <div className="products-page">
 
             <div className="product-header">
-                 <h2>Products</h2>   
-                  <input 
+                 <h2>Products</h2>
+                 <div className="header-actions">
+                    <button className="more-btn">
+                        <i className="fa-solid fa-ellipsis-vertical"></i>
+                    </button>
+                    <button className="add-product-btn" onClick={() => setShowForm(true)}>
+                        Add product
+                    </button>
+                 </div>
+            </div>
+
+            <div className="search-wrapper">
+                <i className="fa-solid fa-magnifying-glass search-icon"></i>
+                <input 
                   type="text"
-                  placeholder="Search product, category, id ..."
+                  placeholder="Search by product, variant names or SKU"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="search-input"
-            />
-                 <button className="add-product-btn">Add product</button>
-            </div>   
+                />
+            </div>
             
-           
-
+           {showForm && <AddProduct onClose={() => setShowForm(false)} />}
+            
             <table className="products-table">
                 <thead>
                  <tr>
@@ -66,7 +79,7 @@ export default function ProductPage(){
                     )}
 
                      <tr>
-                        <td className="no-prod" colSpan={5}>
+                        <td>
                             Total {filtered.length.toLocaleString()}
                         </td>
                     </tr>

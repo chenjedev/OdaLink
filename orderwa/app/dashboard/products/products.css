@@ -10,9 +10,13 @@
   margin:0 auto;
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 12px ;
+  border-radius: 28px ;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.products-table th {
+  background: #f9fafb;
 }
 
 .products-table th,
@@ -28,30 +32,94 @@
   background: #f9fafb;  
 }
 
+/* ===== PRODUCT HEADER ===== */
+.product-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.product-header h2{
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.header-actions{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.more-btn{
+    background: #f3f4f6;
+    border: none;
+    border-radius: 10px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    color: #374151;
+}
+
+.more-btn:hover{
+    background: #e5e7eb;
+}
+
 .add-product-btn{
-    display:flex;
-    align-items:right;
-    background-color:black;
-    color:white;
+    background-color: black;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
 }
 
 .add-product-btn:hover{
-    background-color:grey;
+    background-color: grey;
 }
 
-.product-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
+/* ===== SEARCH ===== */
+.search-wrapper{
+    position: relative;
+    margin-bottom: 20px;
 }
 
+.search-icon{
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    font-size: 14px;
+}
+
+.search-input{
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    padding: 12px 16px 12px 42px;
+    outline: none;
+    background: #fafafa;
+    box-sizing: border-box;
+}
+
+.search-input:focus{
+    border-color: #1387c1;
+    background: white;
+}
 
 .no-prod {
   text-align: center !important;
   padding: 24px;
   color: #6b7280;
 }
-
 
 /* ORDERS */
     .badge {
@@ -67,3 +135,62 @@
 .badge-confirmed { background: #dbeafe; color: #1d4ed8; }  
 .badge-delivered { background: #dcfce7; color: #15803d; }  
 .badge-cancelled { background: #fee2e2; color: #b91c1c; }
+
+/* ADD PRODUCTS */
+.modal-overlay {
+  position: fixed;        
+  inset: 0;             
+  background: rgba(0, 0, 0, 0.4);   
+  display: grid;
+  place-items: center;    
+  z-index: 50;           
+}
+
+.add-prod-page{
+   width:20%;
+}
+
+
+.add-prod-header{
+  display: flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.cancel-btn {
+  background:transparent;
+  border:none;
+  cursor:pointer;
+  top: 12px;
+  right: 12px;
+}
+
+.register-form {
+  position: relative;  
+}
+
+.save-btn:hover{
+  background:gray;
+}
+
+.success-box {
+  background: white;
+  padding: 32px;
+  border-radius: 12px;
+  text-align: center;
+  width: 360px;
+  max-width: 90vw;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  display:flex;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.detail-row span {
+  color: #6b7280;
+}
