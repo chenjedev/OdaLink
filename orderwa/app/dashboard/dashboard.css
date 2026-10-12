@@ -243,3 +243,9 @@
     padding: 16px;
   }
 }
+
+/* ORDERS */
+.table-wrapper{
+    overflow-x: auto;
+    width: 100%;
+}

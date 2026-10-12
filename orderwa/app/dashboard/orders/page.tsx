@@ -48,7 +48,8 @@ export default function OrderPage(){
                 </div>
                 
                {showForm && <AddOrder onClose={() => setShowForm(false)} />}
-    
+            
+            <div className="table-wrapper">
                 <table className="products-table">
                     <thead>
                      <tr>
@@ -87,6 +88,7 @@ export default function OrderPage(){
     
                     </tbody>
                 </table>
+                </div>
             </div>
         );
     }

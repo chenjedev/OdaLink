@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import productsData from "../lib/products";
 import ProductCard from "./ProductCard";
 import CheckoutForm from "./CheckoutForm";
-
-function ProductList({ shopSlug }) {
-  const [products, setProducts] = useState(productsData);
+ 
+function ProductList({ products = [], shopSlug }) {
+  
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState([]);
   const [cartLoaded, setCartLoaded] = useState(false);
@@ -58,20 +57,6 @@ function ProductList({ shopSlug }) {
 
   function handleRemoveFromCart(index) {
     setCart(cart.filter((_, i) => i !== index));
-  }
-
-  function handleAdd() {
-    const newProduct = {
-      id: Date.now(),
-      name: "Laptop",
-      price: 750000,
-      image: "",
-    };
-    setProducts([...products, newProduct]);
-  }
-
-  function handleDelete(id) {
-    setProducts(products.filter((product) => product.id !== id));
   }
 
   return (

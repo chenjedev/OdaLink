@@ -24,7 +24,7 @@ export default function HomePage() {
             <Link href="/signup" className="btn-primary">
               Start for  free
             </Link>
-            <Link href="/store/demo" className="btn-secondary">
+            <Link href="/products" className="btn-secondary">
               View demo store
             </Link>
           </div>

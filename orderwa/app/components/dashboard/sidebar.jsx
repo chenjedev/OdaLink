@@ -31,7 +31,7 @@ function Sidebar() {
           className="brand desktop-brand"
           onClick={() => setMenuOpen(false)}
         >
-          <span className="brand-mark">O</span>
+          
           <span className="brand-name">OdaLink</span>
         </Link>
 
