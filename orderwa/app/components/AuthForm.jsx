@@ -95,7 +95,7 @@ function AuthForm({ initialMode = "register" }) {
   if (email.trim() === "") missingFields.push("email");
   if (password.length < 6) missingFields.push("a password (6+ characters)");
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setIsSubmitting(true);
     setError("");
@@ -112,6 +112,21 @@ function AuthForm({ initialMode = "register" }) {
       return;
     }
 
+
+    const { error: signUpError } = await supabase.auth.signUp ( { 
+      email,
+      password,
+      option: { data: { name, phone} },
+
+    });
+
+    if (signUpError) {
+      setError(signUpError.message);
+      setIsSubmitting(false);
+      return;
+    }
+    
+
     setSuccess(true);
     setName("");
     setPhone("");
@@ -124,20 +139,28 @@ function AuthForm({ initialMode = "register" }) {
 
   async function handleLogin(e) {
     e.preventDefault();
-  
-
-    const { error } = await supabase.auth.signUp({ email, password });
-    
-    
     setIsLoggingIn(true);
     setLoginError("");
     setLoginSuccess(false);
 
-    if (loginEmail.trim() === "" || loginPassword.length < 6) {
+    if (isInvalidLogin) {
       setLoginError("Please enter email and password");
       setIsLoggingIn(false);
       return;
     }
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: loginEmail,
+      password: loginPassword,
+    });
+
+    
+    if (signInError) {
+      setLoginError(signInError.message);
+      setIsLoggingIn(false);
+      return;
+    }
+    
 
     setLoginSuccess(true);
     setLoginEmail("");
