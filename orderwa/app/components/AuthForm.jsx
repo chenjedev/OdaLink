@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { supabase } from "../../lib/supabase";
 
 const UserIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -123,6 +124,11 @@ function AuthForm({ initialMode = "register" }) {
 
   function handleLogin(e) {
     e.preventDefault();
+  
+
+    const { error } = await supabase.auth.signUp({ email, password });
+    
+    
     setIsLoggingIn(true);
     setLoginError("");
     setLoginSuccess(false);
