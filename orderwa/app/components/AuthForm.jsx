@@ -122,7 +122,7 @@ function AuthForm({ initialMode = "register" }) {
     setTimeout(() => setSuccess(false), 3000);
   }
 
-  function handleLogin(e) {
+  async function handleLogin(e) {
     e.preventDefault();
   
 
