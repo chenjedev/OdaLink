@@ -117,7 +117,7 @@ function AuthForm({ initialMode = "register" }) {
       email,
       password,
       name,
-      phone },
+      phone 
 
     });
 
