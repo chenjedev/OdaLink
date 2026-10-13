@@ -116,7 +116,8 @@ function AuthForm({ initialMode = "register" }) {
     const { error: signUpError } = await supabase.auth.signUp ( { 
       email,
       password,
-      option: { data: { name, phone} },
+      name,
+      phone },
 
     });
 
