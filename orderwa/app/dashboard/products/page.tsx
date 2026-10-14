@@ -1,91 +1,162 @@
 "use client";
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import AddProduct from "../../components/dashboard/AddProduct";
+import { supabase } from "../../../lib/supabase";
 
-const products = [
-    {id:14345, name:"jordan-4", category:"shoes", price:62000,  image:"",  stock:21 }, 
-    {id:56462, name:"Black-tshirt", category:"tshirt", price:17000,  image:"",  stock:44 }, 
-    {id:13452, name:"Gucci bag", category:"bag",  price:45000,  image:"",   stock:19 }
-];
+type Product = {
+  id: number | string;
+  name: string;
+  price: number;
+  image: string | null;
+  category?: string | null;
+  stock?: number | null;
+};
 
-export default function ProductPage(){
+type Shop = {
+  id: string;
+  name: string;
+  slug: string;
+};
 
-    const [search , setSearch] = useState("");
-    const [showForm , setShowForm] = useState(false);
+export default function ProductPage() {
+  const router = useRouter();
+  const [search, setSearch] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [shop, setShop] = useState<Shop | null>(null);
+  const [loading, setLoading] = useState(true);
 
-    const filtered = products.filter((p) => 
-     p.name.toLowerCase().includes(search.toLowerCase()) ||
-     p.category.toLowerCase().includes(search.toLowerCase()) ||
-    p.id.toString().includes(search.toLowerCase())
-    );
+  async function load() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    return(
-        <div className="products-page">
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
 
-            <div className="product-header">
-                 <h2>Products</h2>
-                 <div className="header-actions">
-                    <button className="more-btn">
-                        <i className="fa-solid fa-ellipsis-vertical"></i>
-                    </button>
-                    <button className="add-product-btn" onClick={() => setShowForm(true)}>
-                        Add product
-                    </button>
-                 </div>
-            </div>
+    const { data: shopData } = await supabase
+      .from("shops")
+      .select("id, name, slug")
+      .eq("owner_id", user.id)
+      .maybeSingle();
 
-            <div className="search-wrapper">
-                <i className="fa-solid fa-magnifying-glass search-icon"></i>
-                <input 
-                  type="text"
-                  placeholder="Search by product, variant names or SKU"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="search-input"
-                />
-            </div>
-            
-           {showForm && <AddProduct onClose={() => setShowForm(false)} />}
-            
-            <table className="products-table">
-                <thead>
-                 <tr>
-                  <th>Id</th>
-                  <th>Name</th>
-                  <th>Category</th>
-                  <th>Price</th>
-                  <th>Stock</th>
-                 </tr>
-                </thead>
+    setShop(shopData as Shop | null);
 
-                <tbody>
-                    {filtered.map((p) => (
-                        <tr key={p.id}>
-                            <td>{p.id}</td>
-                            <td>{p.name}</td>
-                            <td>{p.category}</td>
-                            <td>{p.price.toLocaleString()} Tsh</td>
-                            <td>{p.stock.toLocaleString()}</td>
-                        </tr>
-                        
-                    )) }
+    if (shopData) {
+      const { data } = await supabase
+        .from("products")
+        .select("id, name, price, image")
+        .eq("shop_id", shopData.id)
+        .order("id");
 
-                    {filtered.length === 0 && (
-                    <tr>
-                        
-                        <td className="no-prod" colSpan={5}>No product found</td>
-                       
-                    </tr>
-                    )}
+      setProducts((data as Product[]) ?? []);
+    }
 
-                     <tr>
-                        <td>
-                            Total {filtered.length.toLocaleString()}
-                        </td>
-                    </tr>
+    setLoading(false);
+  }
 
-                </tbody>
-            </table>
+  useEffect(() => {
+    load();
+  }, [router]);
+
+  const filtered = products.filter(
+    (p) =>
+      p.name.toLowerCase().includes(search.toLowerCase()) ||
+      (p.category ?? "").toLowerCase().includes(search.toLowerCase()) ||
+      p.id.toString().includes(search.toLowerCase())
+  );
+
+  if (loading) {
+    return <p>Loading products...</p>;
+  }
+
+  return (
+    <div className="products-page">
+      <div className="product-header">
+        <h2>Products {shop ? `— ${shop.name}` : ""}</h2>
+        <div className="header-actions">
+          <button className="more-btn" type="button">
+            <i className="fa-solid fa-ellipsis-vertical"></i>
+          </button>
+          <button
+            className="add-product-btn"
+            type="button"
+            onClick={() => setShowForm(true)}
+            disabled={!shop}
+          >
+            Add product
+          </button>
         </div>
-    );
+      </div>
+
+      {!shop && (
+        <p style={{ color: "#dc2626" }}>
+          Huna duka bado. Signup mpya inapaswa kuunda shop otomatiki.
+        </p>
+      )}
+
+      <div className="search-wrapper">
+        <i className="fa-solid fa-magnifying-glass search-icon"></i>
+        <input
+          type="text"
+          placeholder="Search by product, variant names or SKU"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="search-input"
+        />
+      </div>
+
+      {showForm && shop && (
+        <AddProduct
+          shopId={shop.id}
+          onClose={() => setShowForm(false)}
+          onAdded={() => {
+            setShowForm(false);
+            load();
+          }}
+        />
+      )}
+
+      <table className="products-table">
+        <thead>
+          <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Image</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filtered.map((p) => (
+            <tr key={p.id}>
+              <td>{p.id}</td>
+              <td>{p.name}</td>
+              <td>{Number(p.price).toLocaleString()} Tsh</td>
+              <td>
+                {p.image ? (
+                  <img src={p.image} alt="" width={40} height={40} />
+                ) : (
+                  "—"
+                )}
+              </td>
+            </tr>
+          ))}
+          {filtered.length === 0 && (
+            <tr>
+              <td className="no-prod" colSpan={4}>
+                No product found
+              </td>
+            </tr>
+          )}
+          <tr>
+            <td colSpan={4}>Total {filtered.length}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
 }
