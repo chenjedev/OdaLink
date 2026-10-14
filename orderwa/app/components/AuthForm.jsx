@@ -61,26 +61,21 @@ const SpinnerIcon = () => (
 );
 
 function AuthForm({ initialMode = "register" }) {
-
   const router = useRouter();
-  
-  const [mode, setMode] = useState(initialMode);
 
+  const [mode, setMode] = useState(initialMode);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [showLoginPassword, setShowLoginPassword] = useState(false);
-
   const [error, setError] = useState("");
   const [loginError, setLoginError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
@@ -116,21 +111,42 @@ function AuthForm({ initialMode = "register" }) {
       return;
     }
 
-const { error: signUpError } = await supabase.auth.signUp({
-  email,
-  password,
-  options: {
-    data: { name, phone },
-  },
-});
-    
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name, phone },
+      },
+    });
 
     if (signUpError) {
       setError(signUpError.message);
       setIsSubmitting(false);
       return;
     }
-    
+
+    // Auto-create shop for this user
+    const user = signUpData.user;
+    if (user) {
+      const shopName = name.trim() || "My Shop";
+      const baseSlug =
+        shopName
+          .toLowerCase()
+          .replace(/\s+/g, "-")
+          .replace(/[^a-z0-9-]/g, "") || "shop";
+      const slug = `${baseSlug}-${user.id.slice(0, 6)}`;
+
+      const { error: shopError } = await supabase.from("shops").insert({
+        name: shopName,
+        phone: phone.trim() || null,
+        owner_id: user.id,
+        slug,
+      });
+
+      if (shopError) {
+        console.error("Shop create failed:", shopError.message);
+      }
+    }
 
     setSuccess(true);
     setName("");
@@ -159,15 +175,14 @@ const { error: signUpError } = await supabase.auth.signUp({
       password: loginPassword,
     });
 
-    
     if (signInError) {
       setLoginError(signInError.message);
       setIsLoggingIn(false);
       return;
     }
-    
+
     router.push("/dashboard");
-    
+
     setLoginSuccess(true);
     setLoginEmail("");
     setLoginPassword("");
