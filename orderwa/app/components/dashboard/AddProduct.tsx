@@ -1,120 +1,151 @@
 "use client";
 
-import React, {useState} from "react";
+import { useState, FormEvent } from "react";
+import { supabase } from "../../../lib/supabase";
 
-function AddOrder({ onClose } : { onClose: () => void })  {
-    const [customer , setCustomer] = useState("");
-    const [phone , setPhone] = useState("");
-    const [items , setItems] = useState("");
-    const [total , setTotal] = useState("");
-    const [status , setStatus] = useState("");
+type Props = {
+  shopId: string;
+  onClose: () => void;
+  onAdded: () => void;
+};
 
-    const [isAdd,  setIsAdd] = useState(false);
-    
-    function handleAdd(e: React.SubmitEvent) {
-        e.preventDefault();
-        setIsAdd(true);
+export default function AddProduct({ shopId, onClose, onAdded }: Props) {
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
+  const [image, setImage] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  const isInvalid =
+    name.trim() === "" || price.trim() === "" || Number(price) <= 0;
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    if (isInvalid) {
+      setError("Enter name and a valid price");
+      setLoading(false);
+      return;
     }
- 
- if (isAdd) {
+
+    const { error: insertError } = await supabase.from("products").insert({
+      name: name.trim(),
+      price: Number(price),
+      image: image.trim() || null,
+      shop_id: shopId,
+    });
+
+    if (insertError) {
+      setError(insertError.message);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(false);
+    setIsSuccess(true);
+  }
+
+  // Success screen
+  if (isSuccess) {
     return (
-        <div className="modal-overlay">
-            <div className="add-prod-page">
-                <div className="register-form">
-                    <div className="add-prod-header">
-                        <h2>Order added successfully</h2>
-                        <button type="button" className="cancel-btn" onClick={onClose}>x</button>
-                    </div>
-
-                    <div className="detail-row">
-                        <span>Customer</span>
-                        <strong>{customer}</strong>
-                    </div>
-                    <div className="detail-row">
-                        <span>Phone</span>
-                        <strong>{phone}</strong>
-                    </div>
-                    <div className="detail-row">
-                        <span>Items</span>
-                        <strong>{items}</strong>
-                    </div>
-                    <div className="detail-row">
-                        <span>Total</span>
-                        <strong>{Number(total).toLocaleString()} Tsh</strong>
-                    </div>
-
-                    <div className="form-group">
-                        <button type="button" className="save-btn" onClick={onClose}>Done</button>
-                    </div>
-                </div>
+      <div className="modal-overlay">
+        <div className="add-prod-page">
+          <div className="register-form">
+            <div className="add-prod-header">
+              <h2>Product added successfully</h2>
+              <button type="button" className="cancel-btn" onClick={() => { onAdded(); onClose(); }}>
+                x
+              </button>
             </div>
-        </div>
-    );
-}
 
-    return(
-        <div className="modal-overlay"  >
-          <div className="add-prod-page">
-            <form className="register-form" onSubmit={handleAdd}>
-                  <div className="add-prod-header">
-                    <h2>Add Order </h2>
-                    <button  type="button" className="cancel-btn" onClick={onClose}>x</button>
-                  </div>
+            <div className="detail-row">
+              <span>Name</span>
+              <strong>{name}</strong>
+            </div>
+            <div className="detail-row">
+              <span>Price</span>
+              <strong>{Number(price).toLocaleString()} Tsh</strong>
+            </div>
 
-                  <div className="form-group">
-                    <label>Customer</label>
-                    <input 
-                         type="text"
-                         placeholder="Customer..." 
-                         value={customer}   
-                         onChange={(e) => setCustomer(e.target.value)}
-                         required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Phone</label>
-                    <input 
-                         type="text"
-                         placeholder="Phone..."   
-                         value={phone} 
-                         onChange={(e) => setPhone(e.target.value)}
-                         required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Items</label>
-                    <input 
-                         type="text"
-                         placeholder="Items..."   
-                         value={items}
-                         onChange={(e) => setItems(e.target.value)}
-                         required 
-                    />
-                  </div> 
-                 
-                 <div className="form-group">
-                    <label>Total</label>
-                    <input 
-                         type="text"
-                         placeholder="Total..."   
-                         value={total} 
-                         onChange={(e) => setTotal(e.target.value)}
-                         required
-                    />
-                  </div>
-
-                   <div className="form-group">
-                    <button className="save-btn">Save</button>
-                    </div>
-
-            </form>
+            <div className="form-group">
+              <button
+                type="button"
+                className="save-btn"
+                onClick={() => {
+                  onAdded();
+                  onClose();
+                }}
+              >
+                Done
+              </button>
+            </div>
           </div>
-        </div> 
+        </div>
+      </div>
     );
+  }
 
+  // Form
+  return (
+    <div className="modal-overlay">
+      <div className="add-prod-page">
+        <form className="register-form" onSubmit={handleSubmit}>
+          <div className="add-prod-header">
+            <h2>Add Product</h2>
+            <button type="button" className="cancel-btn" onClick={onClose}>
+              x
+            </button>
+          </div>
+
+          <div className="form-group">
+            <label>Name</label>
+            <input
+              type="text"
+              placeholder="eg. Black t-shirt"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Price (TZS)</label>
+            <input
+              type="number"
+              placeholder="eg. 25000"
+              value={price}
+              min={1}
+              onChange={(e) => setPrice(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Image URL (optional)</label>
+            <input
+              type="url"
+              placeholder="https://..."
+              value={image}
+              onChange={(e) => setImage(e.target.value)}
+            />
+          </div>
+
+          {error && <p className="form-error">{error}</p>}
+
+          <div className="form-group">
+            <button
+              type="submit"
+              className="save-btn"
+              disabled={isInvalid || loading}
+            >
+              {loading ? "Saving..." : "Save"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 }
-
-
-export default AddOrder;
