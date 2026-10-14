@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { supabase } from "../../lib/supabase";
 
@@ -60,6 +61,9 @@ const SpinnerIcon = () => (
 );
 
 function AuthForm({ initialMode = "register" }) {
+
+  const router = useRouter();
+  
   const [mode, setMode] = useState(initialMode);
 
   const [name, setName] = useState("");
@@ -162,7 +166,8 @@ const { error: signUpError } = await supabase.auth.signUp({
       return;
     }
     
-
+    router.push("/dashboard");
+    
     setLoginSuccess(true);
     setLoginEmail("");
     setLoginPassword("");
