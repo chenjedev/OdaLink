@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 import { supabase } from "../../../lib/supabase";
-// adjust path
 
 type Props = {
   shopId: string;
@@ -20,7 +19,7 @@ export default function AddProduct({ shopId, onClose, onAdded }: Props) {
   const isInvalid =
     name.trim() === "" || price.trim() === "" || Number(price) <= 0;
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
     setLoading(true);
@@ -44,6 +43,9 @@ export default function AddProduct({ shopId, onClose, onAdded }: Props) {
       return;
     }
 
+    setName("");
+    setPrice("");
+    setImage("");
     setLoading(false);
     onAdded();
   }
