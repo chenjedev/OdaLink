@@ -11,14 +11,19 @@ type Props = {
 
 export default function AddProduct({ shopId, onClose, onAdded }: Props) {
   const [name, setName] = useState("");
+  const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
-  const [image, setImage] = useState("");
+  const [stock, setStock] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
   const isInvalid =
-    name.trim() === "" || price.trim() === "" || Number(price) <= 0;
+    name.trim() === "" ||
+    price.trim() === "" ||
+    Number(price) <= 0 ||
+    stock.trim() === "" ||
+    Number(stock) < 0;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -26,15 +31,16 @@ export default function AddProduct({ shopId, onClose, onAdded }: Props) {
     setLoading(true);
 
     if (isInvalid) {
-      setError("Enter name and a valid price");
+      setError("Fill name, price and stock correctly");
       setLoading(false);
       return;
     }
 
     const { error: insertError } = await supabase.from("products").insert({
       name: name.trim(),
+      category: category.trim() || null,
       price: Number(price),
-      image: image.trim() || null,
+      stock: Number(stock),
       shop_id: shopId,
     });
 
@@ -48,7 +54,6 @@ export default function AddProduct({ shopId, onClose, onAdded }: Props) {
     setIsSuccess(true);
   }
 
-  // Success screen
   if (isSuccess) {
     return (
       <div className="modal-overlay">
@@ -56,7 +61,14 @@ export default function AddProduct({ shopId, onClose, onAdded }: Props) {
           <div className="register-form">
             <div className="add-prod-header">
               <h2>Product added successfully</h2>
-              <button type="button" className="cancel-btn" onClick={() => { onAdded(); onClose(); }}>
+              <button
+                type="button"
+                className="cancel-btn"
+                onClick={() => {
+                  onAdded();
+                  onClose();
+                }}
+              >
                 x
               </button>
             </div>
@@ -66,8 +78,16 @@ export default function AddProduct({ shopId, onClose, onAdded }: Props) {
               <strong>{name}</strong>
             </div>
             <div className="detail-row">
+              <span>Category</span>
+              <strong>{category || "—"}</strong>
+            </div>
+            <div className="detail-row">
               <span>Price</span>
               <strong>{Number(price).toLocaleString()} Tsh</strong>
+            </div>
+            <div className="detail-row">
+              <span>Stock</span>
+              <strong>{stock}</strong>
             </div>
 
             <div className="form-group">
@@ -88,7 +108,6 @@ export default function AddProduct({ shopId, onClose, onAdded }: Props) {
     );
   }
 
-  // Form
   return (
     <div className="modal-overlay">
       <div className="add-prod-page">
@@ -112,6 +131,16 @@ export default function AddProduct({ shopId, onClose, onAdded }: Props) {
           </div>
 
           <div className="form-group">
+            <label>Category</label>
+            <input
+              type="text"
+              placeholder="eg. shoes, tshirt, bag"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
             <label>Price (TZS)</label>
             <input
               type="number"
@@ -124,12 +153,14 @@ export default function AddProduct({ shopId, onClose, onAdded }: Props) {
           </div>
 
           <div className="form-group">
-            <label>Image URL (optional)</label>
+            <label>Stock</label>
             <input
-              type="url"
-              placeholder="https://..."
-              value={image}
-              onChange={(e) => setImage(e.target.value)}
+              type="number"
+              placeholder="eg. 20"
+              value={stock}
+              min={0}
+              onChange={(e) => setStock(e.target.value)}
+              required
             />
           </div>
 
