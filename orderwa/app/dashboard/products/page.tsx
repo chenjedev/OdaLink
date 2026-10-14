@@ -37,11 +37,35 @@ export default function ProductPage() {
       return;
     }
 
-    const { data: shopData } = await supabase
+    let { data: shopData } = await supabase
       .from("shops")
       .select("id, name, slug")
       .eq("owner_id", user.id)
       .maybeSingle();
+
+    // Hakuna shop? Unda otomatiki
+    if (!shopData) {
+      const meta = user.user_metadata || {};
+      const shopName = (meta.name as string)?.trim() || "My Shop";
+      const slug = `shop-${user.id.slice(0, 8)}`;
+
+      const { data: created, error: createErr } = await supabase
+        .from("shops")
+        .insert({
+          name: shopName,
+          phone: (meta.phone as string) || null,
+          owner_id: user.id,
+          slug,
+        })
+        .select("id, name, slug")
+        .single();
+
+      if (createErr) {
+        console.error("Auto-create shop failed:", createErr.message);
+      } else {
+        shopData = created;
+      }
+    }
 
     setShop(shopData as Shop | null);
 
@@ -96,7 +120,7 @@ export default function ProductPage() {
 
       {!shop && (
         <p style={{ color: "#dc2626" }}>
-          Huna duka bado. Signup mpya inapaswa kuunda shop otomatiki.
+          Huna duka bado. Check console for shop create error.
         </p>
       )}
 
