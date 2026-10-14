@@ -54,6 +54,8 @@ export default function ProductPage() {
         .order("id");
 
       setProducts((data as Product[]) ?? []);
+    } else {
+      setProducts([]);
     }
 
     setLoading(false);
