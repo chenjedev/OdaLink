@@ -9,7 +9,6 @@ type Product = {
   id: number | string;
   name: string;
   price: number;
-  image: string | null;
   category?: string | null;
   stock?: number | null;
 };
@@ -49,7 +48,7 @@ export default function ProductPage() {
     if (shopData) {
       const { data } = await supabase
         .from("products")
-        .select("id, name, price, image")
+        .select("id, name, price, category, stock")
         .eq("shop_id", shopData.id)
         .order("id");
 
@@ -128,8 +127,9 @@ export default function ProductPage() {
           <tr>
             <th>Id</th>
             <th>Name</th>
+            <th>Category</th>
             <th>Price</th>
-            <th>Image</th>
+            <th>Stock</th>
           </tr>
         </thead>
         <tbody>
@@ -137,25 +137,20 @@ export default function ProductPage() {
             <tr key={p.id}>
               <td>{p.id}</td>
               <td>{p.name}</td>
+              <td>{p.category ?? "—"}</td>
               <td>{Number(p.price).toLocaleString()} Tsh</td>
-              <td>
-                {p.image ? (
-                  <img src={p.image} alt="" width={40} height={40} />
-                ) : (
-                  "—"
-                )}
-              </td>
+              <td>{p.stock ?? 0}</td>
             </tr>
           ))}
           {filtered.length === 0 && (
             <tr>
-              <td className="no-prod" colSpan={4}>
+              <td className="no-prod" colSpan={5}>
                 No product found
               </td>
             </tr>
           )}
           <tr>
-            <td colSpan={4}>Total {filtered.length}</td>
+            <td colSpan={5}>Total {filtered.length}</td>
           </tr>
         </tbody>
       </table>
