@@ -2,11 +2,19 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { supabase } from "../../../lib/supabase";
 
 function Sidebar() {
+  const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  async function handleLogout() {
+    setMenuOpen(false);
+    await supabase.auth.signOut();
+    router.push("/login");
+  }
 
   return (
     <>
@@ -56,6 +64,10 @@ function Sidebar() {
         >
           Orders
         </Link>
+
+        <button type="button" className="logout-btn" onClick={handleLogout}>
+          Logout
+        </button>
       </div>
     </>
   );
