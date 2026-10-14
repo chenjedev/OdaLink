@@ -5,13 +5,25 @@ import { useRouter } from "next/navigation";
 import StatCard from "../components/dashboard/statcard";
 import { supabase } from "../../lib/supabase";
 
+type Shop = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+type Product = {
+  id: number | string;
+  name: string;
+  price: number;
+  image: string | null;
+};
 
 export default function DashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [displayName, setDisplayName] = useState("");
-  const [shop, setShop] = useState(null);
-  const [products, setProducts] = useState([]);
+  const [shop, setShop] = useState<Shop | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -37,7 +49,7 @@ export default function DashboardPage() {
         .eq("owner_id", user.id)
         .maybeSingle();
 
-      setShop(shopData);
+      setShop(shopData as Shop | null);
 
       if (shopData) {
         const { data: productsData } = await supabase
@@ -46,7 +58,7 @@ export default function DashboardPage() {
           .eq("shop_id", shopData.id)
           .order("id");
 
-        setProducts(productsData ?? []);
+        setProducts((productsData as Product[]) ?? []);
       }
 
       setLoading(false);
@@ -68,7 +80,7 @@ export default function DashboardPage() {
           Shop: <strong>{shop.name}</strong> ({shop.slug})
         </p>
       ) : (
-        <p>Shop coming soon...</p>
+        <p>Huna duka bado.</p>
       )}
 
       <div className="stats-grid">
@@ -77,14 +89,14 @@ export default function DashboardPage() {
           value={products.length}
           change="kutoka database"
         />
-        <StatCard title="Orders today" value={0} change="later" />
-        <StatCard title="Pending" value={0} change="later" />
-        <StatCard title="Revenue" value={0} change="later" />
+        <StatCard title="Orders today" value={0} change="baadaye" />
+        <StatCard title="Pending" value={0} change="baadaye" />
+        <StatCard title="Revenue" value={0} change="baadaye" />
       </div>
 
       <h2>Products</h2>
       {products.length === 0 ? (
-        <p>Products coming soon...</p>
+        <p>Hakuna bidhaa bado.</p>
       ) : (
         <ul>
           {products.map((p) => (
