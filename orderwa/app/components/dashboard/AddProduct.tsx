@@ -1,119 +1,102 @@
 "use client";
 
-import React, {useState} from "react";
+import { useState } from "react";
+import { supabase } from "../../../lib/supabase";
+// adjust path
 
-function AddProduct({ onClose } : { onClose: () => void })  {
-    const [name , setName] = useState("");
-    const [category , setCategory] = useState("");
-    const [price , setPrice] = useState("");
-    const [stock , setStock] = useState("");
+type Props = {
+  shopId: string;
+  onClose: () => void;
+  onAdded: () => void;
+};
 
-    const [isAdd,  setIsAdd] = useState(false);
-    
-    function handleAdd(e: React.SubmitEvent) {
-        e.preventDefault();
-        setIsAdd(true);
+export default function AddProduct({ shopId, onClose, onAdded }: Props) {
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
+  const [image, setImage] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const isInvalid =
+    name.trim() === "" || price.trim() === "" || Number(price) <= 0;
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    if (isInvalid) {
+      setError("Enter name and a valid price");
+      setLoading(false);
+      return;
     }
- 
- if (isAdd) {
-    return (
-        <div className="modal-overlay">
-            <div className="add-prod-page">
-                <div className="register-form">
-                    <div className="add-prod-header">
-                        <h2>Product added successfully</h2>
-                        <button type="button" className="cancel-btn" onClick={onClose}>x</button>
-                    </div>
 
-                    <div className="detail-row">
-                        <span>Name</span>
-                        <strong>{name}</strong>
-                    </div>
-                    <div className="detail-row">
-                        <span>Category</span>
-                        <strong>{category}</strong>
-                    </div>
-                    <div className="detail-row">
-                        <span>Price</span>
-                        <strong>{Number(price).toLocaleString()} Tsh</strong>
-                    </div>
-                    <div className="detail-row">
-                        <span>Stock</span>
-                        <strong>{Number(stock).toLocaleString()}</strong>
-                    </div>
+    const { error: insertError } = await supabase.from("products").insert({
+      name: name.trim(),
+      price: Number(price),
+      image: image.trim() || null,
+      shop_id: shopId,
+    });
 
-                    <div className="form-group">
-                        <button type="button" className="save-btn" onClick={onClose}>Done</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
+    if (insertError) {
+      setError(insertError.message);
+      setLoading(false);
+      return;
+    }
 
-    return(
-        <div className="modal-overlay"  >
-          <div className="add-prod-page">
-            <form className="register-form" onSubmit={handleAdd}>
-                  <div className="add-prod-header">
-                    <h2>Add poduct </h2>
-                    <button  type="button" className="cancel-btn" onClick={onClose}>x</button>
-                  </div>
+    setLoading(false);
+    onAdded();
+  }
 
-                  <div className="form-group">
-                    <label>Name</label>
-                    <input 
-                         type="text"
-                         placeholder="Name..." 
-                         value={name}   
-                         onChange={(e) => setName(e.target.value)}
-                         required
-                    />
-                  </div>
+  return (
+    <div className="add-product-modal">
+      <div className="add-product-box">
+        <h3>Add product</h3>
 
-                  <div className="form-group">
-                    <label>Category</label>
-                    <input 
-                         type="text"
-                         placeholder="Category..."   
-                         value={category} 
-                         onChange={(e) => setCategory(e.target.value)}
-                         required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Price</label>
-                    <input 
-                         type="text"
-                         placeholder="Price..."   
-                         value={price}
-                         onChange={(e) => setPrice(e.target.value)}
-                         required 
-                    />
-                  </div> 
-                 
-                 <div className="form-group">
-                    <label>Stock</label>
-                    <input 
-                         type="text"
-                         placeholder="Stock..."   
-                         value={stock} 
-                         onChange={(e) => setStock(e.target.value)}
-                         required
-                    />
-                  </div>
-
-                   <div className="form-group">
-                    <button className="save-btn">Save</button>
-                    </div>
-
-            </form>
+        <form onSubmit={handleSubmit}>
+          <div>
+            <label>Name</label>
+            <input
+              type="text"
+              placeholder="eg. Black t-shirt"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
           </div>
-        </div> 
-    );
 
+          <div>
+            <label>Price (TZS)</label>
+            <input
+              type="number"
+              placeholder="eg. 25000"
+              value={price}
+              min={1}
+              onChange={(e) => setPrice(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label>Image URL (optional)</label>
+            <input
+              type="url"
+              placeholder="https://..."
+              value={image}
+              onChange={(e) => setImage(e.target.value)}
+            />
+          </div>
+
+          {error && <p className="form-error">{error}</p>}
+
+          <div className="form-actions">
+            <button type="button" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="submit" disabled={isInvalid || loading}>
+              {loading ? "Saving..." : "Save"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 }
-
-
-export default AddProduct;
