@@ -124,37 +124,9 @@ function AuthForm({ initialMode = "register" }) {
       setIsSubmitting(false);
       return;
     }
-
-    // Auto-create shop for this user
-    const user = signUpData.user;
-    if (user) {
-      const shopName = name.trim() || "My Shop";
-      const baseSlug =
-        shopName
-          .toLowerCase()
-          .replace(/\s+/g, "-")
-          .replace(/[^a-z0-9-]/g, "") || "shop";
-      const slug = `${baseSlug}-${user.id.slice(0, 6)}`;
-
-      const { error: shopError } = await supabase.from("shops").insert({
-        name: shopName,
-        phone: phone.trim() || null,
-        owner_id: user.id,
-        slug,
-      });
-
-      if (shopError) {
-        console.error("Shop create failed:", shopError.message);
-      }
-    }
-
-    setSuccess(true);
-    setName("");
-    setPhone("");
-    setEmail("");
-    setPassword("");
-    setError("");
-    setIsSubmitting(false);
+    
+     router.push("/login");
+     
     setTimeout(() => setSuccess(false), 3000);
   }
 
