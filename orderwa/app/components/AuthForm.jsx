@@ -92,7 +92,10 @@ function AuthForm({ initialMode = "register" }) {
   if (name.trim() === "") missingFields.push("name");
   if (phone.trim().length < 10) missingFields.push("a valid phone number");
   if (email.trim() === "") missingFields.push("email");
-  if (password.length < 6) missingFields.push("a password (6+ async function handleSubmit(e) {
+  if (password.length < 6) missingFields.push("a password (6+ characters)");
+
+async function handleSubmit(e) {
+
   e.preventDefault();
   setIsSubmitting(true);
   setError("");
