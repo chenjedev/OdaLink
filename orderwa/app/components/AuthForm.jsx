@@ -92,43 +92,44 @@ function AuthForm({ initialMode = "register" }) {
   if (name.trim() === "") missingFields.push("name");
   if (phone.trim().length < 10) missingFields.push("a valid phone number");
   if (email.trim() === "") missingFields.push("email");
-  if (password.length < 6) missingFields.push("a password (6+ characters)");
+  if (password.length < 6) missingFields.push("a password (6+ async function handleSubmit(e) {
+  e.preventDefault();
+  setIsSubmitting(true);
+  setError("");
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError("");
+  if (
+    name.trim() === "" ||
+    phone.trim().length < 10 ||
+    email.trim() === "" ||
+    password.length < 6
+  ) {
+    setError("Please fill all fields before submitting");
+    setIsSubmitting(false);
+    return;
+  }
 
-    if (
-      name.trim() === "" ||
-      phone.trim().length < 10 ||
-      email.trim() === "" ||
-      password.length < 6
-    ) {
-      setError("Please fill all fields before submitting");
-      setSuccess(false);
-      setIsSubmitting(false);
-      return;
-    }
-
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email,
+  try {
+    const { error: signUpError } = await supabase.auth.signUp({
+      email: email.trim(),
       password,
       options: {
-        data: { name, phone },
+        data: { name: name.trim(), phone: phone.trim() },
       },
     });
 
     if (signUpError) {
       setError(signUpError.message);
-      setIsSubmitting(false);
       return;
     }
-    
-     router.push("/login");
-     
-    setTimeout(() => setSuccess(false), 3000);
+
+    router.push("/login");
+  } catch (err) {
+    console.error("Signup failed:", err);
+    setError("Something went wrong, try again");
+  } finally {
+    setIsSubmitting(false);
   }
+}
 
   async function handleLogin(e) {
     e.preventDefault();
