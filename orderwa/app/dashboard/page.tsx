@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import StatCard from "../components/dashboard/statcard";
 import { supabase } from "../../lib/supabase";
+import StoreLink from "../components/dashboard/StoreLink";
 
 type Shop = {
   id: string;
@@ -80,13 +81,16 @@ export default function DashboardPage() {
     <div>
       <h1>Welcome, {displayName}</h1>
 
-      {shop ? (
-        <p>
-          Shop: <strong>{shop.name}</strong> ({shop.slug})
-        </p>
-      ) : (
-        <p>No shop found for this account.</p>
-      )}
+{shop ? (
+  <>
+    <p>
+      Shop: <strong>{shop.name}</strong> ({shop.slug})
+    </p>
+    <StoreLink slug={shop.slug} shopName={shop.name} />
+  </>
+) : (
+  <p>No shop found for this account.</p>
+)}
 
       <div className="stats-grid">
         <StatCard
