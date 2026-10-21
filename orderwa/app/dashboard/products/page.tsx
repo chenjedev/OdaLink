@@ -37,44 +37,27 @@ export default function ProductPage() {
       return;
     }
 
-    let { data: shopData } = await supabase
+    // Shop ya user huyu (trigger ndiyo inaitengeneza wakati wa signup)
+    const { data: shopData, error: shopErr } = await supabase
       .from("shops")
       .select("id, name, slug")
       .eq("owner_id", user.id)
       .maybeSingle();
 
-    // Hakuna shop? Unda otomatiki
-    if (!shopData) {
-      const meta = user.user_metadata || {};
-      const shopName = (meta.name as string)?.trim() || "My Shop";
-      const slug = `shop-${user.id.slice(0, 8)}`;
-
-      const { data: created, error: createErr } = await supabase
-        .from("shops")
-        .insert({
-          name: shopName,
-          phone: (meta.phone as string) || null,
-          owner_id: user.id,
-          slug,
-        })
-        .select("id, name, slug")
-        .single();
-
-      if (createErr) {
-        console.error("Auto-create shop failed:", createErr.message);
-      } else {
-        shopData = created;
-      }
-    }
+    if (shopErr) console.error("Load shop failed:", shopErr.message);
 
     setShop(shopData as Shop | null);
 
     if (shopData) {
-      const { data } = await supabase
+      // Filter ya shop_id ni muhimu: SELECT ni public, kwa hiyo bila hii
+      // dashboard ingeonyesha products za kila mtu
+      const { data, error } = await supabase
         .from("products")
         .select("id, name, price, category, stock")
         .eq("shop_id", shopData.id)
         .order("id");
+
+      if (error) console.error("Load products failed:", error.message);
 
       setProducts((data as Product[]) ?? []);
     } else {
@@ -120,7 +103,7 @@ export default function ProductPage() {
 
       {!shop && (
         <p style={{ color: "#dc2626" }}>
-          Huna duka bado. Check console for shop create error.
+          Huna duka bado. Angalia console kwa error.
         </p>
       )}
 
