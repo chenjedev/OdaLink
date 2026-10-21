@@ -15,7 +15,6 @@ type Product = {
   id: number | string;
   name: string;
   price: number;
-  image: string | null;
 };
 
 export default function DashboardPage() {
@@ -43,20 +42,26 @@ export default function DashboardPage() {
           "User"
       );
 
-      const { data: shopData } = await supabase
+      const { data: shopData, error: shopErr } = await supabase
         .from("shops")
         .select("id, name, slug")
         .eq("owner_id", user.id)
         .maybeSingle();
 
+      if (shopErr) console.error("Load shop failed:", shopErr.message);
+
       setShop(shopData as Shop | null);
 
       if (shopData) {
-        const { data: productsData } = await supabase
+        const { data: productsData, error: productsErr } = await supabase
           .from("products")
-          .select("id, name, price, image")
+          .select("id, name, price")
           .eq("shop_id", shopData.id)
           .order("id");
+
+        if (productsErr) {
+          console.error("Load products failed:", productsErr.message);
+        }
 
         setProducts((productsData as Product[]) ?? []);
       }
@@ -80,23 +85,23 @@ export default function DashboardPage() {
           Shop: <strong>{shop.name}</strong> ({shop.slug})
         </p>
       ) : (
-        <p>Huna duka bado.</p>
+        <p>No shop found for this account.</p>
       )}
 
       <div className="stats-grid">
         <StatCard
           title="Products"
           value={products.length}
-          change="kutoka database"
+          change="from database"
         />
-        <StatCard title="Orders today" value={0} change="baadaye" />
-        <StatCard title="Pending" value={0} change="baadaye" />
-        <StatCard title="Revenue" value={0} change="baadaye" />
+        <StatCard title="Orders today" value={0} change="coming soon" />
+        <StatCard title="Pending" value={0} change="coming soon" />
+        <StatCard title="Revenue" value={0} change="coming soon" />
       </div>
 
       <h2>Products</h2>
       {products.length === 0 ? (
-        <p>Hakuna bidhaa bado.</p>
+        <p>No products yet.</p>
       ) : (
         <ul>
           {products.map((p) => (
