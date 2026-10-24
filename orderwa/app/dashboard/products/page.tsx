@@ -84,8 +84,8 @@ export default function ProductPage() {
   }
 
   return (
-    <div className="products-page">
-      <div className="product-header">
+    <div className="products-page" style={{ padding: "12px", maxWidth: "100%", boxSizing: "border-box" }}>
+      <div className="product-header" style={{ marginBottom: "16px" }}>
         <h2>Products {shop ? `— ${shop.name}` : ""}</h2>
         <div className="header-actions">
           <button className="more-btn" type="button">
@@ -108,7 +108,7 @@ export default function ProductPage() {
         </p>
       )}
 
-      <div className="search-wrapper">
+      <div className="search-wrapper" style={{ marginBottom: "16px" }}>
         <i className="fa-solid fa-magnifying-glass search-icon"></i>
         <input
           type="text"
@@ -116,6 +116,7 @@ export default function ProductPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="search-input"
+          style={{ width: "100%", boxSizing: "border-box" }}
         />
       </div>
 
@@ -130,57 +131,88 @@ export default function ProductPage() {
         />
       )}
 
-      {/* Wrapping the table to prevent visual breaking on small mobile viewports */}
-      <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-        <table className="products-table" style={{ width: "100%", minWidth: "500px", borderCollapse: "collapse" }}>
+      {/* Optimized responsive table view wrapper for mobile screens */}
+      <div style={{ width: "100%", overflowX: "hidden" }}>
+        <table className="products-table" style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
           <thead>
-          
+            {/* Kept empty headers structure clean and semantic */}
           </thead>
           <tbody>
             {filtered.map((p) => (
-              <tr key={p.id}>
-                
-                <td>
+              <tr key={p.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
+                {/* Column 1: Image container */}
+                <td style={{ width: "50px", padding: "10px 4px", verticalAlign: "middle" }}>
                   {p.image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={p.image_url}
                       alt={p.name}
-                      width={40}
-                      height={40}
+                      width={44}
+                      height={44}
                       style={{ 
-                        objectFit: "contain", 
-                        borderRadius: 4, 
+                        objectFit: "cover", 
+                        borderRadius: 6, 
                         display: "block",
-                        maxWidth: "100%",
-                        height: "auto"
+                        width: "44px",
+                        height: "44px",
+                        backgroundColor: "#f9fafb"
                       }}
                     />
                   ) : (
-                    <span style={{ color: "#9ca3af", fontSize: "11px" }}>—</span>
+                    <div style={{ 
+                      width: "44px", 
+                      height: "44px", 
+                      borderRadius: 6, 
+                      backgroundColor: "#f3f4f6", 
+                      display: "flex", 
+                      alignItems: "center", 
+                      justifyContent: "center",
+                      color: "#9ca3af", 
+                      fontSize: "11px" 
+                    }}>
+                      —
+                    </div>
                   )}
-
-                  
                 </td>
-                <td>{p.name}. <br />
-                 {p.category ?? "—"}</td>
-                <td>{Number(p.price).toLocaleString()} Tsh. <br />
-                {p.stock ?? 0}. left</td>
+
+                {/* Column 2: Name and Category stacked text */}
+                <td style={{ padding: "10px 8px", verticalAlign: "middle", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  <span style={{ fontSize: "14px", fontWeight: "600", color: "#111827", display: "block", lineHeight: "1.3" }}>
+                    {p.name}
+                  </span>
+                  <span style={{ fontSize: "12px", color: "#6b7280", display: "block", marginTop: "2px" }}>
+                    {p.category ?? "—"}
+                  </span>
+                </td>
+
+                {/* Column 3: Price and Stock items quantity left */}
+                <td style={{ width: "110px", padding: "10px 4px", textAlignment: "right", textAlign: "right", verticalAlign: "middle" }}>
+                  <span style={{ fontSize: "14px", fontWeight: "600", color: "#059669", display: "block", lineHeight: "1.3" }}>
+                    {Number(p.price).toLocaleString()} Tsh
+                  </span>
+                  <span style={{ fontSize: "12px", color: p.stock && p.stock > 0 ? "#4b5563" : "#dc2626", display: "block", marginTop: "2px" }}>
+                    {p.stock ?? 0} left
+                  </span>
+                </td>
               </tr>
             ))}
+            
             {filtered.length === 0 && (
               <tr>
-                <td className="no-prod" colSpan={6}>
+                <td className="no-prod" colSpan={3} style={{ padding: "20px", textAlign: "center", color: "#6b7280", fontSize: "14px" }}>
                   No product found
                 </td>
               </tr>
             )}
+            
             <tr>
-              <td colSpan={6}>Total {filtered.length}</td>
+              <td colSpan={3} style={{ padding: "12px 4px", fontSize: "13px", fontWeight: "600", color: "#374151" }}>
+                Total {filtered.length}
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
   );
-              }
+}
