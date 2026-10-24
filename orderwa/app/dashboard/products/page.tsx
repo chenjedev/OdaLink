@@ -133,7 +133,7 @@ export default function ProductPage() {
 
       {/* Optimized responsive table view wrapper for mobile screens */}
       <div style={{ width: "100%", overflowX: "hidden" }}>
-        <table className="products-table" style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+        <table className="products-table" style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", border:"none" }}>
           <thead>
             {/* Kept empty headers structure clean and semantic */}
           </thead>
