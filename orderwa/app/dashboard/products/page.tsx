@@ -185,8 +185,8 @@ export default function ProductPage() {
                   </span>
                 </td>
 
-                {/* Column 3: Price and Stock items quantity left */}
-                <td style={{ width: "110px", padding: "10px 4px", textAlignment: "right", textAlign: "right", verticalAlign: "middle" }}>
+                {/* Column 3: Price and Stock items quantity left (Fixed TypeScript Type Error here) */}
+                <td style={{ width: "110px", padding: "10px 4px", textAlign: "right", verticalAlign: "middle" }}>
                   <span style={{ fontSize: "14px", fontWeight: "600", color: "#059669", display: "block", lineHeight: "1.3" }}>
                     {Number(p.price).toLocaleString()} Tsh
                   </span>
