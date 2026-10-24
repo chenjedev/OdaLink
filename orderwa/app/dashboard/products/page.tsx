@@ -134,19 +134,12 @@ export default function ProductPage() {
       <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
         <table className="products-table" style={{ width: "100%", minWidth: "500px", borderCollapse: "collapse" }}>
           <thead>
-            <tr>
-              <th>Id</th>
-              <th>Photo</th>
-              <th>Name</th>
-              <th>Category</th>
-              <th>Price</th>
-              <th>Stock</th>
-            </tr>
+          
           </thead>
           <tbody>
             {filtered.map((p) => (
               <tr key={p.id}>
-                <td>{p.id}</td>
+                
                 <td>
                   {p.image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -166,11 +159,13 @@ export default function ProductPage() {
                   ) : (
                     <span style={{ color: "#9ca3af", fontSize: "11px" }}>—</span>
                   )}
+
+                  
                 </td>
-                <td>{p.name}</td>
-                <td>{p.category ?? "—"}</td>
-                <td>{Number(p.price).toLocaleString()} Tsh</td>
-                <td>{p.stock ?? 0}</td>
+                <td>{p.name}
+                 {p.category ?? "—"}</td>
+                <td>{Number(p.price).toLocaleString()} Tsh
+                {p.stock ?? 0}. left</td>
               </tr>
             ))}
             {filtered.length === 0 && (
