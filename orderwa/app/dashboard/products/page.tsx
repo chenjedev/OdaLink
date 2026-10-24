@@ -86,7 +86,7 @@ export default function ProductPage() {
   return (
     <div className="products-page" style={{ padding: "12px", maxWidth: "100%", boxSizing: "border-box" }}>
       <div className="product-header" style={{ marginBottom: "16px" }}>
-        <h2>Products {shop ? `— ${shop.name}` : ""}</h2>
+        <h2>Products</h2>
         <div className="header-actions">
           <button className="more-btn" type="button">
             <i className="fa-solid fa-ellipsis-vertical"></i>
@@ -139,7 +139,7 @@ export default function ProductPage() {
           </thead>
           <tbody>
             {filtered.map((p) => (
-              <tr key={p.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
+              <tr key={p.id} style={{ borderBottom: "1px solid #f3f4f6, padding: "15px" }}>
                 {/* Column 1: Image container */}
                 <td style={{ width: "50px", padding: "10px 4px", verticalAlign: "middle" }}>
                   {p.image_url ? (
