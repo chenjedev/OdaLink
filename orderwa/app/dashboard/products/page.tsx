@@ -88,9 +88,7 @@ export default function ProductPage() {
       <div className="product-header" style={{ marginBottom: "16px" }}>
         <h2>Products</h2>
         <div className="header-actions">
-          <button className="more-btn" type="button">
-            <i className="fa-solid fa-ellipsis-vertical"></i>
-          </button>
+          
           <button
             className="add-product-btn"
             type="button"
