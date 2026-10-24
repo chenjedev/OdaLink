@@ -104,7 +104,7 @@ export default function ProductPage() {
 
       {!shop && (
         <p style={{ color: "#dc2626" }}>
-          Huna duka bado. Angalia console kwa error.
+          No store . Check console for error.
         </p>
       )}
 
@@ -139,7 +139,7 @@ export default function ProductPage() {
           </thead>
           <tbody>
             {filtered.map((p) => (
-              <tr key={p.id} style={{ borderBottom: "1px solid #f3f4f6, padding: "15px" }}>
+              <tr key={p.id} style={{ borderBottom: "1px solid #f3f4f6", padding: "15px" }}>
                 {/* Column 1: Image container */}
                 <td style={{ width: "50px", padding: "10px 4px", verticalAlign: "middle" }}>
                   {p.image_url ? (
