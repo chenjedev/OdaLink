@@ -4,17 +4,19 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import ProductCard from "./ProductCard";
 import CheckoutForm from "./CheckoutForm";
- 
-function ProductList({ products = [], shopSlug }) {
-  
+
+function ProductList({ products = [], shopSlug, shopId, shopName }) {
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState([]);
   const [cartLoaded, setCartLoaded] = useState(false);
 
+  // One cart per shop, so items from another shop never mix in
+  const cartKey = `cart:${shopSlug}`;
+
   // Load cart from localStorage (browser only)
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("cart");
+      const saved = localStorage.getItem(cartKey);
       if (saved) {
         setCart(JSON.parse(saved));
       }
@@ -22,13 +24,17 @@ function ProductList({ products = [], shopSlug }) {
       setCart([]);
     }
     setCartLoaded(true);
-  }, []);
+  }, [cartKey]);
 
   // Save cart only after first load
   useEffect(() => {
     if (!cartLoaded) return;
-    localStorage.setItem("cart", JSON.stringify(cart));
-  }, [cart, cartLoaded]);
+    try {
+      localStorage.setItem(cartKey, JSON.stringify(cart));
+    } catch {
+      // storage can be blocked; the cart still works in memory
+    }
+  }, [cart, cartLoaded, cartKey]);
 
   const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(search.toLowerCase())
@@ -61,8 +67,8 @@ function ProductList({ products = [], shopSlug }) {
 
   return (
     <div className="app">
-      {shopSlug && (
-        <p className="shop-label">Shop: {shopSlug}</p>
+      {(shopName || shopSlug) && (
+        <p className="shop-label">Shop: {shopName || shopSlug}</p>
       )}
 
       <h2>Total products: ({filteredProducts.length})</h2>
@@ -74,9 +80,7 @@ function ProductList({ products = [], shopSlug }) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-      
-     
-        </div>
+      </div>
 
       {filteredProducts.length === 0 && <p>No product found</p>}
 
@@ -89,8 +93,6 @@ function ProductList({ products = [], shopSlug }) {
               price={product.price}
               image={product.image}
             />
-
-            
 
             <button type="button" onClick={() => handleAddToCart(product)}>
               Add To Cart
@@ -137,6 +139,8 @@ function ProductList({ products = [], shopSlug }) {
             cart={cart}
             setCart={setCart}
             cartTotal={totalCartPrice}
+            shopId={shopId}
+            shopName={shopName}
           />
         </div>
       </div>
