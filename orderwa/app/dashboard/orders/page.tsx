@@ -28,6 +28,13 @@ function itemsSummary(items: OrderItem[]) {
   return items.map((i) => `${i.name} x${i.quantity}`).join(", ");
 }
 
+// Assumes Tanzanian numbers: 0712... becomes 255712...
+function toWhatsApp(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  const intl = digits.startsWith("0") ? "255" + digits.slice(1) : digits;
+  return `https://wa.me/${intl}`;
+}
+
 export default function OrderPage() {
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -133,7 +140,8 @@ export default function OrderPage() {
 
       {error && <p style={{ color: "#dc2626" }}>{error}</p>}
 
-      <div className="table-wrapper">
+      {/* Table: shown on large screens */}
+      <div className="table-wrapper orders-table">
         <table className="products-table">
           <thead>
             <tr>
@@ -187,6 +195,52 @@ export default function OrderPage() {
             </tr>
           </tbody>
         </table>
+      </div>
+
+      {/* Cards: shown on phones */}
+      <div className="orders-cards">
+        {filtered.map((o) => (
+          <div key={o.id} className="order-card">
+            <div className="order-card-top">
+              <strong>
+                #{o.id} · {o.customer_name}
+              </strong>
+              <span className={`badge badge-${o.status.toLowerCase()}`}>
+                {o.status}
+              </span>
+            </div>
+
+            <p className="order-meta">
+              <a href={`tel:${o.customer_phone}`}>{o.customer_phone}</a> ·{" "}
+              <a
+                href={toWhatsApp(o.customer_phone)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                WhatsApp
+              </a>{" "}
+              · {new Date(o.created_at).toLocaleDateString()}
+            </p>
+
+            <p className="order-items">{itemsSummary(o.items)}</p>
+
+            <div className="order-card-bottom">
+              <strong>{Number(o.total).toLocaleString()} Tsh</strong>
+              <select
+                value={o.status}
+                onChange={(e) => handleStatusChange(o.id, e.target.value)}
+              >
+                {STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        ))}
+
+        {filtered.length === 0 && <p>No order found</p>}
       </div>
     </div>
   );
