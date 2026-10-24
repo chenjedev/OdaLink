@@ -25,5 +25,12 @@ export default async function ShopStorePage({ params }) {
 
   if (productsError) console.error('Load products failed:', productsError.message)
 
-  return <ProductList products={products ?? []} shopSlug={shop.slug} />
+ return (
+  <ProductList
+    products={products ?? []}
+    shopSlug={shop.slug}
+    shopId={shop.id}
+    shopName={shop.name}
+  />
+)
 }
