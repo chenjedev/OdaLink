@@ -295,3 +295,30 @@
   }
 }
 
+@media (max-width: 576px) {
+  .modal-overlay {
+    padding: 10px; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .add-prod-page {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  .register-form {
+    width: 100% !important;
+    padding: 15px !important; 
+    box-sizing: border-box;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+}
