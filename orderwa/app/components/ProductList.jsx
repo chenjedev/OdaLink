@@ -91,7 +91,7 @@ function ProductList({ products = [], shopSlug, shopId, shopName }) {
               id={product.id}
               name={product.name}
               price={product.price}
-              image={product.image}
+              image={product.image_url}
             />
 
             <button type="button" onClick={() => handleAddToCart(product)}>
@@ -109,9 +109,9 @@ function ProductList({ products = [], shopSlug, shopId, shopName }) {
 
           {cart.map((item, index) => (
             <p key={`${item.id}-${index}`}>
-              {item.image ? (
+              {item.image_url ? (
                 <Image
-                  src={item.image}
+                  src={item.image_url}
                   alt={item.name}
                   width={50}
                   height={50}
