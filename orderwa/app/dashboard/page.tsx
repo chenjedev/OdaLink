@@ -84,7 +84,7 @@ export default function DashboardPage() {
 {shop ? (
   <>
     <p>
-      Shop: <strong>{shop.name}</strong> ({shop.slug})
+      Shop: <strong>{shop.slug}</strong>
     </p>
     <StoreLink slug={shop.slug} shopName={shop.name} />
   </>
