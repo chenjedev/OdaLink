@@ -162,9 +162,9 @@ export default function ProductPage() {
 
                   
                 </td>
-                <td>{p.name}
+                <td>{p.name}. <br />
                  {p.category ?? "—"}</td>
-                <td>{Number(p.price).toLocaleString()} Tsh
+                <td>{Number(p.price).toLocaleString()} Tsh. <br />
                 {p.stock ?? 0}. left</td>
               </tr>
             ))}
