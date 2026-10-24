@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import AddProduct from "../../components/dashboard/AddProduct";
 import { supabase } from "../../../lib/supabase";
 
@@ -11,6 +12,7 @@ type Product = {
   price: number;
   category?: string | null;
   stock?: number | null;
+  image_url?: string | null; // Added image URL to types
 };
 
 type Shop = {
@@ -37,7 +39,7 @@ export default function ProductPage() {
       return;
     }
 
-    // Shop ya user huyu (trigger ndiyo inaitengeneza wakati wa signup)
+    // Get current user shop settings
     const { data: shopData, error: shopErr } = await supabase
       .from("shops")
       .select("id, name, slug")
@@ -49,11 +51,10 @@ export default function ProductPage() {
     setShop(shopData as Shop | null);
 
     if (shopData) {
-      // Filter ya shop_id ni muhimu: SELECT ni public, kwa hiyo bila hii
-      // dashboard ingeonyesha products za kila mtu
+      // Included image_url in supabase query string selection
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, price, category, stock")
+        .select("id, name, price, category, stock, image_url")
         .eq("shop_id", shopData.id)
         .order("id");
 
@@ -129,38 +130,62 @@ export default function ProductPage() {
         />
       )}
 
-      <table className="products-table">
-        <thead>
-          <tr>
-            <th>Id</th>
-            <th>Name</th>
-            <th>Category</th>
-            <th>Price</th>
-            <th>Stock</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filtered.map((p) => (
-            <tr key={p.id}>
-              <td>{p.id}</td>
-              <td>{p.name}</td>
-              <td>{p.category ?? "—"}</td>
-              <td>{Number(p.price).toLocaleString()} Tsh</td>
-              <td>{p.stock ?? 0}</td>
-            </tr>
-          ))}
-          {filtered.length === 0 && (
+      {/* Wrapping the table to prevent visual breaking on small mobile viewports */}
+      <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+        <table className="products-table" style={{ width: "100%", minWidth: "500px", borderCollapse: "collapse" }}>
+          <thead>
             <tr>
-              <td className="no-prod" colSpan={5}>
-                No product found
-              </td>
+              <th>Id</th>
+              <th>Photo</th>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Stock</th>
             </tr>
-          )}
-          <tr>
-            <td colSpan={5}>Total {filtered.length}</td>
-          </tr>
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {filtered.map((p) => (
+              <tr key={p.id}>
+                <td>{p.id}</td>
+                <td>
+                  {p.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={p.image_url}
+                      alt={p.name}
+                      width={40}
+                      height={40}
+                      style={{ 
+                        objectFit: "contain", 
+                        borderRadius: 4, 
+                        display: "block",
+                        maxWidth: "100%",
+                        height: "auto"
+                      }}
+                    />
+                  ) : (
+                    <span style={{ color: "#9ca3af", fontSize: "11px" }}>—</span>
+                  )}
+                </td>
+                <td>{p.name}</td>
+                <td>{p.category ?? "—"}</td>
+                <td>{Number(p.price).toLocaleString()} Tsh</td>
+                <td>{p.stock ?? 0}</td>
+              </tr>
+            ))}
+            {filtered.length === 0 && (
+              <tr>
+                <td className="no-prod" colSpan={6}>
+                  No product found
+                </td>
+              </tr>
+            )}
+            <tr>
+              <td colSpan={6}>Total {filtered.length}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   );
-}
+              }
