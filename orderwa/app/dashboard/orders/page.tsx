@@ -40,7 +40,13 @@ export default function OrderPage() {
   const [search, setSearch] = useState("");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState("");  
+// Opened from a WhatsApp link (?q=...): start with that search
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q) setSearch(q);
+  }, []);
+
 
   useEffect(() => {
     async function load() {
