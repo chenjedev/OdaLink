@@ -105,80 +105,119 @@ button[type="submit"]:hover:not(:disabled) {
   margin: 0;
 }
 
-/* ---------- Product list ---------- */
-.product-list {
+/* ---------- Product list ---------- */.product-list {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
 @media (min-width: 640px) {
   .product-list {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
   }
 }
 
 @media (min-width: 900px) {
   .product-list {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
 .product-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  padding: 14px 16px;
+  padding: 8px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .product-card img {
+  display: block;
   width: 100%;
-  height: 160px;
+  height: auto;
+  aspect-ratio: 1 / 1;
   object-fit: contain;
-  margin-bottom: 10px;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.product-img-placeholder {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #f3f4f6;
+  border-radius: 8px;
+  margin-bottom: 8px;
 }
 
 .product-price {
-  font-size: 15px;
-  font-weight: 600;
-  color: #374151;
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 2px;
 }
 
 .product-name {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  color: #111;
-  margin-bottom: 10px;
+  color: #374151;
+  margin: 0 0 8px;
+  min-height: 2.6em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-/* ---------- Cart + Checkout ---------- */
+.product-card button {
+  margin-top: auto;
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: #111827;
+  border: 1px solid #111827;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* ===== Cart + Checkout ===== */
+
 .order-logic {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-  margin-top: 24px;
-  margin-bottom: 24px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin: 16px 0 24px;
 }
 
 @media (min-width: 768px) {
   .order-logic {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
   }
 }
 
-.cart-box {
+.cart-box,
+.checkout-box {
+  box-sizing: border-box;
+  min-width: 0;
+  margin: 0;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  padding: 16px;
+  padding: 12px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  margin: 0;
 }
 
 .cart-box h3 {
-  margin-bottom: 10px;
+  font-size: 16px;
+  margin: 0 0 8px;
 }
 
 .cart-box p {
@@ -186,7 +225,9 @@ button[type="submit"]:hover:not(:disabled) {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  margin: 0;
   padding: 8px 0;
+  font-size: 14px;
   border-bottom: 1px solid #f0f0f0;
 }
 
@@ -194,23 +235,61 @@ button[type="submit"]:hover:not(:disabled) {
   border-bottom: none;
 }
 
-.checkout-box {
+.cart-box img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.cart-box p button {
+  margin-left: auto;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #dc2626;
   background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  margin: 0;
+  border: 1px solid #dc2626;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 .checkout-box form {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  gap: 10px;
 }
 
+/* 16px stops iPhone Safari from zooming in when you tap a field */
 .checkout-box input {
-  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  font-size: 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.checkout-box p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.checkout-box button {
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  background: #111827;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.checkout-box button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ---------- Status ---------- */
