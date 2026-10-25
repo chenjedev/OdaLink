@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 
 // Messages raised by our database trigger that are safe and useful to show the customer
@@ -12,6 +13,7 @@ const SAFE_MESSAGES = [
 ];
 
 function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName }) {
+  const router = useRouter();
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [sending, setSending] = useState(false);
@@ -74,6 +76,9 @@ function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName }) {
           ? insertError.message
           : "Could not send your order. Please try again."
       );
+
+      // Reload the shop's products so stock numbers and cart limits are fresh
+      if (isSafe) router.refresh();
       return;
     }
 
@@ -83,6 +88,18 @@ function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName }) {
     setName("");
     setPhone("");
     setCart([]);
+
+    // Reload the shop's products so the new stock numbers show
+    router.refresh();
+  }
+
+  // Nothing to order: show only the success message after an order, otherwise nothing
+  if (cart.length === 0) {
+    return success ? (
+      <div className="checkout-box">
+        <p style={{ color: "#16a34a" }}>{success}</p>
+      </div>
+    ) : null;
   }
 
   return (
@@ -90,31 +107,23 @@ function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName }) {
       <form onSubmit={handleSubmit}>
         <input
           type="text"
-          placeholder="eg. John Doe"
+          placeholder="Your name, eg. John Doe"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
         <input
           type="tel"
-          placeholder="eg. 0712345678"
+          placeholder="Phone, eg. 0712345678"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
         />
 
-        {cart.map((item, index) => (
-          <p key={index}>
-            {item.name} x{item.quantity} —{" "}
-            {(item.price * item.quantity).toLocaleString()} TZS
-          </p>
-        ))}
-
-        <p>Total: {cartTotal.toLocaleString()} TZS</p>
-
         {error && <p style={{ color: "#dc2626" }}>{error}</p>}
-        {success && <p style={{ color: "#16a34a" }}>{success}</p>}
 
         <button type="submit" disabled={isInvalid}>
-          {sending ? "Sending..." : "Submit"}
+          {sending
+            ? "Sending..."
+            : `Send order · ${cartTotal.toLocaleString()} TZS`}
         </button>
       </form>
     </div>
