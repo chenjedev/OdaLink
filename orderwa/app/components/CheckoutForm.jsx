@@ -3,6 +3,14 @@
 import { useState } from "react";
 import { supabase } from "../../lib/supabase";
 
+// Messages raised by our database trigger that are safe and useful to show the customer
+const SAFE_MESSAGES = [
+  "Not enough stock",
+  "Product not available",
+  "Invalid quantity",
+  "Order must have",
+];
+
 function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName }) {
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
@@ -56,7 +64,16 @@ function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName }) {
 
     if (insertError) {
       console.error("Order failed:", insertError.message);
-      setError("Could not send your order. Please try again.");
+
+      // Show the database's own message only when it is one of ours
+      const isSafe = SAFE_MESSAGES.some((m) =>
+        insertError.message.startsWith(m)
+      );
+      setError(
+        isSafe
+          ? insertError.message
+          : "Could not send your order. Please try again."
+      );
       return;
     }
 
