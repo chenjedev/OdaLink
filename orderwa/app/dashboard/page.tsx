@@ -16,6 +16,7 @@ type Product = {
   id: number | string;
   name: string;
   price: number;
+  stock: number | null;
 };
 
 type OrderRow = {
@@ -23,6 +24,11 @@ type OrderRow = {
   status: string;
   created_at: string;
 };
+
+// Add up the totals of a list of orders
+function sumTotals(list: OrderRow[]) {
+  return list.reduce((sum, o) => sum + Number(o.total), 0);
+}
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -64,7 +70,7 @@ export default function DashboardPage() {
         // Only active products: deleted ones are hidden
         const { data: productsData, error: productsErr } = await supabase
           .from("products")
-          .select("id, name, price")
+          .select("id, name, price, stock")
           .eq("shop_id", shopData.id)
           .eq("is_active", true)
           .order("id");
@@ -98,22 +104,28 @@ export default function DashboardPage() {
     return <p>Loading...</p>;
   }
 
-  // Stats, worked out from the orders we just loaded
+  // Stats, worked out from the data we just loaded
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
+  // Money tied up in stock: price x quantity left, for every active product
+  const stockWorth = products.reduce(
+    (sum, p) => sum + Number(p.price) * (p.stock ?? 0),
+    0
+  );
+
   // Orders placed today (cancelled ones are not counted)
-  const ordersToday = orders.filter(
+  const todayOrders = orders.filter(
     (o) => new Date(o.created_at) >= startOfToday && o.status !== "cancelled"
-  ).length;
+  );
 
   // Orders waiting for the seller to act
-  const pendingCount = orders.filter((o) => o.status === "pending").length;
+  const pendingOrders = orders.filter((o) => o.status === "pending");
 
   // Revenue: only orders the seller confirmed or delivered
-  const revenue = orders
-    .filter((o) => o.status === "confirmed" || o.status === "delivered")
-    .reduce((sum, o) => sum + Number(o.total), 0);
+  const revenue = sumTotals(
+    orders.filter((o) => o.status === "confirmed" || o.status === "delivered")
+  );
 
   return (
     <div>
@@ -134,17 +146,17 @@ export default function DashboardPage() {
         <StatCard
           title="Products"
           value={products.length}
-          change="in your shop"
+          change={`stock worth ${stockWorth.toLocaleString()} TZS`}
         />
         <StatCard
           title="Orders today"
-          value={ordersToday}
-          change="not cancelled"
+          value={todayOrders.length}
+          change={`worth ${sumTotals(todayOrders).toLocaleString()} TZS`}
         />
         <StatCard
           title="Pending"
-          value={pendingCount}
-          change="need your action"
+          value={pendingOrders.length}
+          change={`worth ${sumTotals(pendingOrders).toLocaleString()} TZS`}
         />
         <StatCard
           title="Revenue (TZS)"
