@@ -32,6 +32,8 @@ export default async function ShopStorePage({ params }) {
       shopSlug={shop.slug}
       shopId={shop.id}
       shopName={shop.name}
+      shopPhone={shop.phone}     
+      
     />
   )
 }
