@@ -90,6 +90,15 @@ export default function OrderPage() {
   async function handleStatusChange(orderId: number, newStatus: string) {
     setError("");
 
+    // Cancelling is permanent (stock goes back), so ask first.
+    // If the seller says no, the dropdown snaps back to the old status.
+    if (newStatus === "cancelled") {
+      const ok = window.confirm(
+        "Cancel this order? The stock will be returned and the order cannot be reopened."
+      );
+      if (!ok) return;
+    }
+
     // .select() lets us see whether a row was really updated
     const { data, error: updateErr } = await supabase
       .from("orders")
@@ -163,13 +172,14 @@ export default function OrderPage() {
                 <td>{o.customer_name}</td>
                 <td>{o.customer_phone}</td>
                 <td>{itemsSummary(o.items)}</td>
-                <td>{Number(o.total).toLocaleString()} Tsh</td>
+                <td>{Number(o.total).toLocaleString()} TZS</td>
                 <td>
                   <span className={`badge badge-${o.status.toLowerCase()}`}>
                     {o.status}
                   </span>{" "}
                   <select
                     value={o.status}
+                    disabled={o.status === "cancelled"}
                     onChange={(e) => handleStatusChange(o.id, e.target.value)}
                   >
                     {STATUSES.map((s) => (
@@ -225,9 +235,10 @@ export default function OrderPage() {
             <p className="order-items">{itemsSummary(o.items)}</p>
 
             <div className="order-card-bottom">
-              <strong>{Number(o.total).toLocaleString()} Tsh</strong>
+              <strong>{Number(o.total).toLocaleString()} TZS</strong>
               <select
                 value={o.status}
+                disabled={o.status === "cancelled"}
                 onChange={(e) => handleStatusChange(o.id, e.target.value)}
               >
                 {STATUSES.map((s) => (
