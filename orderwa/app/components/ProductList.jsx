@@ -5,7 +5,7 @@ import Image from "next/image";
 import ProductCard from "./ProductCard";
 import CheckoutForm from "./CheckoutForm";
 
-function ProductList({ products = [], shopSlug, shopId, shopName }) {
+function ProductList({ products = [], shopSlug, shopId, shopName , shopPhone}) {
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState([]);
   const [cartLoaded, setCartLoaded] = useState(false);
