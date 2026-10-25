@@ -165,18 +165,8 @@ export default function DashboardPage() {
         />
       </div>
 
-      <h2>Products</h2>
-      {products.length === 0 ? (
-        <p>No products yet.</p>
-      ) : (
-        <ul>
-          {products.map((p) => (
-            <li key={p.id}>
-              {p.name} — {Number(p.price).toLocaleString()} TZS
-            </li>
-          ))}
-        </ul>
-      )}
+      
+    
     </div>
   );
 }
