@@ -24,6 +24,7 @@ export default function ProductPage() {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<Product | null>(null); // product being edited
   const [products, setProducts] = useState<Product[]>([]);
   const [shop, setShop] = useState<Shop | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,27 +73,9 @@ export default function ProductPage() {
     load();
   }, [router]);
 
-  // Soft delete: the product stays in the database (old orders stay safe)
-  // but disappears from the dashboard and the storefront.
-  async function handleDelete(p: Product) {
-    const ok = window.confirm(
-      `Delete "${p.name}"? Customers won't see it anymore. Past orders stay safe.`
-    );
-    if (!ok) return;
-
-    const { data, error } = await supabase
-      .from("products")
-      .update({ is_active: false })
-      .eq("id", p.id)
-      .select("id");
-
-    if (error || !data || data.length === 0) {
-      console.error("Delete product failed:", error?.message);
-      alert("Could not delete the product");
-      return;
-    }
-
-    setProducts((prev) => prev.filter((x) => x.id !== p.id));
+  function closeForm() {
+    setShowForm(false);
+    setEditing(null);
   }
 
   const filtered = products.filter(
@@ -141,12 +124,16 @@ export default function ProductPage() {
         />
       </div>
 
-      {showForm && shop && (
+      {/* One form for both: no product = add, a product = edit.
+          The key makes React start the form fresh for each product. */}
+      {(showForm || editing) && shop && (
         <AddProduct
+          key={editing ? String(editing.id) : "new"}
           shopId={shop.id}
-          onClose={() => setShowForm(false)}
+          product={editing}
+          onClose={closeForm}
           onAdded={() => {
-            setShowForm(false);
+            closeForm();
             load();
           }}
         />
@@ -167,7 +154,12 @@ export default function ProductPage() {
             {filtered.map((p) => (
               <tr
                 key={p.id}
-                style={{ borderBottom: "1px solid #f3f4f6", padding: "15px" }}
+                onClick={() => setEditing(p)}
+                style={{
+                  borderBottom: "1px solid #f3f4f6",
+                  padding: "15px",
+                  cursor: "pointer",
+                }}
               >
                 {/* Column 1: Image */}
                 <td
@@ -247,7 +239,7 @@ export default function ProductPage() {
                 {/* Column 3: Price and stock */}
                 <td
                   style={{
-                    width: "100px",
+                    width: "110px",
                     padding: "10px 4px",
                     textAlign: "right",
                     verticalAlign: "middle",
@@ -275,32 +267,6 @@ export default function ProductPage() {
                     {p.stock ?? 0} left
                   </span>
                 </td>
-
-                {/* Column 4: Delete */}
-                <td
-                  style={{
-                    width: "64px",
-                    padding: "10px 4px",
-                    textAlign: "right",
-                    verticalAlign: "middle",
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(p)}
-                    style={{
-                      background: "none",
-                      border: "1px solid #dc2626",
-                      color: "#dc2626",
-                      borderRadius: 6,
-                      fontSize: "12px",
-                      padding: "4px 8px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Delete
-                  </button>
-                </td>
               </tr>
             ))}
 
@@ -308,7 +274,7 @@ export default function ProductPage() {
               <tr>
                 <td
                   className="no-prod"
-                  colSpan={4}
+                  colSpan={3}
                   style={{
                     padding: "20px",
                     textAlign: "center",
@@ -323,7 +289,7 @@ export default function ProductPage() {
 
             <tr>
               <td
-                colSpan={4}
+                colSpan={3}
                 style={{
                   padding: "12px 4px",
                   fontSize: "13px",
