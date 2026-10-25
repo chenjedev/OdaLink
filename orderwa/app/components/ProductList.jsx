@@ -315,6 +315,7 @@ function ProductList({ products = [], shopSlug, shopId, shopName , shopPhone}) {
                 cartTotal={totalCartPrice}
                 shopId={shopId}
                 shopName={shopName}
+                shopPhone={shopPhone}    
               />
             </div>
           </div>
