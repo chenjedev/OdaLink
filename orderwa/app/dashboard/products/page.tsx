@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import AddProduct from "../../components/dashboard/AddProduct";
 import { supabase } from "../../../lib/supabase";
 
@@ -12,7 +11,7 @@ type Product = {
   price: number;
   category?: string | null;
   stock?: number | null;
-  image_url?: string | null; // Added image URL to types
+  image_url?: string | null;
 };
 
 type Shop = {
@@ -51,11 +50,12 @@ export default function ProductPage() {
     setShop(shopData as Shop | null);
 
     if (shopData) {
-      // Included image_url in supabase query string selection
+      // Only active products: deleted ones are hidden
       const { data, error } = await supabase
         .from("products")
         .select("id, name, price, category, stock, image_url")
         .eq("shop_id", shopData.id)
+        .eq("is_active", true)
         .order("id");
 
       if (error) console.error("Load products failed:", error.message);
@@ -72,6 +72,29 @@ export default function ProductPage() {
     load();
   }, [router]);
 
+  // Soft delete: the product stays in the database (old orders stay safe)
+  // but disappears from the dashboard and the storefront.
+  async function handleDelete(p: Product) {
+    const ok = window.confirm(
+      `Delete "${p.name}"? Customers won't see it anymore. Past orders stay safe.`
+    );
+    if (!ok) return;
+
+    const { data, error } = await supabase
+      .from("products")
+      .update({ is_active: false })
+      .eq("id", p.id)
+      .select("id");
+
+    if (error || !data || data.length === 0) {
+      console.error("Delete product failed:", error?.message);
+      alert("Could not delete the product");
+      return;
+    }
+
+    setProducts((prev) => prev.filter((x) => x.id !== p.id));
+  }
+
   const filtered = products.filter(
     (p) =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -84,11 +107,13 @@ export default function ProductPage() {
   }
 
   return (
-    <div className="products-page" style={{ padding: "12px", maxWidth: "100%", boxSizing: "border-box" }}>
+    <div
+      className="products-page"
+      style={{ padding: "12px", maxWidth: "100%", boxSizing: "border-box" }}
+    >
       <div className="product-header" style={{ marginBottom: "16px" }}>
         <h2>Products</h2>
         <div className="header-actions">
-          
           <button
             className="add-product-btn"
             type="button"
@@ -101,9 +126,7 @@ export default function ProductPage() {
       </div>
 
       {!shop && (
-        <p style={{ color: "#dc2626" }}>
-          No store . Check console for error.
-        </p>
+        <p style={{ color: "#dc2626" }}>No store . Check console for error.</p>
       )}
 
       <div className="search-wrapper" style={{ marginBottom: "16px" }}>
@@ -129,17 +152,31 @@ export default function ProductPage() {
         />
       )}
 
-      {/* Optimized responsive table view wrapper for mobile screens */}
       <div style={{ width: "100%", overflowX: "hidden" }}>
-        <table className="products-table" style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", border:"none" }}>
-          <thead>
-            {/* Kept empty headers structure clean and semantic */}
-          </thead>
+        <table
+          className="products-table"
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            tableLayout: "fixed",
+            border: "none",
+          }}
+        >
+          <thead></thead>
           <tbody>
             {filtered.map((p) => (
-              <tr key={p.id} style={{ borderBottom: "1px solid #f3f4f6", padding: "15px" }}>
-                {/* Column 1: Image container */}
-                <td style={{ width: "50px", padding: "10px 4px", verticalAlign: "middle" }}>
+              <tr
+                key={p.id}
+                style={{ borderBottom: "1px solid #f3f4f6", padding: "15px" }}
+              >
+                {/* Column 1: Image */}
+                <td
+                  style={{
+                    width: "50px",
+                    padding: "10px 4px",
+                    verticalAlign: "middle",
+                  }}
+                >
                   {p.image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -147,64 +184,153 @@ export default function ProductPage() {
                       alt={p.name}
                       width={44}
                       height={44}
-                      style={{ 
-                        objectFit: "cover", 
-                        borderRadius: 6, 
+                      style={{
+                        objectFit: "cover",
+                        borderRadius: 6,
                         display: "block",
                         width: "44px",
                         height: "44px",
-                        backgroundColor: "#f9fafb"
+                        backgroundColor: "#f9fafb",
                       }}
                     />
                   ) : (
-                    <div style={{ 
-                      width: "44px", 
-                      height: "44px", 
-                      borderRadius: 6, 
-                      backgroundColor: "#f3f4f6", 
-                      display: "flex", 
-                      alignItems: "center", 
-                      justifyContent: "center",
-                      color: "#9ca3af", 
-                      fontSize: "11px" 
-                    }}>
+                    <div
+                      style={{
+                        width: "44px",
+                        height: "44px",
+                        borderRadius: 6,
+                        backgroundColor: "#f3f4f6",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#9ca3af",
+                        fontSize: "11px",
+                      }}
+                    >
                       —
                     </div>
                   )}
                 </td>
 
-                {/* Column 2: Name and Category stacked text */}
-                <td style={{ padding: "10px 8px", verticalAlign: "middle", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  <span style={{ fontSize: "14px", fontWeight: "600", color: "#111827", display: "block", lineHeight: "1.3" }}>
+                {/* Column 2: Name and category */}
+                <td
+                  style={{
+                    padding: "10px 8px",
+                    verticalAlign: "middle",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      color: "#111827",
+                      display: "block",
+                      lineHeight: "1.3",
+                    }}
+                  >
                     {p.name}
                   </span>
-                  <span style={{ fontSize: "12px", color: "#6b7280", display: "block", marginTop: "2px" }}>
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      color: "#6b7280",
+                      display: "block",
+                      marginTop: "2px",
+                    }}
+                  >
                     {p.category ?? "—"}
                   </span>
                 </td>
 
-                {/* Column 3: Price and Stock items quantity left (Fixed TypeScript Type Error here) */}
-                <td style={{ width: "110px", padding: "10px 4px", textAlign: "right", verticalAlign: "middle" }}>
-                  <span style={{ fontSize: "14px", fontWeight: "600", color: "#059669", display: "block", lineHeight: "1.3" }}>
-                    {Number(p.price).toLocaleString()} Tsh
+                {/* Column 3: Price and stock */}
+                <td
+                  style={{
+                    width: "100px",
+                    padding: "10px 4px",
+                    textAlign: "right",
+                    verticalAlign: "middle",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      color: "#059669",
+                      display: "block",
+                      lineHeight: "1.3",
+                    }}
+                  >
+                    {Number(p.price).toLocaleString()} TZS
                   </span>
-                  <span style={{ fontSize: "12px", color: p.stock && p.stock > 0 ? "#4b5563" : "#dc2626", display: "block", marginTop: "2px" }}>
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      color: p.stock && p.stock > 0 ? "#4b5563" : "#dc2626",
+                      display: "block",
+                      marginTop: "2px",
+                    }}
+                  >
                     {p.stock ?? 0} left
                   </span>
                 </td>
+
+                {/* Column 4: Delete */}
+                <td
+                  style={{
+                    width: "64px",
+                    padding: "10px 4px",
+                    textAlign: "right",
+                    verticalAlign: "middle",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(p)}
+                    style={{
+                      background: "none",
+                      border: "1px solid #dc2626",
+                      color: "#dc2626",
+                      borderRadius: 6,
+                      fontSize: "12px",
+                      padding: "4px 8px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Delete
+                  </button>
+                </td>
               </tr>
             ))}
-            
+
             {filtered.length === 0 && (
               <tr>
-                <td className="no-prod" colSpan={3} style={{ padding: "20px", textAlign: "center", color: "#6b7280", fontSize: "14px" }}>
+                <td
+                  className="no-prod"
+                  colSpan={4}
+                  style={{
+                    padding: "20px",
+                    textAlign: "center",
+                    color: "#6b7280",
+                    fontSize: "14px",
+                  }}
+                >
                   No product found
                 </td>
               </tr>
             )}
-            
+
             <tr>
-              <td colSpan={3} style={{ padding: "12px 4px", fontSize: "13px", fontWeight: "600", color: "#374151" }}>
+              <td
+                colSpan={4}
+                style={{
+                  padding: "12px 4px",
+                  fontSize: "13px",
+                  fontWeight: "600",
+                  color: "#374151",
+                }}
+              >
                 Total {filtered.length}
               </td>
             </tr>
