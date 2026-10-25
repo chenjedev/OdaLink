@@ -150,7 +150,7 @@ function ProductList({ products = [], shopSlug, shopId, shopName }) {
     <div className="app">
       {/* Top bar: shop name on the left, cart icon on the right */}
       <div className="store-bar">
-        <p className="shop-label">{shopName || shopSlug}</p>
+        <p className="shop-label">{shopSlug || shopName}</p>
 
         <button
           type="button"
