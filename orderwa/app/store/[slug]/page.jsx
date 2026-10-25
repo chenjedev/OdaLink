@@ -17,20 +17,21 @@ export default async function ShopStorePage({ params }) {
   if (shopError) console.error('Load shop failed:', shopError.message)
   if (!shop) notFound()
 
-  // 2. Load only this shop's products
+  // 2. Load only this shop's active products (deleted ones are hidden)
   const { data: products, error: productsError } = await supabase
     .from('products')
     .select('*')
     .eq('shop_id', shop.id)
+    .eq('is_active', true)
 
   if (productsError) console.error('Load products failed:', productsError.message)
 
- return (
-  <ProductList
-    products={products ?? []}
-    shopSlug={shop.slug}
-    shopId={shop.id}
-    shopName={shop.name}
-  />
-)
+  return (
+    <ProductList
+      products={products ?? []}
+      shopSlug={shop.slug}
+      shopId={shop.id}
+      shopName={shop.name}
+    />
+  )
 }
