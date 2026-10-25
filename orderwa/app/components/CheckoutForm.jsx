@@ -12,13 +12,23 @@ const SAFE_MESSAGES = [
   "Order must have",
 ];
 
-function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName }) {
+// WhatsApp links need the number in international form, digits only.
+// Tanzanian numbers: 0712345678 becomes 255712345678
+function toWhatsAppNumber(phone) {
+  const digits = String(phone || "").replace(/\D/g, "");
+  if (digits.startsWith("0")) return "255" + digits.slice(1);
+  if (digits.length === 9) return "255" + digits;
+  return digits;
+}
+
+function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName, shopPhone }) {
   const router = useRouter();
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [whatsappUrl, setWhatsappUrl] = useState("");
 
   const isInvalid =
     name.trim() === "" ||
@@ -30,6 +40,7 @@ function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName }) {
     e.preventDefault();
     setError("");
     setSuccess("");
+    setWhatsappUrl("");
 
     if (!shopId) {
       setError("This shop is not available right now.");
@@ -82,6 +93,31 @@ function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName }) {
       return;
     }
 
+    // The order is saved. Now prepare the WhatsApp message for the seller.
+    // This must happen before the cart is cleared, because it lists the items.
+    const sellerNumber = toWhatsAppNumber(shopPhone);
+    if (sellerNumber) {
+      const lines = cart.map(
+        (item) =>
+          `• ${item.name} x${item.quantity} — ${(
+            item.price * item.quantity
+          ).toLocaleString()} TZS`
+      );
+      const text = [
+        `Hello ${shopName || ""}, I just placed an order on OdaLink:`,
+        "",
+        ...lines,
+        "",
+        `Total: ${cartTotal.toLocaleString()} TZS`,
+        `Name: ${name.trim()}`,
+        `Phone: ${phone.trim()}`,
+      ].join("\n");
+
+      setWhatsappUrl(
+        `https://wa.me/${sellerNumber}?text=${encodeURIComponent(text)}`
+      );
+    }
+
     setSuccess(
       `Order sent to ${shopName || "the shop"}. They will contact you on ${phone.trim()}.`
     );
@@ -93,13 +129,41 @@ function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName }) {
     router.refresh();
   }
 
-  // Nothing to order: show only the success message after an order, otherwise nothing
+  // Nothing to order: after an order show the success message (and the WhatsApp
+  // button), otherwise show nothing
   if (cart.length === 0) {
-    return success ? (
+    if (!success) return null;
+
+    return (
       <div className="checkout-box">
-        <p style={{ color: "#16a34a" }}>{success}</p>
+        <p style={{ color: "#16a34a", fontWeight: 600 }}>{success}</p>
+
+        {whatsappUrl && (
+          <>
+            <p>For a faster reply, also send your order on WhatsApp:</p>
+            {/* A link (not window.open), because phones block popups opened after a delay */}
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "block",
+                textAlign: "center",
+                padding: "12px",
+                fontSize: "15px",
+                fontWeight: 700,
+                color: "#fff",
+                background: "#25D366",
+                borderRadius: "8px",
+                textDecoration: "none",
+              }}
+            >
+              Send on WhatsApp
+            </a>
+          </>
+        )}
       </div>
-    ) : null;
+    );
   }
 
   return (
