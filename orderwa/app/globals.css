@@ -1305,10 +1305,9 @@ button[type="submit"]:hover:not(:disabled) {
   min-height: 100vh;
   padding: 16px;
 }
-
-.store-header {
-  margin-bottom: 24px;
-  margin-left: 7%;
+.store-bar .shop-label {
+  font-size: 22px;
+  font-weight: 800;
 }
 
 .store-title {
