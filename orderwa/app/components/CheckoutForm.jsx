@@ -111,6 +111,8 @@ function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName, shopPhone })
         `Total: ${cartTotal.toLocaleString()} TZS`,
         `Name: ${name.trim()}`,
         `Phone: ${phone.trim()}`,
+         "",
+        `Manage this order (seller): ${window.location.origin}/dashboard/orders?q=${encodeURIComponent(phone.trim())}`,
       ].join("\n");
 
       setWhatsappUrl(
