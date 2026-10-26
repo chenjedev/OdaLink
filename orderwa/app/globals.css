@@ -105,7 +105,8 @@ button[type="submit"]:hover:not(:disabled) {
   margin: 0;
 }
 
-/* ---------- Product list ---------- */.product-list {
+/* ---------- Product list ---------- */
+.product-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
@@ -187,6 +188,10 @@ button[type="submit"]:hover:not(:disabled) {
   cursor: pointer;
 }
 
+.shop-label{
+  font-size:23px;
+  font-weight: bold:
+}
 /* ===== Cart + Checkout ===== */
 
 .order-logic {
