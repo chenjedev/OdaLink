@@ -138,7 +138,7 @@ function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName, shopPhone })
 
     return (
       <div className="checkout-box">
-        <p style={{ color: "#16a34a", fontWeight: 600, margin: "4px 0 14px" }}>{success}</p>
+        <p style={{ color: "#0f766e", fontWeight: 600, margin: "4px 0 14px" }}>{success}</p>
 
         {whatsappUrl && (
           <>
@@ -156,7 +156,7 @@ function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName, shopPhone })
                 fontSize: "15px",
                 fontWeight: 700,
                 color: "#fff",
-                background: "#25D366",
+                background:  "#0f766e",
                 borderRadius: "8px",
                 textDecoration: "none",
               }}
