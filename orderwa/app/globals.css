@@ -133,7 +133,6 @@ button[type="submit"]:hover:not(:disabled) {
   margin: 0;
   color: var(--brand);
   background: #fff;
-  border: 1px solid var(--brand);
   border-radius: 12px;
   cursor: pointer;
 }
