@@ -177,8 +177,6 @@ function ProductList({ products = [], shopSlug, shopId, shopName , shopPhone}) {
         </button>
       </div>
 
-      <h2>Total products: ({filteredProducts.length})</h2>
-
       <div className="search">
         <input
           type="text"
