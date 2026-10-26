@@ -109,7 +109,6 @@ button[type="submit"]:hover:not(:disabled) {
   padding: 10px 12px;
   margin: 0 -12px 12px;
   background: #fff;
-  border-bottom: 1px solid var(--brand-border);
 }
 
 .store-bar .shop-label {
