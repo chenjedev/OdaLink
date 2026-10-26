@@ -1,3 +1,8 @@
+/* ===== Dashboard styles =====
+   Brand colors come from the variables defined in your global CSS file
+   (--brand, --brand-dark, --brand-soft). The values after the commas are
+   backups used if a variable is missing. */
+
 .dash-nav {
   position: sticky;
   top: 0;
@@ -23,14 +28,14 @@
 }
 
 .dash-nav a:hover {
-  background: #f3f4f6;
+  background: var(--brand-soft, #f0fdfa);
 }
 
 .dash-nav a.active {
-  border-left: 2px solid #111;
+  border-left: 3px solid var(--brand, #0d9488);
   font-weight: 600;
-  color: #111;
-  background: #f9fafb;
+  color: var(--brand-dark, #0f766e);
+  background: var(--brand-soft, #f0fdfa);
   padding: 10px 16px;
   width: 190px;
 }
@@ -57,7 +62,7 @@
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: #0d9488;
+  background: var(--brand, #0d9488);
   color: #fff;
   display: flex;
   align-items: center;
@@ -118,14 +123,15 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #6b7280;
+  color: #475569;
   margin: 0 0 4px;
 }
 
+/* The small line under each number (for example "worth 60,000 TZS") */
 .stat-change {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #16a34a;
+  color: var(--brand-dark, #0f766e);
 }
 
 .stat-card,
@@ -143,7 +149,7 @@
   transform: translateY(-2px);
 }
 
-/* Mobile top — hidden on desktop */
+/* Mobile top: hidden on desktop */
 .mobile-top {
   display: none;
 }
@@ -174,7 +180,7 @@
     padding: 0;
   }
 
-   .menu-btn {
+  .menu-btn {
     display: block;
     font-size: 22px;
     background: #fff;
@@ -184,7 +190,6 @@
     cursor: pointer;
     flex-shrink: 0;
   }
-
 
   .dash-nav .desktop-brand {
     display: none;
@@ -231,8 +236,9 @@
 
   .dash-nav a.active {
     width: auto;
-    border-left: 2px solid #111;
-    background: #f9fafb;
+    border-left: 3px solid var(--brand, #0d9488);
+    color: var(--brand-dark, #0f766e);
+    background: var(--brand-soft, #f0fdfa);
   }
 
   .shell {
@@ -245,10 +251,11 @@
 }
 
 /* ORDERS */
-.table-wrapper{
-    overflow-x: auto;
-    width: 100%;
+.table-wrapper {
+  overflow-x: auto;
+  width: 100%;
 }
+
 .orders-cards {
   display: none;
 }
@@ -282,11 +289,12 @@
   .order-meta {
     margin: 6px 0;
     font-size: 14px;
-    color: #6b7280;
+    color: #475569;
   }
 
   .order-meta a {
-    color: #2563eb;
+    color: var(--brand-dark, #0f766e);
+    font-weight: 600;
   }
 
   .order-items {
@@ -325,7 +333,7 @@
   }
 
   .register-form img {
-    max-height: 120px !important; 
+    max-height: 120px !important;
     object-fit: contain;
   }
 }
