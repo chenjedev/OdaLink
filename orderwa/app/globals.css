@@ -188,10 +188,12 @@ button[type="submit"]:hover:not(:disabled) {
   cursor: pointer;
 }
 
-.shop-label{
-  font-size:23px;
-  font-weight: bold:
+.store-bar .shop-label {
+  font-size: 23px;
+  font-weight: bold;
 }
+
+
 /* ===== Cart + Checkout ===== */
 
 .order-logic {
