@@ -68,7 +68,7 @@ function cleanEmail(value) {
 // Turn Supabase's technical login messages into something a seller understands
 function friendlyLoginError(message) {
   if (/invalid login credentials/i.test(message)) {
-    return "Wrong email or password. Check the spelling of your email and try again.";
+    return "Invalid login credentials.";
   }
   if (/email not confirmed/i.test(message)) {
     return "Please confirm your email first. Check your inbox.";
