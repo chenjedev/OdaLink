@@ -10,7 +10,6 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
             <span className="brand-name">OdaLink</span>
           </Link>
           <nav className="nav-links">
-            <Link href="/">Home</Link>
             <Link href="/login">Log in</Link>
             <Link href="/signup" className="nav-login">Start free</Link>
           </nav>
