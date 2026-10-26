@@ -60,10 +60,29 @@ const SpinnerIcon = () => (
   </svg>
 );
 
+// Emails: remove spaces around them and use lowercase, so "John@Gmail.com " matches "john@gmail.com"
+function cleanEmail(value) {
+  return value.trim().toLowerCase();
+}
+
+// Turn Supabase's technical login messages into something a seller understands
+function friendlyLoginError(message) {
+  if (/invalid login credentials/i.test(message)) {
+    return "Wrong email or password. Check the spelling of your email and try again.";
+  }
+  if (/email not confirmed/i.test(message)) {
+    return "Please confirm your email first. Check your inbox.";
+  }
+  if (/rate limit|too many/i.test(message)) {
+    return "Too many attempts. Please wait a few minutes and try again.";
+  }
+  return "Could not log in. Please try again.";
+}
+
 function AuthForm({ initialMode = "register" }) {
   const router = useRouter();
 
-  const [mode, setMode] = useState(initialMode);
+  const [mode, setMode] = useState(initialMode); // "register", "login" or "forgot"
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -78,6 +97,11 @@ function AuthForm({ initialMode = "register" }) {
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  // Forgot password
+  const [resetError, setResetError] = useState("");
+  const [resetSent, setResetSent] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const isInvalid =
     name.trim() === "" ||
@@ -94,45 +118,44 @@ function AuthForm({ initialMode = "register" }) {
   if (email.trim() === "") missingFields.push("email");
   if (password.length < 6) missingFields.push("a password (6+ characters)");
 
-async function handleSubmit(e) {
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError("");
 
-  e.preventDefault();
-  setIsSubmitting(true);
-  setError("");
-
-  if (
-    name.trim() === "" ||
-    phone.trim().length < 10 ||
-    email.trim() === "" ||
-    password.length < 6
-  ) {
-    setError("Please fill all fields before submitting");
-    setIsSubmitting(false);
-    return;
-  }
-
-  try {
-    const { error: signUpError } = await supabase.auth.signUp({
-      email: email.trim(),
-      password,
-      options: {
-        data: { name: name.trim(), phone: phone.trim() },
-      },
-    });
-
-    if (signUpError) {
-      setError(signUpError.message);
+    if (
+      name.trim() === "" ||
+      phone.trim().length < 10 ||
+      email.trim() === "" ||
+      password.length < 6
+    ) {
+      setError("Please fill all fields before submitting");
+      setIsSubmitting(false);
       return;
     }
 
-    router.push("/dashboard");
-  } catch (err) {
-    console.error("Signup failed:", err);
-    setError("Something went wrong, try again");
-  } finally {
-    setIsSubmitting(false);
+    try {
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: cleanEmail(email),
+        password,
+        options: {
+          data: { name: name.trim(), phone: phone.trim() },
+        },
+      });
+
+      if (signUpError) {
+        setError(signUpError.message);
+        return;
+      }
+
+      router.push("/dashboard");
+    } catch (err) {
+      console.error("Signup failed:", err);
+      setError("Something went wrong, try again");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
-}
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -147,12 +170,13 @@ async function handleSubmit(e) {
     }
 
     const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: loginEmail,
+      email: cleanEmail(loginEmail),
       password: loginPassword,
     });
 
     if (signInError) {
-      setLoginError(signInError.message);
+      console.error("Login failed:", signInError.message);
+      setLoginError(friendlyLoginError(signInError.message));
       setIsLoggingIn(false);
       return;
     }
@@ -167,10 +191,46 @@ async function handleSubmit(e) {
     setTimeout(() => setLoginSuccess(false), 3000);
   }
 
+  // Sends the "reset your password" email
+  async function handleForgot(e) {
+    e.preventDefault();
+    setResetError("");
+    setResetSent(false);
+
+    if (loginEmail.trim() === "") {
+      setResetError("Enter the email you registered with");
+      return;
+    }
+
+    setIsResetting(true);
+
+    const { error: resetErr } = await supabase.auth.resetPasswordForEmail(
+      cleanEmail(loginEmail),
+      { redirectTo: `${window.location.origin}/reset-password` }
+    );
+
+    setIsResetting(false);
+
+    if (resetErr) {
+      console.error("Reset email failed:", resetErr.message);
+      setResetError(
+        /rate limit|too many/i.test(resetErr.message)
+          ? "Too many requests. Please wait a few minutes and try again."
+          : "Could not send the email. Please try again."
+      );
+      return;
+    }
+
+    // Same message whether or not the email exists, so strangers cannot check who has an account
+    setResetSent(true);
+  }
+
   function switchToLogin() {
     setMode("login");
     setError("");
     setSuccess(false);
+    setResetError("");
+    setResetSent(false);
   }
 
   function switchToRegister() {
@@ -179,10 +239,17 @@ async function handleSubmit(e) {
     setLoginSuccess(false);
   }
 
+  function switchToForgot() {
+    setMode("forgot");
+    setLoginError("");
+    setResetError("");
+    setResetSent(false);
+  }
+
   return (
     <div className="register-page">
       <div className="auth-card">
-        {mode === "register" ? (
+        {mode === "register" && (
           <form className="register-form" onSubmit={handleSubmit}>
             <h2 className="register-title">Create Account</h2>
 
@@ -225,6 +292,8 @@ async function handleSubmit(e) {
                 type="email"
                 placeholder="eg. johndoe@gmail.com"
                 value={email}
+                autoCapitalize="none"
+                autoCorrect="off"
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
@@ -295,7 +364,9 @@ async function handleSubmit(e) {
               </button>
             </p>
           </form>
-        ) : (
+        )}
+
+        {mode === "login" && (
           <form className="login-form" onSubmit={handleLogin}>
             <h2 className="register-title">
               <LockIcon /> Login
@@ -309,6 +380,8 @@ async function handleSubmit(e) {
                 type="email"
                 placeholder="eg. johndoe@gmail.com"
                 value={loginEmail}
+                autoCapitalize="none"
+                autoCorrect="off"
                 onChange={(e) => setLoginEmail(e.target.value)}
               />
             </div>
@@ -335,6 +408,13 @@ async function handleSubmit(e) {
                   {showLoginPassword ? <EyeOffIcon /> : <EyeIcon />}
                 </button>
               </div>
+              <button
+                type="button"
+                className="auth-switch-btn"
+                onClick={switchToForgot}
+              >
+                Forgot password?
+              </button>
             </div>
 
             {loginSuccess && (
@@ -367,6 +447,67 @@ async function handleSubmit(e) {
                 onClick={switchToRegister}
               >
                 Create account
+              </button>
+            </p>
+          </form>
+        )}
+
+        {mode === "forgot" && (
+          <form className="login-form" onSubmit={handleForgot}>
+            <h2 className="register-title">
+              <MailIcon /> Reset password
+            </h2>
+
+            <p>
+              Enter your email and we will send you a link to choose a new
+              password.
+            </p>
+
+            <div className="form-group">
+              <label>
+                <MailIcon /> Email
+              </label>
+              <input
+                type="email"
+                placeholder="eg. johndoe@gmail.com"
+                value={loginEmail}
+                autoCapitalize="none"
+                autoCorrect="off"
+                onChange={(e) => setLoginEmail(e.target.value)}
+              />
+            </div>
+
+            {resetSent && (
+              <div className="success-box">
+                <CheckCircleIcon /> If an account exists for that email, a reset
+                link is on its way. Check your inbox and spam folder.
+              </div>
+            )}
+
+            {resetError && (
+              <p className="form-error">
+                <AlertIcon /> {resetError}
+              </p>
+            )}
+
+            <button type="submit" disabled={isResetting}>
+              {isResetting ? (
+                <>
+                  <SpinnerIcon /> Sending...
+                </>
+              ) : (
+                "Send reset link"
+              )}
+            </button>
+
+            <p className="auth-switch">
+              Remembered it?{" "}
+              <button
+                type="button"
+                className="auth-switch-btn"
+                onClick={switchToLogin}
+              >
+                Back to login
               </button>
             </p>
           </form>
