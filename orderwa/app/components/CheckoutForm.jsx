@@ -138,11 +138,12 @@ function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName, shopPhone })
 
     return (
       <div className="checkout-box">
-        <p style={{ color: "#16a34a", fontWeight: 600 }}>{success}</p>
+        <p style={{ color: "#16a34a", fontWeight: 600, margin: "4px 0 14px" }}>{success}</p>
 
         {whatsappUrl && (
           <>
-            <p>For a faster reply, also send your order on WhatsApp:</p>
+            <p style={{ margin: "0 0 10px" }}>For a faster reply, also send your order on WhatsApp:</p>
+
             {/* A link (not window.open), because phones block popups opened after a delay */}
             <a
               href={whatsappUrl}
