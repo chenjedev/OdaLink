@@ -63,7 +63,15 @@ function Sidebar() {
           onClick={() => setMenuOpen(false)}
         >
           Orders
+        </Link>     
+           <Link
+          href="/dashboard/settings"
+          className={pathname === "/dashboard/settings" ? "active" : ""}
+          onClick={() => setMenuOpen(false)}
+        >
+          Settings
         </Link>
+
 
         <button type="button" className="logout-btn" onClick={handleLogout}>
           Logout
