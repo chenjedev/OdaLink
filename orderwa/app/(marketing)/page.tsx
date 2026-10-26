@@ -24,9 +24,7 @@ export default function HomePage() {
             <Link href="/signup" className="btn-primary">
               Start for  free
             </Link>
-            <Link href="../store" className="btn-secondary">
-              View demo store
-            </Link>
+            
           </div>
           <p className="hero-trust">
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -57,8 +55,9 @@ export default function HomePage() {
                 <h4>Asha Mbwana</h4>
                 <p className="mockup-order-phone">+255 712 345 678</p>
                 <ul>
-                  <li><span>Receipts</span><strong>x3</strong></li>
-                  <li><span>Phone Case</span><strong>x1</strong></li>
+                  <li><span>Black shirt</span><strong>x3</strong>45,000 TZS</li>
+                    <li><span>Grey Pant</span><strong>x1</strong>30,000 TZS</li>
+                  <li><span>Jordan 4</span><strong>x1</strong>70,000 TZS</li>
                 </ul>
                 <div className="mockup-total">
                   <span>Total</span>
