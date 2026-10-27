@@ -22,7 +22,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
         <div className="footer-inner">
           <div className="footer-brand">
             <span className="brand-mark">O</span>
-            <span className="brand-name">OrderWa</span>
+            <span className="brand-name">OdaLink</span>
           </div>
           <p className="footer-tag">WhatsApp orders, organized.</p>
           <div className="footer-links">
