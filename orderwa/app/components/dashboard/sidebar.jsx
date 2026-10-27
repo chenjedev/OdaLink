@@ -73,7 +73,7 @@ function Sidebar() {
         </Link>
 
 
-        <button type="button" className="logout-btn" onClick={handleLogout}>
+        <button type="button" className="logout-btn" onClick={handleLogout} style={{color: "red"}} >
           Logout
         </button>
       </div>
