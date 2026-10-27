@@ -194,3 +194,94 @@
 .detail-row span {
   color: #6b7280;
 }
+
+/* ===== UI polish (add at the END of globals.css, do not delete anything) ===== */
+
+/* 1. Add / Edit product popup: a real white card that sits above everything.
+      Before, the form had no background, so the page behind showed through it. */
+body .modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+body .add-prod-page {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+body .add-prod-page .register-form {
+  background: #fff;
+  border: none;
+  box-shadow: none;
+}
+
+.add-prod-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.add-prod-header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+/* The small "x" that closes the popup */
+.cancel-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1;
+  color: #111827;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 8px;
+}
+
+/* 2. Space between form fields (signup, login, settings, add product) */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+/* 3. Buttons in the brand color */
+body .add-product-btn {
+  color: #fff;
+  background: var(--brand, #0d9488);
+  border: 1px solid var(--brand, #0d9488);
+  border-radius: 10px;
+}
+
+body .add-product-btn:hover:not(:disabled) {
+  background: var(--brand-dark, #0f766e);
+}
+
+/* The menu (hamburger) button was bright blue */
+.menu-btn {
+  color: #111827;
+}
