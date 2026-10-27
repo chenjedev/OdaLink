@@ -1525,10 +1525,34 @@ button[type="submit"]:hover:not(:disabled) {
   margin: 0 auto;
 }
 
-.register-form,
-.login-form {
+name) */
+.register-form .success-box,
+.login-form .success-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   box-sizing: border-box;
-  width: 100%;
+  width: auto;
+  max-width: 100%;
+  padding: 12px 14px;
+  margin: 0 0 12px;
+  text-align: left;
+  font-size: 14px;
+  color: var(--brand-dark, #0f766e);
+  background: var(--brand-soft, #f0fdfa);
+  border: 1px solid var(--brand-border, #99f6e4);
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+/* Save button: turn darker teal on hover, not grey (grey also sticks after a tap on phones) */
+.save-btn:hover:not(:disabled) {
+  background: var(--brand-dark, #0f766e);
+}
+
+/* Search box: teal outline when you tap it, not blue */
+.search-input:focus {
+  border-color: var(--brand, #0d9488);
 }
 
 /* 16px stops iPhone Safari from zooming in when you tap a field */
