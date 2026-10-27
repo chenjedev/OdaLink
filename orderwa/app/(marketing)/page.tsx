@@ -22,9 +22,8 @@ export default function HomePage() {
           </p>
           <div className="hero-buttons">
             <Link href="/signup" className="btn-primary">
-              Start for  free
+              Start for free
             </Link>
-            
           </div>
           <p className="hero-trust">
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -34,7 +33,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* ORDER PREVIEW MOCKUP */}
+        {/* ORDER PREVIEW MOCKUP (an example, not a real order) */}
         <div className="mockup-wrap">
           <div className="mockup-phone">
             <div className="mockup-header">
@@ -45,7 +44,7 @@ export default function HomePage() {
               </span>
               <div className="mockup-title">
                 <strong>New order received</strong>
-                <span>OrderWa · just now</span>
+                <span>OdaLink · example</span>
               </div>
               <span className="mockup-unread">1</span>
             </div>
@@ -56,7 +55,7 @@ export default function HomePage() {
                 <p className="mockup-order-phone">+255 712 345 678</p>
                 <ul>
                   <li><span>Black shirt</span><strong>x3</strong>45,000 TZS</li>
-                    <li><span>Grey Pant</span><strong>x1</strong>30,000 TZS</li>
+                  <li><span>Grey Pant</span><strong>x1</strong>30,000 TZS</li>
                   <li><span>Jordan 4</span><strong>x1</strong>70,000 TZS</li>
                 </ul>
                 <div className="mockup-total">
@@ -73,19 +72,19 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* TRUST BAR */}
+      {/* TRUST BAR: only things that are true today */}
       <section className="trust-bar">
         <div className="trust-item">
-          <strong>+500</strong>
-          <span>Businesses</span>
+          <strong>Free</strong>
+          <span>To start</span>
         </div>
         <div className="trust-item">
-          <strong>+12k</strong>
-          <span>Orders placed</span>
+          <strong>1 link</strong>
+          <span>For your whole shop</span>
         </div>
         <div className="trust-item">
-          <strong>98%</strong>
-          <span>Satisfaction</span>
+          <strong>No app</strong>
+          <span>For your customers</span>
         </div>
         <div className="trust-item">
           <strong>2 min</strong>
@@ -104,15 +103,15 @@ export default function HomePage() {
             <span className="step-number">1</span>
             <h3>Share your store link</h3>
             <p>
-              Send customers your OrderWa link on WhatsApp, status, or bio.
+              Send customers your OdaLink link on WhatsApp, status, or bio.
             </p>
           </div>
           <div className="step">
             <span className="step-number">2</span>
             <h3>Customer orders</h3>
             <p>
-              They browse products, checkout with name and phone, and place
-              the order.
+              They browse your products, add to cart, and send the order with
+              their name and phone. It also reaches you on WhatsApp.
             </p>
           </div>
           <div className="step">
@@ -128,7 +127,7 @@ export default function HomePage() {
       {/* BENEFITS */}
       <section className="benefits-wrap">
         <div className="section-head">
-          <p className="eyebrow">Why OrderWa</p>
+          <p className="eyebrow">Why OdaLink</p>
           <h2>Everything your business needs</h2>
         </div>
         <div className="benefits">
@@ -180,12 +179,16 @@ export default function HomePage() {
           <div className="card">
             <div className="card-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <line x1="12" y1="1" x2="12" y2="23" />
-                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                <path d="M21 8 12 3 3 8v8l9 5 9-5z" />
+                <path d="M3 8l9 5 9-5" />
+                <line x1="12" y1="13" x2="12" y2="21" />
               </svg>
             </div>
-            <h3>Payments in mind</h3>
-            <p>Works with TZS and mobile money friendly workflows.</p>
+            <h3>Stock that updates itself</h3>
+            <p>
+              Stock goes down when an order comes in, and comes back if you
+              cancel it.
+            </p>
           </div>
           <div className="card">
             <div className="card-icon">
@@ -200,102 +203,58 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* TESTIMONIALS */}
+      {/* EARLY SELLERS (replaces the made-up testimonials) */}
       <section className="testimonials-wrap">
         <div className="section-head">
-          <p className="eyebrow">Trusted by businesses</p>
-          <h2>Sellers who stopped losing orders</h2>
+          <p className="eyebrow">Just getting started</p>
+          <h2>Be one of our first sellers</h2>
         </div>
         <div className="testimonials">
           <div className="testimonial">
-            <div className="stars" aria-hidden="true">★★★★★</div>
             <p>
-              &ldquo;Before OrderWa I was losing orders in my WhatsApp DMs every day.
-              Now everything comes in one clean list.&rdquo;
+              OdaLink is new, and we are looking for our first sellers. Message
+              us on WhatsApp and we will help you set up your shop.
             </p>
-            <div className="testimonial-author">
-              <span className="avatar">JU</span>
-              <div>
-                <strong>James Upendo</strong>
-                <span>Phone dealer, Dar es Salaam</span>
-              </div>
-            </div>
-          </div>
-          <div className="testimonial">
-            <div className="stars" aria-hidden="true">★★★★★</div>
-            <p>
-              &ldquo;My customers love the store link. They order in seconds and I get
-              all their details automatically.&rdquo;
-            </p>
-            <div className="testimonial-author">
-              <span className="avatar">MN</span>
-              <div>
-                <strong>Maria Nkwera</strong>
-                <span>Fashion boutique, Arusha</span>
-              </div>
-            </div>
-          </div>
-          <div className="testimonial">
-            <div className="stars" aria-hidden="true">★★★★★</div>
-            <p>
-              &ldquo;The dashboard is so simple. I can see every order with the phone
-              number and just tap to chat on WhatsApp.&rdquo;
-            </p>
-            <div className="testimonial-author">
-              <span className="avatar">HD</span>
-              <div>
-                <strong>Hamisi Daudi</strong>
-                <span>Electronics shop, Mwanza</span>
-              </div>
-            </div>
+            <a
+              className="btn-whatsapp"
+              href="https://wa.me/255659148967?text=Hi%2C%20I%20want%20to%20set%20up%20my%20shop%20on%20OdaLink"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Chat with us on WhatsApp
+            </a>
           </div>
         </div>
       </section>
 
-      {/* PRICING */}
+      {/* PRICING: only what exists today */}
       <section className="pricing-wrap">
         <div className="section-head">
           <p className="eyebrow">Pricing</p>
-          <h2>Start free, upgrade when you grow</h2>
+          <h2>Free while we grow</h2>
         </div>
-        <div className="pricing">
-          <div className="price-card">
+        <div
+          className="pricing"
+          style={{ display: "block", maxWidth: 420, margin: "0 auto" }}
+        >
+          <div className="price-card featured">
+            <span className="price-tag">Early sellers</span>
             <h3>Free</h3>
             <p className="price">TZS 0<span>/month</span></p>
             <ul>
-              <li>1 store link</li>
-              <li>Up to 50 orders / month</li>
-              <li>Basic dashboard</li>
-              <li>WhatsApp contact</li>
+              <li>Your own store link</li>
+              <li>Product photos, prices and stock</li>
+              <li>Orders with name, phone, items and total</li>
+              <li>Order status: pending, confirmed, delivered, cancelled</li>
+              <li>Order message sent to your WhatsApp</li>
+              <li>Dashboard with order and stock totals</li>
             </ul>
-            <Link href="/signup" className="btn-secondary price-btn">Start free trial</Link>
-          </div>
-          <div className="price-card featured">
-            <span className="price-tag">Most popular</span>
-            <h3>Pro</h3>
-            <p className="price">TZS 15,000<span>/month</span></p>
-            <ul>
-              <li>Unlimited orders</li>
-              <li>Custom store link</li>
-              <li>Order status tracking</li>
-              <li>Payments integration</li>
-              <li>Priority support</li>
-            </ul>
-            <Link href="/signup" className="btn-primary price-btn">Get started</Link>
-          </div>
-          <div className="price-card">
-            <h3>Business</h3>
-            <p className="price">TZS 40,000<span>/month</span></p>
-            <ul>
-              <li>Everything in Pro</li>
-              <li>Multiple stores</li>
-              <li>Team members</li>
-              <li>Advanced reports</li>
-              <li>Dedicated support</li>
-            </ul>
-            <Link href="/signup" className="btn-secondary price-btn">Contact us</Link>
+            <Link href="/signup" className="btn-primary price-btn">Start for free</Link>
           </div>
         </div>
+        <p style={{ textAlign: "center", marginTop: 16 }}>
+          Paid plans may come later. If they do, you will hear from us first.
+        </p>
       </section>
 
       {/* FAQ */}
@@ -308,24 +267,33 @@ export default function HomePage() {
           <details>
             <summary>How do customers place an order?</summary>
             <p>
-              You share your OrderWa store link on WhatsApp, status, or bio.
-              Customers browse your products, enter their name and phone,
-              and place an order — no app to download.
+              You share your OdaLink store link on WhatsApp, status, or bio.
+              Customers browse your products, add them to the cart, enter
+              their name and phone, and send the order — no app to download.
             </p>
           </details>
           <details>
             <summary>How do I receive orders?</summary>
             <p>
               Every order shows up in your dashboard with the customer&apos;s
-              name, phone number, items, and total. You can chat with them
-              directly on WhatsApp with one tap.
+              name, phone number, items, and total. The customer can also send
+              the order to your WhatsApp with one tap, and you can chat with
+              them directly from your dashboard.
             </p>
           </details>
           <details>
-            <summary>Is there a limit on the free plan?</summary>
+            <summary>What happens to my stock?</summary>
             <p>
-              The free plan includes one store link and up to 50 orders per
-              month. Upgrade to Pro for unlimited orders and more features.
+              Stock goes down automatically when an order comes in. If you
+              cancel an order, the stock comes back. Customers cannot order
+              more than you have.
+            </p>
+          </details>
+          <details>
+            <summary>Is it really free?</summary>
+            <p>
+              Yes. OdaLink is free while we are getting started. If we add paid
+              plans later, you will hear from us before anything changes.
             </p>
           </details>
           <details>
@@ -342,14 +310,14 @@ export default function HomePage() {
       {/* BOTTOM CTA */}
       <section className="bottom-cta">
         <h2>Ready to organize your orders?</h2>
-        <p>Join hundreds of businesses taking WhatsApp orders the easy way.</p>
+        <p>Set up your shop in a couple of minutes. It&apos;s free.</p>
         <div className="cta-buttons">
           <Link href="/signup" className="btn-primary">
-             Start for  free
+            Start for free
           </Link>
           <a
             className="btn-whatsapp"
-            href="https://wa.me/255659148967?text=Hi%2C%20I%20want%20to%20know%20more%20about%20OrderWa"
+            href="https://wa.me/255659148967?text=Hi%2C%20I%20want%20to%20know%20more%20about%20OdaLink"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -360,8 +328,6 @@ export default function HomePage() {
           </a>
         </div>
       </section>
-
-     
     </div>
   );
 }
