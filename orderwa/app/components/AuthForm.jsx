@@ -324,16 +324,7 @@ export default function AuthForm({ initialMode = 'signup', lang = 'en' }) {
           ODALINK SELLER ACCOUNT
         </span>
 
-        <button
-          type="button"
-          className="auth-text-button"
-          onClick={() =>
-            setLanguage((current) => current === 'en' ? 'sw' : 'en')
-          }
-          aria-label="Change language"
-        >
-          {language === 'en' ? 'SW' : 'EN'}
-        </button>
+     
       </div>
 
       <h1 id="auth-title" className="auth-title">
