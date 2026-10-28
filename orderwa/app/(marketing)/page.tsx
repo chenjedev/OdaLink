@@ -1,6 +1,6 @@
 
 "use client";
-
+import { SiteHeader, SiteFooter } from "../components/SiteLayout";
 import {
   ArrowRight,
   ArrowUpRight,
