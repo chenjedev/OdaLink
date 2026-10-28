@@ -1,3 +1,7 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
 /* ===== Brand colors: change them here and the whole site follows ===== */
 :root {
   --brand: #0d9488;        /* main teal (logo, main buttons) */
@@ -5,9 +9,7 @@
   --brand-soft: #f0fdfa;   /* very light teal (soft backgrounds) */
   --brand-border: #99f6e4; /* light teal (thin borders) */
   --text-muted: #475569;   /* grey-blue for secondary text */
-  @import 'tailwindcss';
-@import 'tw-animate-css';
-@import 'shadcn/tailwind.css';
+}
 
 @custom-variant dark (&:is(.dark *));
 
@@ -123,42 +125,8 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    color-scheme: dark;
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
-  }
-}
+/* (The automatic dark-mode block was removed on purpose: the site is designed
+   for a light background, and phones set to dark mode made it unreadable.) */
 
 @layer base {
   * {
@@ -2184,13 +2152,7 @@ body {
   .receipt-actions {
     flex-direction: column;
   }
-
-
-body {
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  color: #111827;
 }
-
 
 /* ---------- App shell ---------- */
 .app {
@@ -2657,7 +2619,6 @@ button[type="submit"]:hover:not(:disabled) {
   cursor: not-allowed;
 }
 
-
 /* Checkout payment methods - mobile responsive fix */
 .checkout-box,
 .cart-drawer .checkout-box {
@@ -2737,7 +2698,6 @@ button[type="submit"]:hover:not(:disabled) {
     font-size: 22px;
   }
 }
-
 
 /* ---------- Status ---------- */
 .error {
@@ -2935,7 +2895,6 @@ button[type="submit"]:hover:not(:disabled) {
   background: #0f766e !important;
   color: #fff !important;
 }
-
 
 /* landing page */
 .landing {
@@ -3752,6 +3711,7 @@ button[type="submit"]:hover:not(:disabled) {
   min-height: 100vh;
   padding: 16px;
 }
+
 .store-bar .shop-label {
   font-size: 22px;
   font-weight: 800;
@@ -3784,7 +3744,6 @@ button[type="submit"]:hover:not(:disabled) {
   max-width: 440px;
   margin: 0 auto;
 }
-
 
 .register-form .success-box,
 .login-form .success-box {
@@ -3827,6 +3786,8 @@ button[type="submit"]:hover:not(:disabled) {
 /* Password field: the show/hide eye sits INSIDE the field, on the right */
 .input-with-action {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .input-with-action input {
@@ -3868,11 +3829,93 @@ button[type="submit"]:hover:not(:disabled) {
   background: none;
 }
 
-.input-with-action {
-  position: relative;
+/* ===== UI polish ===== */
+
+/* Add / Edit product popup: a real white card that sits above everything.
+   Before, the form had no background, so the page behind showed through it. */
+body .modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
   display: flex;
   align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.5);
 }
-.input-with-action input {
-  padding-right: 42px;
+
+body .add-prod-page {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+body .add-prod-page .register-form {
+  background: #fff;
+  border: none;
+  box-shadow: none;
+}
+
+.add-prod-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.add-prod-header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+/* The small "x" that closes the popup */
+.cancel-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1;
+  color: #111827;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 8px;
+}
+
+/* Space between form fields (signup, login, settings, add product) */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+/* Buttons in the brand color */
+body .add-product-btn {
+  color: #fff;
+  background: var(--brand, #0d9488);
+  border: 1px solid var(--brand, #0d9488);
+  border-radius: 10px;
+}
+
+body .add-product-btn:hover:not(:disabled) {
+  background: var(--brand-dark, #0f766e);
+}
+
+/* The menu (hamburger) button was bright blue */
+.menu-btn {
+  color: #111827;
 }
