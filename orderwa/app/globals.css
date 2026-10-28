@@ -479,6 +479,87 @@ button[type="submit"]:hover:not(:disabled) {
 }
 
 
+/* Checkout payment methods - mobile responsive fix */
+.checkout-box,
+.cart-drawer .checkout-box {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.checkout-box h3,
+.checkout-box h4 {
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+/* Payment method card */
+.checkout-box label:has(input[type="radio"]) {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Keep radio button at the left */
+.checkout-box label input[type="radio"] {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  max-width: 18px;
+  margin: 3px 0 0;
+}
+
+/* Allow payment details to use the remaining width */
+.checkout-box label:has(input[type="radio"]) > span {
+  display: block;
+  flex: 1 1 0%;
+  width: 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  white-space: normal;
+}
+
+/* Payment method names and account details */
+.checkout-box label:has(input[type="radio"]) strong,
+.checkout-box label:has(input[type="radio"]) span span {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  white-space: normal;
+}
+
+/* Avoid form elements causing horizontal overflow */
+.checkout-box input,
+.checkout-box select,
+.checkout-box button {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 480px) {
+  .cart-drawer .checkout-box {
+    padding: 0;
+  }
+
+  .checkout-box label:has(input[type="radio"]) {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .checkout-box h3 {
+    font-size: 22px;
+  }
+}
+
+
 /* ---------- Status ---------- */
 .error {
   color: #dc2626;
