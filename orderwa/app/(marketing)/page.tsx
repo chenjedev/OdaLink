@@ -1,5 +1,6 @@
 
 "use client";
+
 import { SiteHeader, SiteFooter } from "../components/SiteLayout";
 import {
   ArrowRight,
@@ -82,45 +83,6 @@ const steps = [
       "Manage each order from your dashboard, contact the customer on WhatsApp, and deliver.",
   },
 ];
-
-function BrandLockup() {
-  return (
-    <a className="brand-lockup" href="#top" aria-label="OdaLink home">
-      <span className="brand-mark" aria-hidden="true">
-        <MessageCircle size={18} strokeWidth={2.2} />
-        <span className="brand-mark-dot" />
-      </span>
-      <span className="brand-wordmark">
-        oda<span>link</span>
-      </span>
-    </a>
-  );
-}
-
-function SiteHeader() {
-  return (
-    <header className="site-header">
-      <div className="site-header-inner">
-        <BrandLockup />
-
-        <nav className="main-nav" aria-label="Main navigation">
-          <a href="#how-it-works">How it works</a>
-          <a href="#features">Features</a>
-          <a href="#about">Why OdaLink</a>
-        </nav>
-
-        <div className="header-actions">
-          <a className="header-login" href="/login">
-            Log in
-          </a>
-          <a className="header-cta" href="/signup">
-            Start free <ArrowUpRight aria-hidden="true" size={16} />
-          </a>
-        </div>
-      </div>
-    </header>
-  );
-}
 
 function StorePreview() {
   return (
@@ -466,35 +428,6 @@ function ClosingCta() {
   );
 }
 
-function SiteFooter() {
-  return (
-    <footer className="site-footer">
-      <div className="footer-main">
-        <div className="footer-brand-block">
-          <BrandLockup />
-          <p>A little more structure for the way you already sell.</p>
-        </div>
-
-        <nav className="footer-nav" aria-label="Footer navigation">
-          <a href="/login">Log in</a>
-          <a href="/dashboard">Dashboard</a>
-          <a href="/store/demo">Demo store</a>
-          <a href="#top">
-            Back to top <ArrowUpRight aria-hidden="true" size={14} />
-          </a>
-        </nav>
-      </div>
-
-      <div className="footer-bottom">
-        <span>© {new Date().getFullYear()} OdaLink</span>
-        <span>
-          Made for small businesses that sell through conversation.
-        </span>
-      </div>
-    </footer>
-  );
-}
-
 export default function OdaLinkLanding() {
   return (
     <div className="oda-page" id="top">
@@ -515,4 +448,3 @@ export default function OdaLinkLanding() {
     </div>
   );
 }
-
