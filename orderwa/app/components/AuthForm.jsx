@@ -1,572 +1,675 @@
 
-"use client";
+'use client'
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { supabase } from "../../lib/supabase";
+import { useState, type ChangeEvent, type FormEvent } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import {
+  ArrowLeft,
+  Eye,
+  EyeOff,
+  LockKeyhole,
+  Mail,
+  Phone,
+  ShieldCheck,
+  UserRound,
+  AlertCircle,
+  CheckCircle2,
+  LoaderCircle,
+} from 'lucide-react'
+import { supabase } from '../../lib/supabase'
 
-const UserIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-    <circle cx="12" cy="7" r="4" />
-  </svg>
-);
-const PhoneIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 0 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
-  </svg>
-);
-const MailIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="2" y="4" width="20" height="16" rx="2" />
-    <path d="m22 7-10 5L2 7" />
-  </svg>
-);
-const LockIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="3" y="11" width="18" height="11" rx="2" />
-    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-  </svg>
-);
-const EyeIcon = () => (
-  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" />
-    <circle cx="12" cy="12" r="3" />
-  </svg>
-);
-const EyeOffIcon = () => (
-  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
-    <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 11 7 11 7a13.16 13.16 0 0 1-1.67 2.68" />
-    <path d="M6.61 6.61A13.526 13.526 0 0 0 1 12s4 7 11 7a9.74 9.74 0 0 0 5.39-1.61" />
-    <line x1="2" y1="2" x2="22" y2="22" />
-  </svg>
-);
-const CheckCircleIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-    <polyline points="22 4 12 14.01 9 11.01" />
-  </svg>
-);
-const AlertIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <circle cx="12" cy="12" r="10" />
-    <line x1="12" y1="8" x2="12" y2="12" />
-    <line x1="12" y1="16" x2="12.01" y2="16" />
-  </svg>
-);
-const SpinnerIcon = () => (
-  <svg className="spinner-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-  </svg>
-);
+type InitialAuthMode = 'login' | 'signup'
+type AuthMode = InitialAuthMode | 'reset'
+type Language = 'en' | 'sw'
 
-function cleanEmail(value) {
-  return value.trim().toLowerCase();
+type AuthValues = {
+  name: string
+  phone: string
+  email: string
+  password: string
 }
 
-function friendlyLoginError(message, lang) {
-  const t = (en, sw) => lang === "sw" ? sw : en;
-
-  if (/invalid login credentials/i.test(message)) {
-    return t("Invalid login credentials.", "Barua pepe au nenosiri si sahihi.");
-  }
-  if (/email not confirmed/i.test(message)) {
-    return t(
-      "Please confirm your email first. Check your inbox.",
-      "Tafadhali thibitisha barua pepe yako kwanza. Angalia inbox yako."
-    );
-  }
-  if (/rate limit|too many/i.test(message)) {
-    return t(
-      "Too many attempts. Please wait a few minutes and try again.",
-      "Umejaribu mara nyingi. Subiri dakika chache kisha ujaribu tena."
-    );
-  }
-  return t(
-    "Could not log in. Please try again.",
-    "Imeshindikana kuingia. Tafadhali jaribu tena."
-  );
+type Props = {
+  initialMode: InitialAuthMode
+  lang?: Language
 }
 
-function AuthForm({ initialMode = "register", lang = "en" }) {
-  const router = useRouter();
-  const t = (en, sw) => lang === "sw" ? sw : en;
+const cleanEmail = (email: string) => email.trim().toLowerCase()
 
-  const [mode, setMode] = useState(initialMode);
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
-  const [showLoginPassword, setShowLoginPassword] = useState(false);
-  const [error, setError] = useState("");
-  const [loginError, setLoginError] = useState("");
-  const [success, setSuccess] = useState(false);
-  const [loginSuccess, setLoginSuccess] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
+export default function OdaLinkAuthForm({
+  initialMode,
+  lang = 'en',
+}: Props) {
+  const router = useRouter()
 
-  const [resetError, setResetError] = useState("");
-  const [resetSent, setResetSent] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
+  const [mode, setMode] = useState<AuthMode>(initialMode)
+  const [language, setLanguage] = useState<Language>(lang)
 
-  const isInvalid =
-    name.trim() === "" ||
-    phone.trim().length < 10 ||
-    email.trim() === "" ||
-    password.length < 6;
+  const [values, setValues] = useState<AuthValues>({
+    name: '',
+    phone: '',
+    email: '',
+    password: '',
+  })
 
-  const isInvalidLogin =
-    loginEmail.trim() === "" || loginPassword.length < 6;
+  const [showPassword, setShowPassword] = useState(false)
+  const [feedback, setFeedback] = useState('')
+  const [feedbackType, setFeedbackType] = useState<'error' | 'success'>('error')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
 
-  const missingFields = [];
-  if (name.trim() === "") missingFields.push(t("name", "jina"));
-  if (phone.trim().length < 10) missingFields.push(t("a valid phone number", "namba sahihi ya simu"));
-  if (email.trim() === "") missingFields.push(t("email", "barua pepe"));
-  if (password.length < 6) missingFields.push(t("a password (6+ characters)", "nenosiri (herufi/tarakimu 6+)"));
+  const t = (en: string, sw: string) =>
+    language === 'sw' ? sw : en
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError("");
+  const emailIsValid =
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())
 
-    if (
-      name.trim() === "" ||
-      phone.trim().length < 10 ||
-      email.trim() === "" ||
-      password.length < 6
-    ) {
-      setError(t(
-        "Please fill all fields before submitting",
-        "Tafadhali jaza sehemu zote kabla ya kuendelea"
-      ));
-      setIsSubmitting(false);
-      return;
+  const phoneDigits = values.phone.replace(/\D/g, '').length
+  const phoneIsValid = phoneDigits >= 10 && phoneDigits <= 15
+  const passwordIsValid = values.password.length >= 6
+
+  const missingRequirements = [
+    {
+      label: t('name', 'jina'),
+      complete: values.name.trim().length > 0,
+    },
+    {
+      label: t('a valid phone number', 'namba sahihi ya simu'),
+      complete: phoneIsValid,
+    },
+    {
+      label: t('a valid email', 'barua pepe sahihi'),
+      complete: emailIsValid,
+    },
+    {
+      label: t('a password (6+ characters)', 'nenosiri (herufi 6+)'),
+      complete: passwordIsValid,
+    },
+  ]
+    .filter((item) => !item.complete)
+    .map((item) => item.label)
+
+  const canSubmit =
+    mode === 'reset'
+      ? emailIsValid
+      : mode === 'signup'
+        ? missingRequirements.length === 0
+        : emailIsValid && passwordIsValid
+
+  function handleChange(event: ChangeEvent<HTMLInputElement>) {
+    const field = event.currentTarget.name as keyof AuthValues
+    const value = event.currentTarget.value
+
+    setValues((current) => ({
+      ...current,
+      [field]: value,
+    }))
+
+    setFeedback('')
+    setResetSent(false)
+  }
+
+  function showError(message: string) {
+    setFeedbackType('error')
+    setFeedback(message)
+  }
+
+  function showSuccess(message: string) {
+    setFeedbackType('success')
+    setFeedback(message)
+  }
+
+  function friendlyError(message: string) {
+    if (/invalid login credentials/i.test(message)) {
+      return t(
+        'Email or password is incorrect.',
+        'Barua pepe au nenosiri si sahihi.',
+      )
     }
 
-    try {
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: cleanEmail(email),
-        password,
-        options: {
-          data: { name: name.trim(), phone: phone.trim() },
-        },
-      });
+    if (/email not confirmed/i.test(message)) {
+      return t(
+        'Please confirm your email before logging in.',
+        'Thibitisha barua pepe yako kabla ya kuingia.',
+      )
+    }
 
-      if (signUpError) {
-        setError(signUpError.message);
-        return;
+    if (/already registered|already exists/i.test(message)) {
+      return t(
+        'An account with this email may already exist. Try logging in.',
+        'Huenda akaunti yenye email hii ipo tayari. Jaribu kuingia.',
+      )
+    }
+
+    if (/rate limit|too many requests|too many attempts/i.test(message)) {
+      return t(
+        'Too many attempts. Please wait a few minutes and try again.',
+        'Umejaribu mara nyingi. Subiri dakika chache kisha ujaribu tena.',
+      )
+    }
+
+    if (/password should be at least/i.test(message)) {
+      return t(
+        'Your password must contain at least 6 characters.',
+        'Nenosiri lako liwe na herufi au tarakimu zisizopungua 6.',
+      )
+    }
+
+    return t(
+      'Something went wrong. Please try again.',
+      'Kuna hitilafu imetokea. Tafadhali jaribu tena.',
+    )
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (isSubmitting) return
+
+    setFeedback('')
+    setResetSent(false)
+
+    if (!canSubmit) {
+      showError(
+        t(
+          'Please check the information you entered.',
+          'Tafadhali kagua taarifa ulizoweka.',
+        ),
+      )
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      if (mode === 'signup') {
+        const { data, error } = await supabase.auth.signUp({
+          email: cleanEmail(values.email),
+          password: values.password,
+          options: {
+            data: {
+              name: values.name.trim(),
+              phone: values.phone.trim(),
+            },
+          },
+        })
+
+        if (error) {
+          showError(friendlyError(error.message))
+          return
+        }
+
+        if (data.session) {
+          router.replace('/dashboard')
+          router.refresh()
+          return
+        }
+
+        showSuccess(
+          t(
+            'Your account request was received. Check your email to confirm your account before logging in.',
+            'Ombi la akaunti limepokelewa. Angalia email yako na uthibitishe akaunti kabla ya kuingia.',
+          ),
+        )
+
+        setMode('login')
+        setValues((current) => ({
+          ...current,
+          password: '',
+        }))
+
+        return
       }
 
-      router.push("/dashboard");
-    } catch (err) {
-      console.error("Signup failed:", err);
-      setError(t(
-        "Something went wrong, try again",
-        "Kuna hitilafu imetokea, tafadhali jaribu tena"
-      ));
+      if (mode === 'login') {
+        const { data, error } =
+          await supabase.auth.signInWithPassword({
+            email: cleanEmail(values.email),
+            password: values.password,
+          })
+
+        if (error) {
+          showError(friendlyError(error.message))
+          return
+        }
+
+        if (!data.session) {
+          showError(
+            t(
+              'Login could not be completed. Please try again.',
+              'Imeshindikana kukamilisha kuingia. Tafadhali jaribu tena.',
+            ),
+          )
+          return
+        }
+
+        setValues((current) => ({
+          ...current,
+          password: '',
+        }))
+
+        router.replace('/dashboard')
+        router.refresh()
+        return
+      }
+
+      if (mode === 'reset') {
+        const { error } =
+          await supabase.auth.resetPasswordForEmail(
+            cleanEmail(values.email),
+            {
+              redirectTo: `${window.location.origin}/reset-password`,
+            },
+          )
+
+        if (error) {
+          showError(friendlyError(error.message))
+          return
+        }
+
+        setResetSent(true)
+        showSuccess(
+          t(
+            'If an account exists for this email, a password reset link has been sent. Check your inbox and spam folder.',
+            'Ikiwa akaunti yenye email hii ipo, kiungo cha kubadilisha nenosiri kimetumwa. Angalia inbox na spam folder.',
+          ),
+        )
+      }
+    } catch (error) {
+      console.error('Authentication error:', error)
+
+      showError(
+        t(
+          'Unable to complete your request. Check your connection and try again.',
+          'Imeshindikana kukamilisha ombi lako. Kagua intaneti kisha ujaribu tena.',
+        ),
+      )
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
   }
 
-  async function handleLogin(e) {
-    e.preventDefault();
-    setIsLoggingIn(true);
-    setLoginError("");
-    setLoginSuccess(false);
+  function changeMode(nextMode: AuthMode) {
+    setMode(nextMode)
+    setFeedback('')
+    setResetSent(false)
+    setShowPassword(false)
 
-    if (isInvalidLogin) {
-      setLoginError(t(
-        "Please enter email and password",
-        "Tafadhali weka barua pepe na nenosiri"
-      ));
-      setIsLoggingIn(false);
-      return;
-    }
-
-    try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: cleanEmail(loginEmail),
-        password: loginPassword,
-      });
-
-      if (signInError) {
-        console.error("Login failed:", signInError.message);
-        setLoginError(friendlyLoginError(signInError.message, lang));
-        setIsLoggingIn(false);
-        return;
-      }
-
-      router.push("/dashboard");
-
-      setLoginSuccess(true);
-      setLoginEmail("");
-      setLoginPassword("");
-      setLoginError("");
-      setIsLoggingIn(false);
-      setTimeout(() => setLoginSuccess(false), 3000);
-    } catch (err) {
-      console.error("Login failed:", err);
-      setLoginError(t(
-        "Could not log in. Please try again.",
-        "Imeshindikana kuingia. Tafadhali jaribu tena."
-      ));
-      setIsLoggingIn(false);
-    }
+    setValues((current) => ({
+      ...current,
+      password: '',
+    }))
   }
 
-  async function handleForgot(e) {
-    e.preventDefault();
-    setResetError("");
-    setResetSent(false);
+  const title =
+    mode === 'signup'
+      ? t('Create Account', 'Fungua Akaunti')
+      : mode === 'reset'
+        ? t('Reset password', 'Badilisha Nenosiri')
+        : t('Login', 'Ingia')
 
-    if (loginEmail.trim() === "") {
-      setResetError(t(
-        "Enter the email you registered with",
-        "Weka barua pepe uliyotumia kujisajili"
-      ));
-      return;
-    }
-
-    setIsResetting(true);
-
-    try {
-      const { error: resetErr } = await supabase.auth.resetPasswordForEmail(
-        cleanEmail(loginEmail),
-        { redirectTo: `${window.location.origin}/reset-password` }
-      );
-
-      setIsResetting(false);
-
-      if (resetErr) {
-        console.error("Reset email failed:", resetErr.message);
-        setResetError(
-          /rate limit|too many/i.test(resetErr.message)
-            ? t(
-                "Too many requests. Please wait a few minutes and try again.",
-                "Maombi ni mengi sana. Subiri dakika chache kisha ujaribu tena."
-              )
-            : t(
-                "Could not send the email. Please try again.",
-                "Imeshindikana kutuma barua pepe. Tafadhali jaribu tena."
-              )
-        );
-        return;
-      }
-
-      setResetSent(true);
-    } catch (err) {
-      console.error("Reset email failed:", err);
-      setIsResetting(false);
-      setResetError(t(
-        "Could not send the email. Please try again.",
-        "Imeshindikana kutuma barua pepe. Tafadhali jaribu tena."
-      ));
-    }
-  }
-
-  function switchToLogin() {
-    setMode("login");
-    setError("");
-    setSuccess(false);
-    setResetError("");
-    setResetSent(false);
-  }
-
-  function switchToRegister() {
-    setMode("register");
-    setLoginError("");
-    setLoginSuccess(false);
-  }
-
-  function switchToForgot() {
-    setMode("forgot");
-    setLoginError("");
-    setResetError("");
-    setResetSent(false);
-  }
+  const description =
+    mode === 'signup'
+      ? t(
+          'Set up your seller account and start organizing orders.',
+          'Fungua akaunti yako ya muuzaji na anza kusimamia oda.',
+        )
+      : mode === 'reset'
+        ? t(
+            'Enter your email to receive a password reset link.',
+            'Weka email yako ili upokee kiungo cha kubadilisha nenosiri.',
+          )
+        : t(
+            'Manage orders, products, and your store link.',
+            'Simamia oda, bidhaa na kiungo cha duka lako.',
+          )
 
   return (
-    <div className="register-page">
-      <div className="auth-card">
-        {mode === "register" && (
-          <form className="register-form" onSubmit={handleSubmit}>
-            <h2 className="register-title">{t("Create Account", "Fungua Akaunti")}</h2>
+    <section className="auth-card" aria-labelledby="auth-title">
+      <div className="auth-card-topline">
+        <span className="auth-card-icon" aria-hidden="true">
+          {mode === 'signup' ? (
+            <UserRound />
+          ) : mode === 'reset' ? (
+            <Mail />
+          ) : (
+            <LockKeyhole />
+          )}
+        </span>
 
-            <div className="form-group">
-              <label>
-                <UserIcon /> {t("Name", "Jina")}
-              </label>
-              <input
-                type="text"
-                placeholder={t("eg. John Doe", "mf. John Doe")}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
+        <span className="auth-card-label">
+          ODALINK SELLER ACCOUNT
+        </span>
 
-            <div className="form-group">
-              <label>
-                <PhoneIcon /> {t("Phone", "Namba ya Simu")}
-              </label>
-              <input
-                type="text"
-                placeholder="eg. 07XXXXXXXX"
-                value={phone}
-                maxLength={10}
-                inputMode="numeric"
-                onChange={(e) => setPhone(e.target.value)}
-              />
-              {phone.length > 0 && phone.length < 10 && (
-                <p className="field-hint">
-                  <AlertIcon /> {t(
-                    "Phone must be at least 10 digits",
-                    "Namba ya simu iwe na tarakimu 10 au zaidi"
-                  )}
-                </p>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label>
-                <MailIcon /> {t("Email", "Barua Pepe")}
-              </label>
-              <input
-                type="email"
-                placeholder="eg. johndoe@gmail.com"
-                value={email}
-                autoCapitalize="none"
-                autoCorrect="off"
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>
-                <LockIcon /> {t("Password", "Nenosiri")}
-              </label>
-              <div className="input-with-action">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="eg. 123456"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <button
-                  type="button"
-                  className="input-action-btn"
-                  onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? t("Hide password", "Ficha nenosiri") : t("Show password", "Onyesha nenosiri")}
-                >
-                  {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-                </button>
-              </div>
-              {password.length > 0 && password.length < 6 && (
-                <p className="field-hint">
-                  <AlertIcon /> {t(
-                    "Password must be at least 6 characters",
-                    "Nenosiri liwe na herufi au tarakimu 6 au zaidi"
-                  )}
-                </p>
-              )}
-            </div>
-
-            {success && (
-              <div className="success-box">
-                <CheckCircleIcon /> {t("Account created successfully!", "Akaunti imefunguliwa kikamilifu!")}
-              </div>
-            )}
-
-            {error && (
-              <p className="form-error">
-                <AlertIcon /> {error}
-              </p>
-            )}
-
-            <button type="submit" disabled={isInvalid || isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <SpinnerIcon /> {t("Creating account...", "Akaunti inafunguliwa...")}
-                </>
-              ) : (
-                t("Create Account", "Fungua Akaunti")
-              )}
-            </button>
-
-            {isInvalid && missingFields.length > 0 && (
-              <p className="button-hint">
-                {t("Still needed:", "Bado vinahitajika:")} {missingFields.join(", ")}
-              </p>
-            )}
-
-            <p className="auth-switch">
-              {t("Already have an account?", "Tayari una akaunti?")}{" "}
-              <button
-                type="button"
-                className="auth-switch-btn"
-                onClick={switchToLogin}
-              >
-                {t("Login to your account", "Ingia kwenye akaunti yako")}
-              </button>
-            </p>
-          </form>
-        )}
-
-        {mode === "login" && (
-          <form className="login-form" onSubmit={handleLogin}>
-            <h2 className="register-title">
-              <LockIcon /> {t("Login", "Ingia")}
-            </h2>
-
-            <div className="form-group">
-              <label>
-                <MailIcon /> {t("Email", "Barua Pepe")}
-              </label>
-              <input
-                type="email"
-                placeholder="eg. johndoe@gmail.com"
-                value={loginEmail}
-                autoCapitalize="none"
-                autoCorrect="off"
-                onChange={(e) => setLoginEmail(e.target.value)}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>
-                <LockIcon /> {t("Password", "Nenosiri")}
-              </label>
-              <div className="input-with-action">
-                <input
-                  type={showLoginPassword ? "text" : "password"}
-                  placeholder="eg. 123456"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                />
-                <button
-                  type="button"
-                  className="input-action-btn"
-                  onClick={() => setShowLoginPassword((v) => !v)}
-                  aria-label={showLoginPassword ? t("Hide password", "Ficha nenosiri") : t("Show password", "Onyesha nenosiri")}
-                >
-                  {showLoginPassword ? <EyeOffIcon /> : <EyeIcon />}
-                </button>
-              </div>
-              <button
-                type="button"
-                className="auth-switch-btn"
-                onClick={switchToForgot}
-              >
-                {t("Forgot password?", "Umesahau nenosiri?")}
-              </button>
-            </div>
-
-            {loginSuccess && (
-              <div className="success-box">
-                <CheckCircleIcon /> {t("Login successful!", "Umefanikiwa kuingia!")}
-              </div>
-            )}
-
-            {loginError && (
-              <p className="form-error">
-                <AlertIcon /> {loginError}
-              </p>
-            )}
-
-            <button type="submit" disabled={isInvalidLogin || isLoggingIn}>
-              {isLoggingIn ? (
-                <>
-                  <SpinnerIcon /> {t("Logging in...", "Unaingia...")}
-                </>
-              ) : (
-                t("Login", "Ingia")
-              )}
-            </button>
-
-            <p className="auth-switch">
-              {t("Don't have an account?", "Huna akaunti?")}{" "}
-              <button
-                type="button"
-                className="auth-switch-btn"
-                onClick={switchToRegister}
-              >
-                {t("Create account", "Fungua akaunti")}
-              </button>
-            </p>
-          </form>
-        )}
-
-        {mode === "forgot" && (
-          <form className="login-form" onSubmit={handleForgot}>
-            <h2 className="register-title">
-              <MailIcon /> {t("Reset password", "Weka nenosiri jipya")}
-            </h2>
-
-            <p>
-              {t(
-                "Enter your email and we will send you a link to choose a new password.",
-                "Weka barua pepe yako tutakutumia kiungo cha kuweka nenosiri jipya."
-              )}
-            </p>
-
-            <div className="form-group">
-              <label>
-                <MailIcon /> {t("Email", "Barua Pepe")}
-              </label>
-              <input
-                type="email"
-                placeholder="eg. johndoe@gmail.com"
-                value={loginEmail}
-                autoCapitalize="none"
-                autoCorrect="off"
-                onChange={(e) => setLoginEmail(e.target.value)}
-              />
-            </div>
-
-            {resetSent && (
-              <div className="success-box">
-                <CheckCircleIcon /> {t(
-                  "If an account exists for that email, a reset link is on its way. Check your inbox and spam folder.",
-                  "Ikiwa akaunti yenye barua pepe hiyo ipo, kiungo cha kubadilisha nenosiri kimetumwa. Angalia inbox na spam folder."
-                )}
-              </div>
-            )}
-
-            {resetError && (
-              <p className="form-error">
-                <AlertIcon /> {resetError}
-              </p>
-            )}
-
-            <button type="submit" disabled={isResetting}>
-              {isResetting ? (
-                <>
-                  <SpinnerIcon /> {t("Sending...", "Inatuma...")}
-                </>
-              ) : (
-                t("Send reset link", "Tuma kiungo cha kubadilisha nenosiri")
-              )}
-            </button>
-
-            <p className="auth-switch">
-              {t("Remembered it?", "Umelikumbuka nenosiri?")}{" "}
-              <button
-                type="button"
-                className="auth-switch-btn"
-                onClick={switchToLogin}
-              >
-                {t("Back to login", "Rudi kuingia")}
-              </button>
-            </p>
-          </form>
-        )}
+        <button
+          type="button"
+          className="auth-text-button"
+          onClick={() =>
+            setLanguage((current) => current === 'en' ? 'sw' : 'en')
+          }
+          aria-label="Change language"
+        >
+          {language === 'en' ? 'SW' : 'EN'}
+        </button>
       </div>
-    </div>
-  );
+
+      <h1 id="auth-title" className="auth-title">
+        {title}
+      </h1>
+
+      <p className="auth-description">
+        {description}
+      </p>
+
+      <form className="auth-form" onSubmit={handleSubmit} noValidate>
+        {mode === 'signup' && (
+          <div className="auth-field-grid">
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="auth-name">
+                <UserRound aria-hidden="true" />
+                {t('Name', 'Jina')}
+              </label>
+
+              <input
+                className="auth-input"
+                id="auth-name"
+                name="name"
+                autoComplete="name"
+                placeholder={t('eg. John Doe', 'mf. John Doe')}
+                value={values.name}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="auth-phone">
+                <Phone aria-hidden="true" />
+                {t('Phone', 'Namba ya Simu')}
+              </label>
+
+              <input
+                className="auth-input"
+                id="auth-phone"
+                name="phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="eg. 0712345678"
+                value={values.phone}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="auth-field auth-field-wide">
+              <label className="auth-label" htmlFor="auth-email-signup">
+                <Mail aria-hidden="true" />
+                {t('Email', 'Barua Pepe')}
+              </label>
+
+              <input
+                className="auth-input"
+                id="auth-email-signup"
+                name="email"
+                type="email"
+                autoComplete="email"
+                inputMode="email"
+                placeholder="eg. johndoe@gmail.com"
+                value={values.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <PasswordField
+              id="auth-password-signup"
+              label={t('Password', 'Nenosiri')}
+              value={values.password}
+              showPassword={showPassword}
+              onChange={handleChange}
+              onToggle={() => setShowPassword((current) => !current)}
+              autoComplete="new-password"
+              placeholder="At least 6 characters"
+              t={t}
+            />
+          </div>
+        )}
+
+        {mode === 'login' && (
+          <div className="auth-field-grid auth-field-grid-single">
+            <div className="auth-field auth-field-wide">
+              <label className="auth-label" htmlFor="auth-email-login">
+                <Mail aria-hidden="true" />
+                {t('Email', 'Barua Pepe')}
+              </label>
+
+              <input
+                className="auth-input"
+                id="auth-email-login"
+                name="email"
+                type="email"
+                autoComplete="email"
+                inputMode="email"
+                placeholder="eg. johndoe@gmail.com"
+                value={values.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <PasswordField
+              id="auth-password-login"
+              label={t('Password', 'Nenosiri')}
+              value={values.password}
+              showPassword={showPassword}
+              onChange={handleChange}
+              onToggle={() => setShowPassword((current) => !current)}
+              autoComplete="current-password"
+              placeholder="Enter your password"
+              t={t}
+            />
+
+            <div className="auth-form-utility">
+              <button
+                className="auth-text-button"
+                type="button"
+                onClick={() => changeMode('reset')}
+              >
+                {t('Forgot password?', 'Umesahau nenosiri?')}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {mode === 'reset' && (
+          <div className="auth-field-grid auth-field-grid-single">
+            <div className="auth-field auth-field-wide">
+              <label className="auth-label" htmlFor="auth-email-reset">
+                <Mail aria-hidden="true" />
+                {t('Email', 'Barua Pepe')}
+              </label>
+
+              <input
+                className="auth-input"
+                id="auth-email-reset"
+                name="email"
+                type="email"
+                autoComplete="email"
+                inputMode="email"
+                placeholder="eg. johndoe@gmail.com"
+                value={values.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
+        )}
+
+        <button
+          className="auth-submit"
+          type="submit"
+          disabled={!canSubmit || isSubmitting}
+        >
+          {isSubmitting ? (
+            <>
+              <LoaderCircle className="auth-spinner" aria-hidden="true" />
+              {mode === 'signup'
+                ? t('Creating account...', 'Akaunti inafunguliwa...')
+                : mode === 'reset'
+                  ? t('Sending...', 'Inatuma...')
+                  : t('Logging in...', 'Unaingia...')}
+            </>
+          ) : mode === 'signup' ? (
+            t('Create Account', 'Fungua Akaunti')
+          ) : mode === 'reset' ? (
+            t('Send reset link', 'Tuma kiungo')
+          ) : (
+            t('Login', 'Ingia')
+          )}
+        </button>
+
+        {mode === 'signup' && (
+          <p className="auth-helper" role="status" aria-live="polite">
+            {missingRequirements.length > 0
+              ? `${t('Still needed:', 'Bado vinahitajika:')} ${missingRequirements.join(', ')}`
+              : t(
+                  'You are ready to create your account.',
+                  'Uko tayari kufungua akaunti yako.',
+                )}
+          </p>
+        )}
+
+        {feedback && (
+          <p
+            className={
+              feedbackType === 'error'
+                ? 'auth-feedback'
+                : 'auth-feedback auth-feedback-success'
+            }
+            role="status"
+            aria-live="polite"
+          >
+            {feedbackType === 'error' ? (
+              <AlertCircle aria-hidden="true" />
+            ) : (
+              <CheckCircle2 aria-hidden="true" />
+            )}
+            {feedback}
+          </p>
+        )}
+
+        {resetSent && (
+          <p className="auth-helper">
+            {t(
+              'For security, this message does not reveal whether an account exists.',
+              'Kwa usalama, ujumbe huu hauonyeshi kama akaunti ipo.',
+            )}
+          </p>
+        )}
+      </form>
+
+      <p className="auth-preview-note" role="note">
+        <ShieldCheck aria-hidden="true" />
+        {t(
+          'Your account is protected by Supabase authentication.',
+          'Akaunti yako inalindwa na mfumo wa Supabase.',
+        )}
+      </p>
+
+      {mode === 'reset' ? (
+        <button
+          className="auth-back-button"
+          type="button"
+          onClick={() => changeMode('login')}
+        >
+          <ArrowLeft aria-hidden="true" />
+          {t('Back to login', 'Rudi kuingia')}
+        </button>
+      ) : (
+        <p className="auth-switch-copy">
+          {mode === 'signup' ? (
+            <>
+              {t('Already have an account?', 'Tayari una akaunti?')}{' '}
+              <Link href="/login">
+                {t('Login to your account', 'Ingia kwenye akaunti yako')}
+              </Link>
+            </>
+          ) : (
+            <>
+              {t("Don't have an account?", 'Huna akaunti?')}{' '}
+              <Link href="/signup">
+                {t('Create account', 'Fungua akaunti')}
+              </Link>
+            </>
+          )}
+        </p>
+      )}
+    </section>
+  )
 }
 
-export default AuthForm;
+function PasswordField({
+  id,
+  label,
+  value,
+  showPassword,
+  onChange,
+  onToggle,
+  autoComplete,
+  placeholder,
+  t,
+}: {
+  id: string
+  label: string
+  value: string
+  showPassword: boolean
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void
+  onToggle: () => void
+  autoComplete: string
+  placeholder: string
+  t: (en: string, sw: string) => string
+}) {
+  return (
+    <div className="auth-field auth-field-wide">
+      <label className="auth-label" htmlFor={id}>
+        <LockKeyhole aria-hidden="true" />
+        {label}
+      </label>
+
+      <div className="auth-password-wrap">
+        <input
+          className="auth-input"
+          id={id}
+          name="password"
+          type={showPassword ? 'text' : 'password'}
+          autoComplete={autoComplete}
+          placeholder={placeholder}
+          minLength={6}
+          value={value}
+          onChange={onChange}
+          required
+        />
+
+        <button
+          className="auth-password-toggle"
+          type="button"
+          onClick={onToggle}
+          aria-label={
+            showPassword
+              ? t('Hide password', 'Ficha nenosiri')
+              : t('Show password', 'Onyesha nenosiri')
+          }
+          aria-pressed={showPassword}
+        >
+          {showPassword ? (
+            <EyeOff aria-hidden="true" />
+          ) : (
+            <Eye aria-hidden="true" />
+          )}
+        </button>
+      </div>
+    </div>
+  )
+}
