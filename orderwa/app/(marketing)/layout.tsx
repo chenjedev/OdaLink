@@ -1,9 +1,8 @@
 
-import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Manrope } from 'next/font/google'
-import './globals.css'
-import './odalink-routes.css'
+import '../globals.css'
+import '../odalink-routes.css'
 
 const manrope = Manrope({
   subsets: ['latin'],
@@ -43,7 +42,6 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${manrope.variable} antialiased`}>
         {children}
-        {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
   )
