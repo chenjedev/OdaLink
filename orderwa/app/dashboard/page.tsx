@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -25,18 +26,52 @@ type OrderRow = {
   created_at: string;
 };
 
-// Add up the totals of a list of orders
+type Lang = "en" | "sw";
+
+// Add up the totals of a list of orders.
 function sumTotals(list: OrderRow[]) {
   return list.reduce((sum, o) => sum + Number(o.total), 0);
 }
 
 export default function DashboardPage() {
   const router = useRouter();
+
   const [loading, setLoading] = useState(true);
   const [displayName, setDisplayName] = useState("");
   const [shop, setShop] = useState<Shop | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [lang, setLang] = useState<Lang>("en");
+
+  const t = (en: string, sw: string) => (lang === "en" ? en : sw);
+
+  // Read the language selected in the dashboard Sidebar.
+  useEffect(() => {
+    function syncLanguage(event?: Event) {
+      const customEvent = event as CustomEvent<Lang> | undefined;
+      const eventLang = customEvent?.detail;
+      const storedLang = localStorage.getItem("odLinkLanguage");
+
+      const nextLang =
+        eventLang === "en" || eventLang === "sw"
+          ? eventLang
+          : storedLang === "en" || storedLang === "sw"
+            ? storedLang
+            : "en";
+
+      setLang(nextLang);
+    }
+
+    syncLanguage();
+
+    window.addEventListener("odLinkLanguageChange", syncLanguage);
+    window.addEventListener("storage", syncLanguage);
+
+    return () => {
+      window.removeEventListener("odLinkLanguageChange", syncLanguage);
+      window.removeEventListener("storage", syncLanguage);
+    };
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -67,7 +102,7 @@ export default function DashboardPage() {
       setShop(shopData as Shop | null);
 
       if (shopData) {
-        // Only active products: deleted ones are hidden
+        // Only active products: deleted ones are hidden.
         const { data: productsData, error: productsErr } = await supabase
           .from("products")
           .select("id, name, price, stock")
@@ -81,7 +116,7 @@ export default function DashboardPage() {
 
         setProducts((productsData as Product[]) ?? []);
 
-        // This shop's orders, used for the stat cards
+        // This shop's orders, used for the stat cards.
         const { data: ordersData, error: ordersErr } = await supabase
           .from("orders")
           .select("total, status, created_at")
@@ -101,72 +136,83 @@ export default function DashboardPage() {
   }, [router]);
 
   if (loading) {
-    return <p>Loading...</p>;
+    return <p>{t("Loading...", "Inapakia...")}</p>;
   }
 
-  // Stats, worked out from the data we just loaded
+  // Stats, worked out from the data we just loaded.
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
-  // Money tied up in stock: price x quantity left, for every active product
+  // Money tied up in stock: price x quantity left, for every active product.
   const stockWorth = products.reduce(
     (sum, p) => sum + Number(p.price) * (p.stock ?? 0),
     0
   );
 
-  // Orders placed today (cancelled ones are not counted)
+  // Orders placed today (cancelled ones are not counted).
   const todayOrders = orders.filter(
     (o) => new Date(o.created_at) >= startOfToday && o.status !== "cancelled"
   );
 
-  // Orders waiting for the seller to act
+  // Orders waiting for the seller to act.
   const pendingOrders = orders.filter((o) => o.status === "pending");
 
-  // Revenue: only orders the seller confirmed or delivered
+  // Revenue: only orders the seller confirmed or delivered.
   const revenue = sumTotals(
     orders.filter((o) => o.status === "confirmed" || o.status === "delivered")
   );
 
   return (
     <div>
-      <h1>Welcome, {displayName}</h1>
+      <h1>
+        {t("Welcome", "Karibu")}, {displayName}
+      </h1>
 
       {shop ? (
         <>
           <p>
-            Shop: <strong>{shop.name}</strong>
+            {t("Shop:", "Duka:")} <strong>{shop.name}</strong>
           </p>
+
           <StoreLink slug={shop.slug} shopName={shop.name} />
         </>
       ) : (
-        <p>No shop found for this account.</p>
+        <p>
+          {t(
+            "No shop found for this account.",
+            "Hakuna duka lililopatikana kwenye akaunti hii."
+          )}
+        </p>
       )}
 
       <div className="stats-grid">
         <StatCard
-          title="Products"
+          title={t("Products", "Bidhaa")}
           value={products.length}
-          change={`stock worth ${stockWorth.toLocaleString()} TZS`}
+          change={`${t("stock worth", "thamani ya bidhaa stoo")} ${stockWorth.toLocaleString()} TZS`}
         />
+
         <StatCard
-          title="Orders today"
+          title={t("Orders today", "Oda za leo")}
           value={todayOrders.length}
-          change={`worth ${sumTotals(todayOrders).toLocaleString()} TZS`}
+          change={`${t("worth", "zenye thamani ya")} ${sumTotals(todayOrders).toLocaleString()} TZS`}
         />
+
         <StatCard
-          title="Pending"
+          title={t("Pending", "Zinazosubiri")}
           value={pendingOrders.length}
-          change={`worth ${sumTotals(pendingOrders).toLocaleString()} TZS`}
+          change={`${t("worth", "zenye thamani ya")} ${sumTotals(pendingOrders).toLocaleString()} TZS`}
         />
+
         <StatCard
-          title="Revenue (TZS)"
+          title={t("Revenue (TZS)", "Mapato (TZS)")}
           value={revenue}
-          change="confirmed + delivered"
+          change={t(
+            "confirmed + delivered",
+            "zilizothibitishwa + zilizofikishwa"
+          )}
         />
       </div>
-
-      
-    
     </div>
   );
 }
