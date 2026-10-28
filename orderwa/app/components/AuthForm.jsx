@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, type ChangeEvent, type FormEvent } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -19,34 +19,17 @@ import {
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
-type InitialAuthMode = 'login' | 'signup'
-type AuthMode = InitialAuthMode | 'reset'
-type Language = 'en' | 'sw'
+const cleanEmail = (email) => email.trim().toLowerCase()
 
-type AuthValues = {
-  name: string
-  phone: string
-  email: string
-  password: string
-}
-
-type Props = {
-  initialMode: InitialAuthMode
-  lang?: Language
-}
-
-const cleanEmail = (email: string) => email.trim().toLowerCase()
-
-export default function OdaLinkAuthForm({
-  initialMode,
-  lang = 'en',
-}: Props) {
+export default function AuthForm({ initialMode = 'signup', lang = 'en' }) {
   const router = useRouter()
 
-  const [mode, setMode] = useState<AuthMode>(initialMode)
-  const [language, setLanguage] = useState<Language>(lang)
+  const [mode, setMode] = useState(
+    initialMode === 'register' ? 'signup' : initialMode
+  )
+  const [language, setLanguage] = useState(lang === 'sw' ? 'sw' : 'en')
 
-  const [values, setValues] = useState<AuthValues>({
+  const [values, setValues] = useState({
     name: '',
     phone: '',
     email: '',
@@ -55,12 +38,11 @@ export default function OdaLinkAuthForm({
 
   const [showPassword, setShowPassword] = useState(false)
   const [feedback, setFeedback] = useState('')
-  const [feedbackType, setFeedbackType] = useState<'error' | 'success'>('error')
+  const [feedbackType, setFeedbackType] = useState('error')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [resetSent, setResetSent] = useState(false)
 
-  const t = (en: string, sw: string) =>
-    language === 'sw' ? sw : en
+  const t = (en, sw) => (language === 'sw' ? sw : en)
 
   const emailIsValid =
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())
@@ -97,72 +79,71 @@ export default function OdaLinkAuthForm({
         ? missingRequirements.length === 0
         : emailIsValid && passwordIsValid
 
-  function handleChange(event: ChangeEvent<HTMLInputElement>) {
-    const field = event.currentTarget.name as keyof AuthValues
-    const value = event.currentTarget.value
+  function handleChange(event) {
+    const { name, value } = event.currentTarget
 
     setValues((current) => ({
       ...current,
-      [field]: value,
+      [name]: value,
     }))
 
     setFeedback('')
     setResetSent(false)
   }
 
-  function showError(message: string) {
+  function showError(message) {
     setFeedbackType('error')
     setFeedback(message)
   }
 
-  function showSuccess(message: string) {
+  function showSuccess(message) {
     setFeedbackType('success')
     setFeedback(message)
   }
 
-  function friendlyError(message: string) {
+  function friendlyError(message) {
     if (/invalid login credentials/i.test(message)) {
       return t(
         'Email or password is incorrect.',
-        'Barua pepe au nenosiri si sahihi.',
+        'Barua pepe au nenosiri si sahihi.'
       )
     }
 
     if (/email not confirmed/i.test(message)) {
       return t(
         'Please confirm your email before logging in.',
-        'Thibitisha barua pepe yako kabla ya kuingia.',
+        'Thibitisha barua pepe yako kabla ya kuingia.'
       )
     }
 
     if (/already registered|already exists/i.test(message)) {
       return t(
         'An account with this email may already exist. Try logging in.',
-        'Huenda akaunti yenye email hii ipo tayari. Jaribu kuingia.',
+        'Huenda akaunti yenye email hii ipo tayari. Jaribu kuingia.'
       )
     }
 
     if (/rate limit|too many requests|too many attempts/i.test(message)) {
       return t(
         'Too many attempts. Please wait a few minutes and try again.',
-        'Umejaribu mara nyingi. Subiri dakika chache kisha ujaribu tena.',
+        'Umejaribu mara nyingi. Subiri dakika chache kisha ujaribu tena.'
       )
     }
 
     if (/password should be at least/i.test(message)) {
       return t(
         'Your password must contain at least 6 characters.',
-        'Nenosiri lako liwe na herufi au tarakimu zisizopungua 6.',
+        'Nenosiri lako liwe na herufi au tarakimu zisizopungua 6.'
       )
     }
 
     return t(
       'Something went wrong. Please try again.',
-      'Kuna hitilafu imetokea. Tafadhali jaribu tena.',
+      'Kuna hitilafu imetokea. Tafadhali jaribu tena.'
     )
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event) {
     event.preventDefault()
 
     if (isSubmitting) return
@@ -174,8 +155,8 @@ export default function OdaLinkAuthForm({
       showError(
         t(
           'Please check the information you entered.',
-          'Tafadhali kagua taarifa ulizoweka.',
-        ),
+          'Tafadhali kagua taarifa ulizoweka.'
+        )
       )
       return
     }
@@ -209,16 +190,16 @@ export default function OdaLinkAuthForm({
         showSuccess(
           t(
             'Your account request was received. Check your email to confirm your account before logging in.',
-            'Ombi la akaunti limepokelewa. Angalia email yako na uthibitishe akaunti kabla ya kuingia.',
-          ),
+            'Ombi la akaunti limepokelewa. Angalia email yako na uthibitishe akaunti kabla ya kuingia.'
+          )
         )
 
-        setMode('login')
         setValues((current) => ({
           ...current,
           password: '',
         }))
 
+        setMode('login')
         return
       }
 
@@ -238,8 +219,8 @@ export default function OdaLinkAuthForm({
           showError(
             t(
               'Login could not be completed. Please try again.',
-              'Imeshindikana kukamilisha kuingia. Tafadhali jaribu tena.',
-            ),
+              'Imeshindikana kukamilisha kuingia. Tafadhali jaribu tena.'
+            )
           )
           return
         }
@@ -260,7 +241,7 @@ export default function OdaLinkAuthForm({
             cleanEmail(values.email),
             {
               redirectTo: `${window.location.origin}/reset-password`,
-            },
+            }
           )
 
         if (error) {
@@ -269,11 +250,12 @@ export default function OdaLinkAuthForm({
         }
 
         setResetSent(true)
+
         showSuccess(
           t(
             'If an account exists for this email, a password reset link has been sent. Check your inbox and spam folder.',
-            'Ikiwa akaunti yenye email hii ipo, kiungo cha kubadilisha nenosiri kimetumwa. Angalia inbox na spam folder.',
-          ),
+            'Ikiwa akaunti yenye email hii ipo, kiungo cha kubadilisha nenosiri kimetumwa. Angalia inbox na spam folder.'
+          )
         )
       }
     } catch (error) {
@@ -282,15 +264,15 @@ export default function OdaLinkAuthForm({
       showError(
         t(
           'Unable to complete your request. Check your connection and try again.',
-          'Imeshindikana kukamilisha ombi lako. Kagua intaneti kisha ujaribu tena.',
-        ),
+          'Imeshindikana kukamilisha ombi lako. Kagua intaneti kisha ujaribu tena.'
+        )
       )
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  function changeMode(nextMode: AuthMode) {
+  function changeMode(nextMode) {
     setMode(nextMode)
     setFeedback('')
     setResetSent(false)
@@ -313,16 +295,16 @@ export default function OdaLinkAuthForm({
     mode === 'signup'
       ? t(
           'Set up your seller account and start organizing orders.',
-          'Fungua akaunti yako ya muuzaji na anza kusimamia oda.',
+          'Fungua akaunti yako ya muuzaji na anza kusimamia oda.'
         )
       : mode === 'reset'
         ? t(
             'Enter your email to receive a password reset link.',
-            'Weka email yako ili upokee kiungo cha kubadilisha nenosiri.',
+            'Weka email yako ili upokee kiungo cha kubadilisha nenosiri.'
           )
         : t(
             'Manage orders, products, and your store link.',
-            'Simamia oda, bidhaa na kiungo cha duka lako.',
+            'Simamia oda, bidhaa na kiungo cha duka lako.'
           )
 
   return (
@@ -431,7 +413,7 @@ export default function OdaLinkAuthForm({
               onChange={handleChange}
               onToggle={() => setShowPassword((current) => !current)}
               autoComplete="new-password"
-              placeholder="At least 6 characters"
+              placeholder={t('At least 6 characters', 'Angalau herufi 6')}
               t={t}
             />
           </div>
@@ -467,7 +449,7 @@ export default function OdaLinkAuthForm({
               onChange={handleChange}
               onToggle={() => setShowPassword((current) => !current)}
               autoComplete="current-password"
-              placeholder="Enter your password"
+              placeholder={t('Enter your password', 'Weka nenosiri lako')}
               t={t}
             />
 
@@ -536,7 +518,7 @@ export default function OdaLinkAuthForm({
               ? `${t('Still needed:', 'Bado vinahitajika:')} ${missingRequirements.join(', ')}`
               : t(
                   'You are ready to create your account.',
-                  'Uko tayari kufungua akaunti yako.',
+                  'Uko tayari kufungua akaunti yako.'
                 )}
           </p>
         )}
@@ -564,7 +546,7 @@ export default function OdaLinkAuthForm({
           <p className="auth-helper">
             {t(
               'For security, this message does not reveal whether an account exists.',
-              'Kwa usalama, ujumbe huu hauonyeshi kama akaunti ipo.',
+              'Kwa usalama, ujumbe huu hauonyeshi kama akaunti ipo.'
             )}
           </p>
         )}
@@ -574,7 +556,7 @@ export default function OdaLinkAuthForm({
         <ShieldCheck aria-hidden="true" />
         {t(
           'Your account is protected by Supabase authentication.',
-          'Akaunti yako inalindwa na mfumo wa Supabase.',
+          'Akaunti yako inalindwa na mfumo wa Supabase.'
         )}
       </p>
 
@@ -620,16 +602,6 @@ function PasswordField({
   autoComplete,
   placeholder,
   t,
-}: {
-  id: string
-  label: string
-  value: string
-  showPassword: boolean
-  onChange: (event: ChangeEvent<HTMLInputElement>) => void
-  onToggle: () => void
-  autoComplete: string
-  placeholder: string
-  t: (en: string, sw: string) => string
 }) {
   return (
     <div className="auth-field auth-field-wide">
