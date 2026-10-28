@@ -1,3 +1,4 @@
+
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Manrope } from 'next/font/google'
@@ -46,3 +47,4 @@ export default function RootLayout({
       </body>
     </html>
   )
+}
