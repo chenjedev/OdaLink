@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -63,7 +64,6 @@ export default function PaymentPage() {
           .order("created_at", { ascending: true });
 
         if (paymentError) throw paymentError;
-
         if (!active) return;
 
         setPaymentMethods(data || []);
@@ -105,18 +105,21 @@ export default function PaymentPage() {
     );
 
     if (!selectedPayment || !checkout) {
-      setError(t("Please select a payment method.", "Tafadhali chagua njia ya malipo."));
+      setError(
+        t(
+          "Please select a payment method.",
+          "Tafadhali chagua njia ya malipo."
+        )
+      );
       return;
     }
 
-    const updatedCheckout = {
-      ...checkout,
-      selectedPaymentId: selectedPayment.id,
-    };
-
     sessionStorage.setItem(
       "odLinkCheckout",
-      JSON.stringify(updatedCheckout)
+      JSON.stringify({
+        ...checkout,
+        selectedPaymentId: selectedPayment.id,
+      })
     );
 
     router.push(`/checkout/${shopSlug}/instructions`);
@@ -125,7 +128,11 @@ export default function PaymentPage() {
   if (loading) {
     return (
       <main style={styles.page}>
-        <p>{t("Loading payment methods...", "Inapakia njia za malipo...")}</p>
+        <div style={styles.card}>
+          <p style={styles.bodyText}>
+            Inapakia njia za malipo...
+          </p>
+        </div>
       </main>
     );
   }
@@ -133,7 +140,11 @@ export default function PaymentPage() {
   if (!checkout) {
     return (
       <main style={styles.page}>
-        <p>{error || t("Loading checkout...", "Inapakia checkout...")}</p>
+        <div style={styles.card}>
+          <p style={styles.bodyText}>
+            {error || "Inapakia checkout..."}
+          </p>
+        </div>
       </main>
     );
   }
@@ -158,8 +169,10 @@ export default function PaymentPage() {
         </p>
 
         <div style={styles.totalBox}>
-          <span>{t("Order total", "Jumla ya oda")}</span>
-          <strong>
+          <span style={styles.totalLabel}>
+            {t("Order total", "Jumla ya oda")}
+          </span>
+          <strong style={styles.totalAmount}>
             {Number(checkout.cartTotal || 0).toLocaleString()} TZS
           </strong>
         </div>
@@ -190,7 +203,7 @@ export default function PaymentPage() {
                       border: selected
                         ? "2px solid #0f766e"
                         : "1px solid #d1d5db",
-                      background: selected ? "#f0fdfa" : "#fff",
+                      background: selected ? "#f0fdfa" : "#ffffff",
                     }}
                   >
                     <input
@@ -198,19 +211,22 @@ export default function PaymentPage() {
                       name="paymentMethod"
                       checked={selected}
                       onChange={() => setSelectedPaymentId(item.id)}
+                      style={styles.radio}
                     />
 
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <strong>{label}</strong>
+                    <div style={styles.methodContent}>
+                      <strong style={styles.methodTitle}>
+                        {label}
+                      </strong>
 
                       <p style={styles.detail}>
                         {t("Account name:", "Jina la akaunti:")}{" "}
-                        {item.account_name}
+                        {item.account_name || "—"}
                       </p>
 
                       <p style={styles.detail}>
                         {t("Account number:", "Namba ya malipo:")}{" "}
-                        {item.account_number}
+                        {item.account_number || "—"}
                       </p>
 
                       {item.method === "bank" && item.bank_name && (
@@ -230,7 +246,10 @@ export default function PaymentPage() {
               type="button"
               onClick={continueToInstructions}
               disabled={!selectedPaymentId}
-              style={styles.primaryButton}
+              style={{
+                ...styles.primaryButton,
+                opacity: selectedPaymentId ? 1 : 0.6,
+              }}
             >
               {t("Continue to payment", "Endelea kulipa")} →
             </button>
@@ -243,80 +262,206 @@ export default function PaymentPage() {
 
 const styles = {
   page: {
+    width: "100%",
     minHeight: "100vh",
     background: "#f8fafc",
     padding: "24px 14px",
     color: "#111827",
+    boxSizing: "border-box",
+    fontFamily: "Arial, Helvetica, sans-serif",
   },
+
   card: {
+    display: "block",
     width: "100%",
     maxWidth: 520,
+    minWidth: 0,
     margin: "0 auto",
     padding: 20,
-    background: "#fff",
+    background: "#ffffff",
     border: "1px solid #e5e7eb",
     borderRadius: 14,
     boxSizing: "border-box",
+    textAlign: "left",
+    writingMode: "horizontal-tb",
   },
+
+  bodyText: {
+    display: "block",
+    width: "100%",
+    fontSize: 16,
+    lineHeight: 1.5,
+    overflowWrap: "anywhere",
+  },
+
   back: {
+    display: "inline-block",
     border: 0,
     background: "transparent",
     padding: "6px 0",
     cursor: "pointer",
     fontSize: 15,
     color: "#0f766e",
+    textAlign: "left",
   },
+
   heading: {
+    display: "block",
+    width: "100%",
     fontSize: 23,
+    lineHeight: 1.3,
     margin: "18px 0 8px",
+    fontWeight: 700,
+    whiteSpace: "normal",
+    overflowWrap: "break-word",
+    wordBreak: "normal",
   },
+
   muted: {
+    display: "block",
+    width: "100%",
     color: "#6b7280",
-    marginBottom: 18,
+    fontSize: 14,
+    lineHeight: 1.5,
+    margin: "0 0 18px",
+    overflowWrap: "anywhere",
   },
+
   totalBox: {
     display: "flex",
+    flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
+    width: "100%",
     padding: 14,
     background: "#f3f4f6",
     borderRadius: 10,
     marginBottom: 20,
-  },
-  methods: {
-    display: "grid",
-    gap: 10,
-  },
-  method: {
-    display: "flex",
-    alignItems: "flex-start",
-    gap: 12,
-    padding: 14,
-    borderRadius: 10,
-    cursor: "pointer",
     boxSizing: "border-box",
   },
-  detail: {
-    margin: "7px 0 0",
+
+  totalLabel: {
+    display: "block",
     fontSize: 14,
-    color: "#4b5563",
+    lineHeight: 1.5,
+  },
+
+  totalAmount: {
+    display: "block",
+    fontSize: 16,
+    lineHeight: 1.5,
     overflowWrap: "anywhere",
   },
-  primaryButton: {
+
+  methods: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "stretch",
+    gap: 12,
     width: "100%",
+    minWidth: 0,
+    boxSizing: "border-box",
+  },
+
+  method: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    width: "100%",
+    minWidth: 0,
+    margin: 0,
+    padding: 14,
+    borderRadius: 12,
+    cursor: "pointer",
+    boxSizing: "border-box",
+    textAlign: "left",
+    lineHeight: 1.5,
+    writingMode: "horizontal-tb",
+  },
+
+  radio: {
+    display: "block",
+    flex: "0 0 18px",
+    width: 18,
+    height: 18,
+    minWidth: 18,
+    margin: "3px 0 0",
+    accentColor: "#0f766e",
+    cursor: "pointer",
+  },
+
+  methodContent: {
+    display: "block",
+    flex: "1 1 0%",
+    width: "100%",
+    minWidth: 0,
+    maxWidth: "100%",
+    margin: 0,
+    padding: 0,
+    textAlign: "left",
+    whiteSpace: "normal",
+    overflowWrap: "anywhere",
+    wordBreak: "normal",
+    writingMode: "horizontal-tb",
+  },
+
+  methodTitle: {
+    display: "block",
+    width: "100%",
+    margin: 0,
+    padding: 0,
+    fontSize: 16,
+    lineHeight: 1.5,
+    fontWeight: 700,
+    whiteSpace: "normal",
+    overflowWrap: "anywhere",
+    wordBreak: "normal",
+  },
+
+  detail: {
+    display: "block",
+    width: "100%",
+    maxWidth: "100%",
+    boxSizing: "border-box",
+    margin: "7px 0 0",
+    padding: 0,
+    fontSize: 14,
+    lineHeight: 1.5,
+    color: "#4b5563",
+    textAlign: "left",
+    whiteSpace: "normal",
+    overflowWrap: "anywhere",
+    wordBreak: "normal",
+    writingMode: "horizontal-tb",
+  },
+
+  primaryButton: {
+    display: "block",
+    width: "100%",
+    boxSizing: "border-box",
     marginTop: 18,
     padding: 14,
     background: "#0f766e",
-    color: "#fff",
+    color: "#ffffff",
     border: 0,
     borderRadius: 9,
     fontSize: 16,
+    lineHeight: 1.5,
     fontWeight: 700,
     cursor: "pointer",
+    whiteSpace: "normal",
   },
+
   error: {
+    display: "block",
+    width: "100%",
     color: "#dc2626",
+    fontSize: 14,
+    lineHeight: 1.5,
     marginTop: 14,
+    overflowWrap: "anywhere",
   },
 };
