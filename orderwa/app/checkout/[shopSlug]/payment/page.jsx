@@ -23,7 +23,9 @@ export default function PaymentPage() {
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [selectedPaymentId, setSelectedPaymentId] = useState("");
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
   const t = (en, sw) => (checkout?.lang === "sw" ? sw : en);
 
@@ -66,15 +68,16 @@ export default function PaymentPage() {
         if (paymentError) throw paymentError;
         if (!active) return;
 
-        setPaymentMethods(data || []);
+        const methods = data || [];
+        setPaymentMethods(methods);
 
-        if (data?.length) {
+        if (methods.length > 0) {
           const savedPaymentId = checkoutData.selectedPaymentId;
 
           setSelectedPaymentId(
-            data.some((item) => item.id === savedPaymentId)
+            methods.some((item) => item.id === savedPaymentId)
               ? savedPaymentId
-              : data[0].id
+              : methods[0].id
           );
         }
       } catch (err) {
@@ -125,13 +128,131 @@ export default function PaymentPage() {
     router.push(`/checkout/${shopSlug}/instructions`);
   }
 
+  async function submitOrderWithoutPayment() {
+    if (submitting || !checkout) return;
+
+    setSubmitting(true);
+    setError("");
+
+    try {
+      const items = checkout.cart.map((item) => ({
+        product_id: item.id,
+        name: item.name,
+        price: Number(item.price),
+        quantity: Number(item.quantity),
+      }));
+
+      const { data: order, error: insertError } = await supabase
+        .from("orders")
+        .insert({
+          shop_id: checkout.shopId,
+          customer_name: checkout.name.trim(),
+          customer_phone: checkout.phone.trim(),
+          items,
+          total: Number(checkout.cartTotal),
+          status: "pending",
+        })
+        .select("id")
+        .single();
+
+      if (insertError) throw insertError;
+
+      // Hifadhi ID ya oda ili ukurasa wa success uweze kuionyesha.
+      sessionStorage.setItem(
+        "odLinkOrderResult",
+        JSON.stringify({
+          orderId: order.id,
+          shopName: checkout.shopName || shopSlug,
+          total: Number(checkout.cartTotal),
+          customerName: checkout.name.trim(),
+        })
+      );
+
+      localStorage.removeItem(`cart:${shopSlug}`);
+      sessionStorage.removeItem("odLinkCheckout");
+
+      setSuccess(true);
+    } catch (err) {
+      console.error("Submit order failed:", err);
+
+      setError(
+        err?.message?.includes("Not enough stock") ||
+          err?.message?.includes("Product not available") ||
+          err?.message?.includes("Invalid quantity")
+          ? err.message
+          : t(
+              "Your order could not be submitted. Please try again.",
+              "Oda haikuweza kutumwa. Tafadhali jaribu tena."
+            )
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   if (loading) {
     return (
       <main style={styles.page}>
         <div style={styles.card}>
-          <p style={styles.bodyText}>
-            Inapakia njia za malipo...
+          <p>{t("Loading checkout...", "Inapakia checkout...")}</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (success) {
+    let orderResult = null;
+
+    if (typeof window !== "undefined") {
+      try {
+        orderResult = JSON.parse(
+          sessionStorage.getItem("odLinkOrderResult") || "null"
+        );
+      } catch {
+        orderResult = null;
+      }
+    }
+
+    return (
+      <main style={styles.page}>
+        <div style={styles.card}>
+          <div style={styles.successIcon}>✓</div>
+
+          <h1 style={styles.heading}>
+            {t("Order submitted!", "Oda imetumwa!")}
+          </h1>
+
+          <p style={styles.muted}>
+            {t(
+              "Your order has been received by the system and is waiting for the seller to review it.",
+              "Oda yako imepokelewa na inasubiri muuzaji aikague."
+            )}
           </p>
+
+          {orderResult?.orderId && (
+            <div style={styles.totalBox}>
+              <span>{t("Order ID", "Namba ya oda")}</span>
+              <strong>{orderResult.orderId}</strong>
+            </div>
+          )}
+
+          <div style={styles.pending}>
+            <strong>{t("Status: Pending", "Hali: Inasubiri")}</strong>
+            <p style={styles.detail}>
+              {t(
+                "Payment has not been confirmed. The seller can contact you to arrange payment and delivery.",
+                "Malipo hayajathibitishwa. Muuzaji anaweza kuwasiliana nawe kupanga malipo na delivery."
+              )}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => router.push(`/${shopSlug}`)}
+            style={styles.primaryButton}
+          >
+            {t("Back to shop", "Rudi dukani")}
+          </button>
         </div>
       </main>
     );
@@ -141,9 +262,17 @@ export default function PaymentPage() {
     return (
       <main style={styles.page}>
         <div style={styles.card}>
-          <p style={styles.bodyText}>
-            {error || "Inapakia checkout..."}
+          <p style={styles.error}>
+            {error || "Checkout haipatikani."}
           </p>
+
+          <button
+            type="button"
+            onClick={() => router.push(`/${shopSlug}`)}
+            style={styles.primaryButton}
+          >
+            {t("Back to shop", "Rudi dukani")}
+          </button>
         </div>
       </main>
     );
@@ -161,7 +290,9 @@ export default function PaymentPage() {
         </button>
 
         <h1 style={styles.heading}>
-          {t("Choose payment method", "Chagua njia ya malipo")}
+          {paymentMethods.length > 0
+            ? t("Choose payment method", "Chagua njia ya malipo")
+            : t("Complete your order", "Kamilisha oda yako")}
         </h1>
 
         <p style={styles.muted}>
@@ -169,21 +300,54 @@ export default function PaymentPage() {
         </p>
 
         <div style={styles.totalBox}>
-          <span style={styles.totalLabel}>
-            {t("Order total", "Jumla ya oda")}
-          </span>
-          <strong style={styles.totalAmount}>
+          <span>{t("Order total", "Jumla ya oda")}</span>
+          <strong>
             {Number(checkout.cartTotal || 0).toLocaleString()} TZS
           </strong>
         </div>
 
         {paymentMethods.length === 0 ? (
-          <p style={styles.error}>
-            {t(
-              "This shop has no enabled payment methods. Please contact the seller.",
-              "Duka hili halijaweka njia za malipo. Tafadhali wasiliana na muuzaji."
+          <>
+            <div style={styles.infoBox}>
+              <h2 style={styles.infoTitle}>
+                {t("No payment methods available", "Hakuna njia za malipo")}
+              </h2>
+
+              <p style={styles.detail}>
+                {t(
+                  "You can still submit your order. The seller can contact you to arrange payment and delivery.",
+                  "Bado unaweza kutuma oda yako. Muuzaji atawasiliana nawe kupanga malipo na delivery."
+                )}
+              </p>
+            </div>
+
+            {error && (
+              <p role="alert" style={styles.error}>
+                {error}
+              </p>
             )}
-          </p>
+
+            <button
+              type="button"
+              onClick={submitOrderWithoutPayment}
+              disabled={submitting}
+              style={{
+                ...styles.primaryButton,
+                opacity: submitting ? 0.65 : 1,
+              }}
+            >
+              {submitting
+                ? t("Submitting order...", "Inatuma oda...")
+                : t("Submit Order", "Tuma Oda")}
+            </button>
+
+            <p style={styles.note}>
+              {t(
+                "Your order will be marked as pending until the seller reviews it. This does not confirm payment.",
+                "Oda yako itakuwa inasubiri hadi muuzaji aikague. Hii haimaanishi kuwa malipo yamethibitishwa."
+              )}
+            </p>
+          </>
         ) : (
           <>
             <div style={styles.methods}>
@@ -215,9 +379,7 @@ export default function PaymentPage() {
                     />
 
                     <div style={styles.methodContent}>
-                      <strong style={styles.methodTitle}>
-                        {label}
-                      </strong>
+                      <strong style={styles.methodTitle}>{label}</strong>
 
                       <p style={styles.detail}>
                         {t("Account name:", "Jina la akaunti:")}{" "}
@@ -240,7 +402,11 @@ export default function PaymentPage() {
               })}
             </div>
 
-            {error && <p style={styles.error}>{error}</p>}
+            {error && (
+              <p role="alert" style={styles.error}>
+                {error}
+              </p>
+            )}
 
             <button
               type="button"
@@ -283,15 +449,6 @@ const styles = {
     borderRadius: 14,
     boxSizing: "border-box",
     textAlign: "left",
-    writingMode: "horizontal-tb",
-  },
-
-  bodyText: {
-    display: "block",
-    width: "100%",
-    fontSize: 16,
-    lineHeight: 1.5,
-    overflowWrap: "anywhere",
   },
 
   back: {
@@ -302,27 +459,22 @@ const styles = {
     cursor: "pointer",
     fontSize: 15,
     color: "#0f766e",
-    textAlign: "left",
   },
 
   heading: {
     display: "block",
-    width: "100%",
     fontSize: 23,
-    lineHeight: 1.3,
+    lineHeight: 1.4,
     margin: "18px 0 8px",
     fontWeight: 700,
-    whiteSpace: "normal",
-    overflowWrap: "break-word",
-    wordBreak: "normal",
+    overflowWrap: "anywhere",
   },
 
   muted: {
     display: "block",
-    width: "100%",
     color: "#6b7280",
     fontSize: 14,
-    lineHeight: 1.5,
+    lineHeight: 1.6,
     margin: "0 0 18px",
     overflowWrap: "anywhere",
   },
@@ -342,17 +494,18 @@ const styles = {
     boxSizing: "border-box",
   },
 
-  totalLabel: {
-    display: "block",
-    fontSize: 14,
-    lineHeight: 1.5,
+  infoBox: {
+    padding: 15,
+    border: "1px solid #fed7aa",
+    background: "#fff7ed",
+    borderRadius: 10,
+    marginBottom: 14,
   },
 
-  totalAmount: {
-    display: "block",
-    fontSize: 16,
+  infoTitle: {
+    fontSize: 17,
     lineHeight: 1.5,
-    overflowWrap: "anywhere",
+    margin: "0 0 8px",
   },
 
   methods: {
@@ -362,7 +515,6 @@ const styles = {
     gap: 12,
     width: "100%",
     minWidth: 0,
-    boxSizing: "border-box",
   },
 
   method: {
@@ -372,70 +524,40 @@ const styles = {
     gap: 12,
     width: "100%",
     minWidth: 0,
-    margin: 0,
     padding: 14,
     borderRadius: 12,
     cursor: "pointer",
     boxSizing: "border-box",
     textAlign: "left",
-    lineHeight: 1.5,
-    writingMode: "horizontal-tb",
   },
 
   radio: {
-    display: "block",
     flex: "0 0 18px",
     width: 18,
     height: 18,
-    minWidth: 18,
     margin: "3px 0 0",
     accentColor: "#0f766e",
-    cursor: "pointer",
   },
 
   methodContent: {
-    display: "block",
     flex: "1 1 0%",
-    width: "100%",
     minWidth: 0,
-    maxWidth: "100%",
-    margin: 0,
-    padding: 0,
-    textAlign: "left",
-    whiteSpace: "normal",
     overflowWrap: "anywhere",
-    wordBreak: "normal",
-    writingMode: "horizontal-tb",
   },
 
   methodTitle: {
     display: "block",
-    width: "100%",
-    margin: 0,
-    padding: 0,
     fontSize: 16,
     lineHeight: 1.5,
-    fontWeight: 700,
-    whiteSpace: "normal",
     overflowWrap: "anywhere",
-    wordBreak: "normal",
   },
 
   detail: {
-    display: "block",
-    width: "100%",
-    maxWidth: "100%",
-    boxSizing: "border-box",
-    margin: "7px 0 0",
-    padding: 0,
     fontSize: 14,
-    lineHeight: 1.5,
+    lineHeight: 1.6,
     color: "#4b5563",
-    textAlign: "left",
-    whiteSpace: "normal",
+    margin: "7px 0 0",
     overflowWrap: "anywhere",
-    wordBreak: "normal",
-    writingMode: "horizontal-tb",
   },
 
   primaryButton: {
@@ -452,15 +574,42 @@ const styles = {
     lineHeight: 1.5,
     fontWeight: 700,
     cursor: "pointer",
-    whiteSpace: "normal",
+  },
+
+  note: {
+    fontSize: 13,
+    lineHeight: 1.6,
+    color: "#92400e",
+    background: "#fffbeb",
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 14,
+  },
+
+  successIcon: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 54,
+    height: 54,
+    borderRadius: "50%",
+    background: "#d1fae5",
+    color: "#047857",
+    fontSize: 30,
+    fontWeight: 700,
+  },
+
+  pending: {
+    padding: 14,
+    background: "#fef3c7",
+    borderRadius: 10,
+    marginTop: 16,
   },
 
   error: {
-    display: "block",
-    width: "100%",
     color: "#dc2626",
     fontSize: 14,
-    lineHeight: 1.5,
+    lineHeight: 1.6,
     marginTop: 14,
     overflowWrap: "anywhere",
   },
