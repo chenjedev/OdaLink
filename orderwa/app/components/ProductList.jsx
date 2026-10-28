@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -10,6 +11,9 @@ function ProductList({ products = [], shopSlug, shopId, shopName , shopPhone}) {
   const [cart, setCart] = useState([]);
   const [cartLoaded, setCartLoaded] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [lang, setLang] = useState("en");
+
+  const t = (en, sw) => lang === "en" ? en : sw;
 
   // One cart per shop, so items from another shop never mix in
   const cartKey = `cart:${shopSlug}`;
@@ -47,9 +51,9 @@ function ProductList({ products = [], shopSlug, shopId, shopName , shopPhone}) {
       const synced = prev
         .map((item) => {
           const p = products.find((x) => x.id === item.id);
-          if (!p) return null; // product was deleted
+          if (!p) return null;
           const stock = p.stock ?? 0;
-          if (stock <= 0) return null; // sold out
+          if (stock <= 0) return null;
           return {
             id: p.id,
             name: p.name,
@@ -61,7 +65,6 @@ function ProductList({ products = [], shopSlug, shopId, shopName , shopPhone}) {
         })
         .filter(Boolean);
 
-      // Return the old array when nothing changed, so React does not re-render
       return JSON.stringify(synced) === JSON.stringify(prev) ? prev : synced;
     });
   }, [cartLoaded, products]);
@@ -105,7 +108,6 @@ function ProductList({ products = [], shopSlug, shopId, shopName , shopPhone}) {
       const found = prev.find((item) => item.id === product.id);
 
       if (found) {
-        // Never put more in the cart than the shop has
         if (found.quantity >= stock) return prev;
         return prev.map((item) =>
           item.id === product.id
@@ -148,15 +150,26 @@ function ProductList({ products = [], shopSlug, shopId, shopName , shopPhone}) {
 
   return (
     <div className="app">
+      {/* Language switch */}
+      <div style={{ textAlign: "right", padding: "8px 16px" }}>
+        <button
+          type="button"
+          onClick={() => setLang(lang === "en" ? "sw" : "en")}
+          aria-label="Change language"
+        >
+          {lang === "en" ? "SW" : "EN"}
+        </button>
+      </div>
+
       {/* Top bar: shop name on the left, cart icon on the right */}
       <div className="store-bar">
-        <p className="shop-label">{shopName ||shopSlug }</p>
+        <p className="shop-label">{shopName || shopSlug}</p>
 
         <button
           type="button"
           className="cart-btn"
           onClick={() => setCartOpen(true)}
-          aria-label={`Open cart, ${cartCount} items`}
+          aria-label={t(`Open cart, ${cartCount} items`, `Fungua kikapu, bidhaa ${cartCount}`)}
         >
           <svg
             width="22"
@@ -180,13 +193,15 @@ function ProductList({ products = [], shopSlug, shopId, shopName , shopPhone}) {
       <div className="search">
         <input
           type="text"
-          placeholder="Search product..."
+          placeholder={t("Search product...", "Tafuta bidhaa...")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
 
-      {filteredProducts.length === 0 && <p>No product found</p>}
+      {filteredProducts.length === 0 && (
+        <p>{t("No product found", "Hakuna bidhaa iliyopatikana")}</p>
+      )}
 
       <div className="product-list">
         {filteredProducts.map((product) => {
@@ -210,12 +225,12 @@ function ProductList({ products = [], shopSlug, shopId, shopName , shopPhone}) {
                 disabled={soldOut || atMax}
               >
                 {soldOut
-                  ? "Out of stock"
+                  ? t("Out of stock", "Bidhaa imeisha")
                   : atMax
-                  ? "Max in cart"
+                  ? t("Max in cart", "Umefikia kiwango cha juu")
                   : inCart > 0
-                  ? `Add more · ${inCart}`
-                  : "Add To Cart"}
+                  ? t(`Add more · ${inCart}`, `Ongeza zaidi · ${inCart}`)
+                  : t("Add To Cart", "Weka kwenye kikapu")}
               </button>
             </div>
           );
@@ -229,23 +244,25 @@ function ProductList({ products = [], shopSlug, shopId, shopName , shopPhone}) {
             className="cart-drawer"
             role="dialog"
             aria-modal="true"
-            aria-label="Your cart"
+            aria-label={t("Your cart", "Kikapu chako")}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="cart-drawer-header">
-              <h3>Your cart ({cartCount})</h3>
+              <h3>{t(`Your cart (${cartCount})`, `Kikapu chako (${cartCount})`)}</h3>
               <button
                 type="button"
                 className="cart-close"
                 onClick={() => setCartOpen(false)}
-                aria-label="Close cart"
+                aria-label={t("Close cart", "Funga kikapu")}
               >
                 ✕
               </button>
             </div>
 
             <div className="cart-drawer-body">
-              {cart.length === 0 && <p className="cart-empty">Cart is empty</p>}
+              {cart.length === 0 && (
+                <p className="cart-empty">{t("Cart is empty", "Kikapu hakina bidhaa")}</p>
+              )}
 
               {cart.map((item) => {
                 const max =
@@ -274,7 +291,7 @@ function ProductList({ products = [], shopSlug, shopId, shopName , shopPhone}) {
                         type="button"
                         onClick={() => changeQuantity(item.id, -1)}
                         disabled={item.quantity <= 1}
-                        aria-label="Decrease quantity"
+                        aria-label={t("Decrease quantity", "Punguza idadi")}
                       >
                         −
                       </button>
@@ -283,7 +300,7 @@ function ProductList({ products = [], shopSlug, shopId, shopName , shopPhone}) {
                         type="button"
                         onClick={() => changeQuantity(item.id, 1)}
                         disabled={item.quantity >= max}
-                        aria-label="Increase quantity"
+                        aria-label={t("Increase quantity", "Ongeza idadi")}
                       >
                         +
                       </button>
@@ -293,7 +310,7 @@ function ProductList({ products = [], shopSlug, shopId, shopName , shopPhone}) {
                       type="button"
                       className="cart-delete"
                       onClick={() => handleRemoveFromCart(item.id)}
-                      aria-label="Remove from cart"
+                      aria-label={t("Remove from cart", "Ondoa kwenye kikapu")}
                     >
                       ✕
                     </button>
@@ -303,7 +320,7 @@ function ProductList({ products = [], shopSlug, shopId, shopName , shopPhone}) {
 
               {cart.length > 0 && (
                 <p className="cart-total">
-                  Total: {totalCartPrice.toLocaleString()} TZS
+                  {t("Total:", "Jumla:")} {totalCartPrice.toLocaleString()} TZS
                 </p>
               )}
 
@@ -313,7 +330,7 @@ function ProductList({ products = [], shopSlug, shopId, shopName , shopPhone}) {
                 cartTotal={totalCartPrice}
                 shopId={shopId}
                 shopName={shopName}
-                shopPhone={shopPhone}    
+                shopPhone={shopPhone}
               />
             </div>
           </div>
