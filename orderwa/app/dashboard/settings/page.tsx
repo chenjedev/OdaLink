@@ -679,10 +679,10 @@ export default function SettingsPage() {
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button
             type="submit"
+            className="save-btn"
             disabled={saving || !paymentFormValid}
             style={{
               ...buttonStyle,
-              background: "#111827",
               color: "#fff",
               opacity: saving || !paymentFormValid ? 0.6 : 1,
             }}
@@ -796,11 +796,11 @@ export default function SettingsPage() {
               >
                 <button
                   type="button"
-                  className="save-btn"
                   onClick={() => editPaymentMethod(item)}
                   style={{
-                    style={{ marginTop: 8 }}
-                    
+                    ...buttonStyle,
+                    background: "#e5e7eb",
+                    color: "#111827",
                   }}
                 >
                   {t("Edit", "Hariri")}
