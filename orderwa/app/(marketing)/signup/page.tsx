@@ -1,4 +1,5 @@
 import AuthForm from "../../components/AuthForm";
+import { SiteHeader, SiteFooter } from "../../components/SiteLayout";
 
 export default function SignUpPage() {
   return (
