@@ -10,12 +10,47 @@ type Shop = {
   name: string;
   slug: string;
   phone: string | null;
-  payment_method: string | null;
-  payment_number: string | null;
-  payment_name: string | null;
+};
+
+type PaymentMethod = {
+  id: string;
+  shop_id: string;
+  method: string;
+  account_name: string;
+  account_number: string;
+  bank_name: string | null;
+  is_enabled: boolean;
+  created_at: string;
 };
 
 type Lang = "en" | "sw";
+
+const PAYMENT_OPTIONS = [
+  { value: "mpesa", label: "M-Pesa" },
+  { value: "airtel_money", label: "Airtel Money" },
+  { value: "tigopesa", label: "Tigo Pesa" },
+  { value: "halopesa", label: "HaloPesa" },
+  { value: "selcom", label: "Selcom" },
+  { value: "bank", label: "Bank / Benki" },
+];
+
+const inputStyle = {
+  width: "100%",
+  boxSizing: "border-box" as const,
+  padding: "12px",
+  border: "1px solid #d1d5db",
+  borderRadius: "8px",
+  fontSize: "15px",
+};
+
+const buttonStyle = {
+  padding: "10px 14px",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontSize: "14px",
+  fontWeight: 600 as const,
+};
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -24,12 +59,18 @@ export default function SettingsPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
 
-  const [paymentMethod, setPaymentMethod] = useState("");
-  const [paymentNumber, setPaymentNumber] = useState("");
-  const [paymentName, setPaymentName] = useState("");
+  const [methods, setMethods] = useState<PaymentMethod[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const [method, setMethod] = useState("mpesa");
+  const [accountName, setAccountName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [isEnabled, setIsEnabled] = useState(true);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const [lang, setLang] = useState<Lang>("en");
@@ -54,7 +95,6 @@ export default function SettingsPage() {
     }
 
     syncLanguage();
-
     window.addEventListener("odLinkLanguageChange", syncLanguage);
     window.addEventListener("storage", syncLanguage);
 
@@ -64,79 +104,131 @@ export default function SettingsPage() {
     };
   }, []);
 
+  async function loadPaymentMethods(shopId: string) {
+    const { data, error: methodsError } = await supabase
+      .from("shop_payment_methods")
+      .select(
+        "id, shop_id, method, account_name, account_number, bank_name, is_enabled, created_at"
+      )
+      .eq("shop_id", shopId)
+      .order("created_at", { ascending: true });
+
+    if (methodsError) {
+      console.error("Load payment methods failed:", methodsError.message);
+      setError(
+        t(
+          "Could not load payment methods.",
+          "Imeshindwa kupakia njia za malipo."
+        )
+      );
+      return;
+    }
+
+    setMethods((data ?? []) as PaymentMethod[]);
+  }
+
   useEffect(() => {
+    let cancelled = false;
+
     async function load() {
       const {
         data: { user },
+        error: authError,
       } = await supabase.auth.getUser();
 
-      if (!user) {
+      if (cancelled) return;
+
+      if (authError || !user) {
         router.replace("/login");
         return;
       }
 
-      const { data, error: shopErr } = await supabase
+      const { data, error: shopError } = await supabase
         .from("shops")
-        .select(
-          "id, name, slug, phone, payment_method, payment_number, payment_name"
-        )
+        .select("id, name, slug, phone")
         .eq("owner_id", user.id)
         .maybeSingle();
 
-      if (shopErr) {
-        console.error("Load shop failed:", shopErr.message);
+      if (cancelled) return;
+
+      if (shopError) {
+        console.error("Load shop failed:", shopError.message);
         setError(
-          "Could not load your shop. Please refresh and try again."
+          t(
+            "Could not load your shop. Please refresh and try again.",
+            "Imeshindwa kupakia duka lako. Tafadhali jaribu tena."
+          )
         );
+        setLoading(false);
+        return;
       }
 
-      if (data) {
-        const s = data as Shop;
-
-        setShop(s);
-        setName(s.name ?? "");
-        setPhone(s.phone ?? "");
-
-        setPaymentMethod(s.payment_method ?? "");
-        setPaymentNumber(s.payment_number ?? "");
-        setPaymentName(s.payment_name ?? "");
+      if (!data) {
+        setLoading(false);
+        return;
       }
 
-      setLoading(false);
+      const currentShop = data as Shop;
+      setShop(currentShop);
+      setName(currentShop.name ?? "");
+      setPhone(currentShop.phone ?? "");
+
+      await loadPaymentMethods(currentShop.id);
+
+      if (!cancelled) setLoading(false);
     }
 
     load();
+
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   const phoneDigits = phone.replace(/\D/g, "");
   const phoneOk =
     phoneDigits.length >= 9 && phoneDigits.length <= 15;
 
-  const paymentNumberDigits = paymentNumber.replace(/\D/g, "");
-  const paymentNumberOk =
-    paymentNumberDigits.length >= 9 &&
-    paymentNumberDigits.length <= 15;
+  const accountDigits = accountNumber.replace(/\D/g, "");
+  const accountNumberOk =
+    accountDigits.length >= 5 && accountDigits.length <= 30;
 
-  const paymentEnabled = paymentMethod !== "";
+  const paymentFormValid =
+    accountName.trim().length >= 2 &&
+    accountNumberOk &&
+    (method !== "bank" || bankName.trim().length >= 2);
 
-  const paymentValid =
-    !paymentEnabled ||
-    (paymentNumberOk && paymentName.trim().length >= 2);
-
-  const isInvalid =
-    name.trim().length < 2 || !phoneOk || !paymentValid;
-
-  const unchanged =
+  const shopDetailsUnchanged =
     !!shop &&
-    name.trim() === (shop.name ?? "") &&
-    phone.trim() === (shop.phone ?? "") &&
-    paymentMethod === (shop.payment_method ?? "") &&
-    paymentNumber.trim() === (shop.payment_number ?? "") &&
-    paymentName.trim() === (shop.payment_name ?? "");
+    name.trim() === shop.name &&
+    phone.trim() === (shop.phone ?? "");
 
-  async function handleSubmit(e: FormEvent) {
+  function resetPaymentForm() {
+    setEditingId(null);
+    setMethod("mpesa");
+    setAccountName("");
+    setAccountNumber("");
+    setBankName("");
+    setIsEnabled(true);
+    setError("");
+    setSaved(false);
+  }
+
+  function editPaymentMethod(item: PaymentMethod) {
+    setEditingId(item.id);
+    setMethod(item.method);
+    setAccountName(item.account_name);
+    setAccountNumber(item.account_number);
+    setBankName(item.bank_name ?? "");
+    setIsEnabled(item.is_enabled);
+    setError("");
+    setSaved(false);
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function handleShopSubmit(e: FormEvent) {
     e.preventDefault();
-
     if (!shop) return;
 
     setError("");
@@ -152,51 +244,25 @@ export default function SettingsPage() {
       return;
     }
 
-    if (paymentEnabled && !paymentNumberOk) {
-      setError(
-        t(
-          "Enter a valid payment number containing 9 to 15 digits.",
-          "Weka namba sahihi ya malipo yenye tarakimu 9 hadi 15."
-        )
-      );
-      return;
-    }
-
-    if (paymentEnabled && paymentName.trim().length < 2) {
-      setError(
-        t(
-          "Enter the name of the payment recipient.",
-          "Weka jina la mpokeaji wa malipo."
-        )
-      );
-      return;
-    }
-
     setSaving(true);
 
-    const { data, error: updateErr } = await supabase
+    const { data, error: updateError } = await supabase
       .from("shops")
       .update({
         name: name.trim(),
         phone: phone.trim(),
-        payment_method: paymentMethod || null,
-        payment_number: paymentNumber.trim() || null,
-        payment_name: paymentName.trim() || null,
       })
       .eq("id", shop.id)
-      .select(
-        "id, name, slug, phone, payment_method, payment_number, payment_name"
-      );
+      .select("id, name, slug, phone");
 
     setSaving(false);
 
-    if (updateErr) {
-      console.error("Update shop failed:", updateErr.message);
-
+    if (updateError) {
+      console.error("Update shop failed:", updateError.message);
       setError(
         t(
-          "Could not save your changes. Please try again.",
-          "Imeshindwa kuhifadhi mabadiliko yako. Tafadhali jaribu tena."
+          "Could not save shop settings. Please try again.",
+          "Imeshindwa kuhifadhi mipangilio ya duka. Tafadhali jaribu tena."
         )
       );
       return;
@@ -205,39 +271,191 @@ export default function SettingsPage() {
     if (!data || data.length === 0) {
       setError(
         t(
-          "Nothing was saved. Check the update policy on the shops table.",
-          "Hakuna kilichohifadhiwa. Kagua ruhusa za kusasisha taarifa kwenye jedwali la shops."
+          "No changes were saved. Check your shop update permissions.",
+          "Mabadiliko hayakuhifadhiwa. Kagua ruhusa za kubadilisha taarifa za duka."
         )
       );
       return;
     }
 
     const updated = data[0] as Shop;
-
     setShop(updated);
-    setName(updated.name ?? "");
+    setName(updated.name);
     setPhone(updated.phone ?? "");
-
-    setPaymentMethod(updated.payment_method ?? "");
-    setPaymentNumber(updated.payment_number ?? "");
-    setPaymentName(updated.payment_name ?? "");
-
     setSaved(true);
+  }
+
+  async function handlePaymentSubmit(e: FormEvent) {
+    e.preventDefault();
+
+    if (!shop) return;
+
+    setError("");
+    setSaved(false);
+
+    if (!paymentFormValid) {
+      setError(
+        t(
+          "Complete the payment details correctly.",
+          "Jaza taarifa za malipo kwa usahihi."
+        )
+      );
+      return;
+    }
+
+    setSaving(true);
+
+    const payload = {
+      shop_id: shop.id,
+      method,
+      account_name: accountName.trim(),
+      account_number: accountNumber.trim(),
+      bank_name: method === "bank" ? bankName.trim() : null,
+      is_enabled: isEnabled,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (editingId) {
+      const { data, error: updateError } = await supabase
+        .from("shop_payment_methods")
+        .update(payload)
+        .eq("id", editingId)
+        .eq("shop_id", shop.id)
+        .select(
+          "id, shop_id, method, account_name, account_number, bank_name, is_enabled, created_at"
+        );
+
+      setSaving(false);
+
+      if (updateError || !data || data.length === 0) {
+        console.error("Update payment method failed:", updateError?.message);
+        setError(
+          t(
+            "Could not update this payment method.",
+            "Imeshindwa kubadilisha njia hii ya malipo."
+          )
+        );
+        return;
+      }
+    } else {
+      const { data, error: insertError } = await supabase
+        .from("shop_payment_methods")
+        .insert(payload)
+        .select(
+          "id, shop_id, method, account_name, account_number, bank_name, is_enabled, created_at"
+        );
+
+      setSaving(false);
+
+      if (insertError || !data || data.length === 0) {
+        console.error("Add payment method failed:", insertError?.message);
+        setError(
+          t(
+            "Could not add this payment method. Please try again.",
+            "Imeshindwa kuongeza njia hii ya malipo. Tafadhali jaribu tena."
+          )
+        );
+        return;
+      }
+    }
+
+    await loadPaymentMethods(shop.id);
+    resetPaymentForm();
+    setSaved(true);
+  }
+
+  async function togglePaymentMethod(item: PaymentMethod) {
+    if (!shop) return;
+
+    setError("");
+    setSaved(false);
+
+    const { data, error: updateError } = await supabase
+      .from("shop_payment_methods")
+      .update({
+        is_enabled: !item.is_enabled,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", item.id)
+      .eq("shop_id", shop.id)
+      .select("id");
+
+    if (updateError || !data || data.length === 0) {
+      console.error("Toggle payment method failed:", updateError?.message);
+      setError(
+        t(
+          "Could not change this payment method.",
+          "Imeshindwa kubadilisha hali ya njia hii ya malipo."
+        )
+      );
+      return;
+    }
+
+    await loadPaymentMethods(shop.id);
+  }
+
+  async function deletePaymentMethod(item: PaymentMethod) {
+    if (!shop) return;
+
+    const confirmed = window.confirm(
+      t(
+        "Delete this payment method? This cannot be undone.",
+        "Ufute njia hii ya malipo? Huwezi kurudisha kitendo hiki."
+      )
+    );
+
+    if (!confirmed) return;
+
+    setError("");
+    setSaved(false);
+    setDeletingId(item.id);
+
+    const { data, error: deleteError } = await supabase
+      .from("shop_payment_methods")
+      .delete()
+      .eq("id", item.id)
+      .eq("shop_id", shop.id)
+      .select("id");
+
+    setDeletingId(null);
+
+    if (deleteError || !data || data.length === 0) {
+      console.error("Delete payment method failed:", deleteError?.message);
+      setError(
+        t(
+          "Could not delete this payment method.",
+          "Imeshindwa kufuta njia hii ya malipo."
+        )
+      );
+      return;
+    }
+
+    setMethods((current) => current.filter((m) => m.id !== item.id));
+
+    if (editingId === item.id) resetPaymentForm();
+  }
+
+  function methodLabel(value: string) {
+    return (
+      PAYMENT_OPTIONS.find((option) => option.value === value)?.label ??
+      value
+    );
   }
 
   if (loading) {
     return (
-      <p>{t("Loading settings...", "Inapakia mipangilio...")}</p>
+      <div className="products-page" style={{ padding: 12 }}>
+        {t("Loading settings...", "Inapakia mipangilio...")}
+      </div>
     );
   }
 
   if (!shop) {
     return (
-      <div className="products-page">
+      <div className="products-page" style={{ padding: 12 }}>
         <div className="product-header">
           <h2>{t("Settings", "Mipangilio")}</h2>
         </div>
-
         <p style={{ color: "#dc2626" }}>
           {error ||
             t(
@@ -253,20 +471,27 @@ export default function SettingsPage() {
     <div
       className="products-page"
       style={{
-        padding: "12px",
-        maxWidth: 520,
+        padding: 12,
+        maxWidth: 560,
+        width: "100%",
         boxSizing: "border-box",
       }}
     >
-      <div className="product-header" style={{ marginBottom: "16px" }}>
+      <div className="product-header" style={{ marginBottom: 16 }}>
         <h2>{t("Settings", "Mipangilio")}</h2>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      {error && (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
+      )}
+
+      <form onSubmit={handleShopSubmit}>
         <div className="form-group">
           <label>{t("Shop name", "Jina la duka")}</label>
-
           <input
+            style={inputStyle}
             type="text"
             placeholder={t("eg. Irene Fashion", "mf. Irene Fashion")}
             value={name}
@@ -281,8 +506,8 @@ export default function SettingsPage() {
 
         <div className="form-group">
           <label>{t("WhatsApp number", "Namba ya WhatsApp")}</label>
-
           <input
+            style={inputStyle}
             type="tel"
             placeholder={t("eg. 0712345678", "mf. 0712345678")}
             value={phone}
@@ -292,162 +517,329 @@ export default function SettingsPage() {
             }}
             required
           />
-
-          <p
-            style={{
-              fontSize: 13,
-              color: "#6b7280",
-              margin: "6px 0 0",
-            }}
-          >
+          <p style={{ fontSize: 13, color: "#6b7280", marginTop: 6 }}>
             {t(
-              "Customers send their orders to this number on WhatsApp. Use a number that has WhatsApp.",
-              "Wateja watatuma oda zao kupitia WhatsApp kwenye namba hii. Tumia namba yenye akaunti ya WhatsApp."
+              "Customers send their orders to this number on WhatsApp.",
+              "Wateja hutuma oda zao kupitia WhatsApp kwenye namba hii."
             )}
           </p>
         </div>
 
         <div className="form-group">
           <label>{t("Shop link name", "Jina la kiungo cha duka")}</label>
-
-          <input type="text" value={shop.slug} readOnly disabled />
-
-          <p
-            style={{
-              fontSize: 13,
-              color: "#6b7280",
-              margin: "6px 0 0",
-            }}
-          >
+          <input
+            style={inputStyle}
+            type="text"
+            value={shop.slug}
+            readOnly
+            disabled
+          />
+          <p style={{ fontSize: 13, color: "#6b7280", marginTop: 6 }}>
             {t(
-              "This cannot be changed, because customers already have links that use it.",
-              "Jina hili haliwezi kubadilishwa kwa sababu wateja tayari wanatumia viungo vinavyolitumia."
+              "This link name cannot be changed here.",
+              "Jina hili la kiungo haliwezi kubadilishwa hapa."
             )}
           </p>
         </div>
 
-        <hr style={{ margin: "24px 0", borderColor: "#e5e7eb" }} />
-
-        <div className="product-header" style={{ marginBottom: "16px" }}>
-          <h3>{t("Payment settings", "Mipangilio ya malipo")}</h3>
-        </div>
-
-        <p
-          style={{
-            fontSize: 14,
-            color: "#6b7280",
-            marginBottom: 16,
-          }}
+        <button
+          type="submit"
+          className="save-btn"
+          disabled={
+            saving ||
+            !phoneOk ||
+            name.trim().length < 2 ||
+            shopDetailsUnchanged
+          }
+          style={{ marginTop: 8 }}
         >
-          {t(
-            "Set up the mobile money account customers should use to pay your shop.",
-            "Weka taarifa za akaunti ya simu ambayo wateja watatumia kulipia bidhaa za duka lako."
-          )}
-        </p>
+          {saving
+            ? t("Saving...", "Inahifadhi...")
+            : t("Save shop settings", "Hifadhi mipangilio ya duka")}
+        </button>
+      </form>
+
+      <hr style={{ margin: "28px 0", borderColor: "#e5e7eb" }} />
+
+      <div className="product-header" style={{ marginBottom: 12 }}>
+        <h3>{t("Payment methods", "Njia za malipo")}</h3>
+      </div>
+
+      <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 20 }}>
+        {t(
+          "Add as many payment methods as your shop needs. Each method keeps its own account details.",
+          "Ongeza njia za malipo unazohitaji. Kila njia ina taarifa zake tofauti za akaunti."
+        )}
+      </p>
+
+      <form
+        onSubmit={handlePaymentSubmit}
+        style={{
+          border: "1px solid #e5e7eb",
+          borderRadius: 12,
+          padding: 14,
+          marginBottom: 24,
+        }}
+      >
+        <h4 style={{ marginTop: 0, marginBottom: 16 }}>
+          {editingId
+            ? t("Edit payment method", "Hariri njia ya malipo")
+            : t("Add payment method", "Ongeza njia ya malipo")}
+        </h4>
 
         <div className="form-group">
-          <label>{t("Payment method", "Njia ya malipo")}</label>
-
+          <label>{t("Payment provider", "Mtoa huduma wa malipo")}</label>
           <select
-            value={paymentMethod}
-            onChange={(e) => {
-              setPaymentMethod(e.target.value);
-              setSaved(false);
-            }}
+            style={inputStyle}
+            value={method}
+            onChange={(e) => setMethod(e.target.value)}
+            required
           >
-            <option value="">
-              {t("Not configured", "Haijawekwa")}
-            </option>
-            <option value="mpesa">M-Pesa</option>
-            <option value="airtel_money">Airtel Money</option>
-            <option value="tigopesa">Tigo Pesa</option>
+            {PAYMENT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </div>
 
-        {paymentEnabled && (
-          <>
-            <div className="form-group">
-              <label>
-                {t(
-                  "Lipa Namba / Payment number",
-                  "Lipa Namba / Namba ya malipo"
-                )}
-              </label>
-
-              <input
-                type="tel"
-                placeholder={t(
-                  "Enter business or mobile number",
-                  "Weka namba ya biashara au simu"
-                )}
-                value={paymentNumber}
-                onChange={(e) => {
-                  setPaymentNumber(e.target.value);
-                  setSaved(false);
-                }}
-                required
-              />
-
-              <p
-                style={{
-                  fontSize: 13,
-                  color: "#6b7280",
-                  margin: "6px 0 0",
-                }}
-              >
-                {t(
-                  "Enter the number customers should use to pay.",
-                  "Weka namba ambayo wateja wanapaswa kutumia kulipia."
-                )}
-              </p>
-            </div>
-
-            <div className="form-group">
-              <label>
-                {t("Recipient name", "Jina la mpokeaji")}
-              </label>
-
-              <input
-                type="text"
-                placeholder={t(
-                  "Name registered to the account",
-                  "Jina lililosajiliwa kwenye akaunti"
-                )}
-                value={paymentName}
-                onChange={(e) => {
-                  setPaymentName(e.target.value);
-                  setSaved(false);
-                }}
-                maxLength={80}
-                required
-              />
-            </div>
-          </>
-        )}
-
-        {error && <p className="form-error">{error}</p>}
-
-        {saved && (
-          <p style={{ color: "#16a34a", fontWeight: 600 }}>
-            {t(
-              "Changes saved successfully.",
-              "Mabadiliko yamehifadhiwa kikamilifu."
-            )}
-          </p>
+        {method === "bank" && (
+          <div className="form-group">
+            <label>{t("Bank name", "Jina la benki")}</label>
+            <input
+              style={inputStyle}
+              type="text"
+              value={bankName}
+              onChange={(e) => setBankName(e.target.value)}
+              placeholder={t("Enter bank name", "Weka jina la benki")}
+              required
+            />
+          </div>
         )}
 
         <div className="form-group">
+          <label>{t("Account / recipient name", "Jina la akaunti / mpokeaji")}</label>
+          <input
+            style={inputStyle}
+            type="text"
+            value={accountName}
+            onChange={(e) => setAccountName(e.target.value)}
+            placeholder={t(
+              "Name registered to the account",
+              "Jina lililosajiliwa kwenye akaunti"
+            )}
+            maxLength={100}
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label>
+            {method === "bank"
+              ? t("Account number", "Namba ya akaunti")
+              : method === "selcom"
+                ? t("Selcom number / Till", "Namba ya Selcom / Till")
+                : t("Lipa Namba / Phone number", "Lipa Namba / Namba ya simu")}
+          </label>
+          <input
+            style={inputStyle}
+            type="text"
+            value={accountNumber}
+            onChange={(e) => setAccountNumber(e.target.value)}
+            placeholder={t(
+              "Enter account or payment number",
+              "Weka namba ya akaunti au malipo"
+            )}
+            maxLength={50}
+            required
+          />
+        </div>
+
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            margin: "16px 0",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={isEnabled}
+            onChange={(e) => setIsEnabled(e.target.checked)}
+          />
+          <span>
+            {t(
+              "Available to customers",
+              "Ionekane kwa wateja"
+            )}
+          </span>
+        </label>
+
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button
             type="submit"
-            className="save-btn"
-            disabled={isInvalid || saving || unchanged}
+            disabled={saving || !paymentFormValid}
+            style={{
+              ...buttonStyle,
+              background: "#111827",
+              color: "#fff",
+              opacity: saving || !paymentFormValid ? 0.6 : 1,
+            }}
           >
             {saving
               ? t("Saving...", "Inahifadhi...")
-              : t("Save changes", "Hifadhi mabadiliko")}
+              : editingId
+                ? t("Update method", "Sasisha njia")
+                : t("Add method", "Ongeza njia")}
           </button>
+
+          {editingId && (
+            <button
+              type="button"
+              onClick={resetPaymentForm}
+              style={{
+                ...buttonStyle,
+                background: "#e5e7eb",
+                color: "#111827",
+              }}
+            >
+              {t("Cancel", "Ghairi")}
+            </button>
+          )}
         </div>
       </form>
+
+      {saved && (
+        <p style={{ color: "#16a34a", fontWeight: 600 }}>
+          {t(
+            "Changes saved successfully.",
+            "Mabadiliko yamehifadhiwa kikamilifu."
+          )}
+        </p>
+      )}
+
+      <h4 style={{ marginBottom: 12 }}>
+        {t("Your payment methods", "Njia zako za malipo")}
+      </h4>
+
+      {methods.length === 0 ? (
+        <p style={{ color: "#6b7280", fontSize: 14 }}>
+          {t(
+            "No payment methods added yet.",
+            "Bado hujaongeza njia za malipo."
+          )}
+        </p>
+      ) : (
+        <div style={{ display: "grid", gap: 12 }}>
+          {methods.map((item) => (
+            <div
+              key={item.id}
+              style={{
+                border: "1px solid #e5e7eb",
+                borderRadius: 12,
+                padding: 14,
+                background: "#fff",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  gap: 10,
+                  flexWrap: "wrap",
+                }}
+              >
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <strong>{methodLabel(item.method)}</strong>
+
+                  <p style={{ margin: "8px 0 4px", overflowWrap: "anywhere" }}>
+                    {t("Account name", "Jina la akaunti")}: {item.account_name}
+                  </p>
+
+                  <p style={{ margin: "4px 0", overflowWrap: "anywhere" }}>
+                    {t("Number", "Namba")}: {item.account_number}
+                  </p>
+
+                  {item.method === "bank" && item.bank_name && (
+                    <p style={{ margin: "4px 0" }}>
+                      {t("Bank", "Benki")}: {item.bank_name}
+                    </p>
+                  )}
+
+                  <span
+                    style={{
+                      display: "inline-block",
+                      marginTop: 8,
+                      padding: "4px 8px",
+                      borderRadius: 6,
+                      fontSize: 12,
+                      background: item.is_enabled ? "#dcfce7" : "#f3f4f6",
+                      color: item.is_enabled ? "#166534" : "#4b5563",
+                    }}
+                  >
+                    {item.is_enabled
+                      ? t("Enabled", "Imewashwa")
+                      : t("Disabled", "Imezimwa")}
+                  </span>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 8,
+                  marginTop: 14,
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => editPaymentMethod(item)}
+                  style={{
+                    ...buttonStyle,
+                    background: "#e5e7eb",
+                    color: "#111827",
+                  }}
+                >
+                  {t("Edit", "Hariri")}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => togglePaymentMethod(item)}
+                  style={{
+                    ...buttonStyle,
+                    background: item.is_enabled ? "#fef3c7" : "#dcfce7",
+                    color: "#111827",
+                  }}
+                >
+                  {item.is_enabled
+                    ? t("Disable", "Zima")
+                    : t("Enable", "Washa")}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => deletePaymentMethod(item)}
+                  disabled={deletingId === item.id}
+                  style={{
+                    ...buttonStyle,
+                    background: "#fee2e2",
+                    color: "#991b1b",
+                    opacity: deletingId === item.id ? 0.6 : 1,
+                  }}
+                >
+                  {deletingId === item.id
+                    ? t("Deleting...", "Inafuta...")
+                    : t("Delete", "Futa")}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
