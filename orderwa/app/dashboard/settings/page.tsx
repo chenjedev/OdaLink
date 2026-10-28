@@ -796,11 +796,11 @@ export default function SettingsPage() {
               >
                 <button
                   type="button"
+                  className="save-btn"
                   onClick={() => editPaymentMethod(item)}
                   style={{
-                    ...buttonStyle,
-                    background: "#e5e7eb",
-                    color: "#111827",
+                    style={{ marginTop: 8 }}
+                    
                   }}
                 >
                   {t("Edit", "Hariri")}
