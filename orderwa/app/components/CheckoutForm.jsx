@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -21,7 +22,7 @@ function toWhatsAppNumber(phone) {
   return digits;
 }
 
-function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName, shopPhone }) {
+function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName, shopPhone, lang = "en" }) {
   const router = useRouter();
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
@@ -29,6 +30,8 @@ function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName, shopPhone })
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [whatsappUrl, setWhatsappUrl] = useState("");
+
+  const t = (en, sw) => lang === "sw" ? sw : en;
 
   const isInvalid =
     name.trim() === "" ||
@@ -43,15 +46,21 @@ function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName, shopPhone })
     setWhatsappUrl("");
 
     if (!shopId) {
-      setError("This shop is not available right now.");
+      setError(t(
+        "This shop is not available right now.",
+        "Duka hili halipatikani kwa sasa."
+      ));
       return;
     }
     if (name.trim() === "" || phone.trim().length < 10) {
-      setError("Please enter your name and a valid phone number");
+      setError(t(
+        "Please enter your name and a valid phone number",
+        "Tafadhali weka jina lako na namba sahihi ya simu"
+      ));
       return;
     }
     if (cart.length === 0) {
-      setError("Your cart is empty");
+      setError(t("Your cart is empty", "Kikapu chako hakina bidhaa"));
       return;
     }
 
@@ -85,7 +94,10 @@ function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName, shopPhone })
       setError(
         isSafe
           ? insertError.message
-          : "Could not send your order. Please try again."
+          : t(
+              "Could not send your order. Please try again.",
+              "Oda yako haikutumwa. Tafadhali jaribu tena."
+            )
       );
 
       // Reload the shop's products so stock numbers and cart limits are fresh
@@ -111,7 +123,7 @@ function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName, shopPhone })
         `Total: ${cartTotal.toLocaleString()} TZS`,
         `Name: ${name.trim()}`,
         `Phone: ${phone.trim()}`,
-         "",
+        "",
         `Manage this order (seller): ${window.location.origin}/dashboard/orders?q=${encodeURIComponent(phone.trim())}`,
       ].join("\n");
 
@@ -121,7 +133,10 @@ function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName, shopPhone })
     }
 
     setSuccess(
-      `Order sent to ${shopName || "the shop"}. They will contact you on ${phone.trim()}.`
+      t(
+        `Order sent to ${shopName || "the shop"}. They will contact you on ${phone.trim()}.`,
+        `Oda imetumwa kwa ${shopName || "duka"}. Watawasiliana nawe kupitia ${phone.trim()}.`
+      )
     );
     setName("");
     setPhone("");
@@ -142,7 +157,12 @@ function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName, shopPhone })
 
         {whatsappUrl && (
           <>
-            <p style={{ margin: "0 0 10px" }}>For a faster reply, also send your order on WhatsApp:</p>
+            <p style={{ margin: "0 0 10px" }}>
+              {t(
+                "For a faster reply, also send your order on WhatsApp:",
+                "Ili upate majibu haraka, pia tuma oda yako kupitia WhatsApp:"
+              )}
+            </p>
 
             {/* A link (not window.open), because phones block popups opened after a delay */}
             <a
@@ -156,12 +176,12 @@ function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName, shopPhone })
                 fontSize: "15px",
                 fontWeight: 700,
                 color: "#fff",
-                background:  "#0f766e",
+                background: "#0f766e",
                 borderRadius: "8px",
                 textDecoration: "none",
               }}
             >
-              Send on WhatsApp
+              {t("Send on WhatsApp", "Tuma kupitia WhatsApp")}
             </a>
           </>
         )}
@@ -174,13 +194,13 @@ function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName, shopPhone })
       <form onSubmit={handleSubmit}>
         <input
           type="text"
-          placeholder="Your name, eg. John Doe"
+          placeholder={t("Your name, eg. John Doe", "Jina lako, mfano John Doe")}
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
         <input
           type="tel"
-          placeholder="Phone, eg. 0712345678"
+          placeholder={t("Phone, eg. 0712345678", "Namba ya simu, mfano 0712345678")}
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
         />
@@ -189,8 +209,11 @@ function CheckoutForm({ cart, setCart, cartTotal, shopId, shopName, shopPhone })
 
         <button type="submit" disabled={isInvalid}>
           {sending
-            ? "Sending..."
-            : `Send order · ${cartTotal.toLocaleString()} TZS`}
+            ? t("Sending...", "Inatuma...")
+            : t(
+                `Send order · ${cartTotal.toLocaleString()} TZS`,
+                `Tuma oda · ${cartTotal.toLocaleString()} TZS`
+              )}
         </button>
       </form>
     </div>
