@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -21,6 +22,8 @@ type Order = {
   created_at: string;
 };
 
+type Lang = "en" | "sw";
+
 const STATUSES = ["pending", "confirmed", "delivered", "cancelled"];
 
 function itemsSummary(items: OrderItem[]) {
@@ -37,16 +40,61 @@ function toWhatsApp(phone: string) {
 
 export default function OrderPage() {
   const router = useRouter();
+
   const [search, setSearch] = useState("");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");  
-// Opened from a WhatsApp link (?q=...): start with that search
+  const [error, setError] = useState("");
+  const [lang, setLang] = useState<Lang>("en");
+
+  const t = (en: string, sw: string) => (lang === "en" ? en : sw);
+
+  function statusLabel(status: string) {
+    if (lang === "en") return status;
+
+    const labels: Record<string, string> = {
+      pending: "Inasubiri",
+      confirmed: "Imethibitishwa",
+      delivered: "Imefikishwa",
+      cancelled: "Imeghairiwa",
+    };
+
+    return labels[status.toLowerCase()] ?? status;
+  }
+
+  // Read the language selected in the dashboard Sidebar.
+  useEffect(() => {
+    function syncLanguage(event?: Event) {
+      const customEvent = event as CustomEvent<Lang> | undefined;
+      const eventLang = customEvent?.detail;
+      const saved = localStorage.getItem("odLinkLanguage");
+
+      const nextLang =
+        eventLang === "en" || eventLang === "sw"
+          ? eventLang
+          : saved === "en" || saved === "sw"
+            ? saved
+            : "en";
+
+      setLang(nextLang);
+    }
+
+    syncLanguage();
+
+    window.addEventListener("odLinkLanguageChange", syncLanguage);
+    window.addEventListener("storage", syncLanguage);
+
+    return () => {
+      window.removeEventListener("odLinkLanguageChange", syncLanguage);
+      window.removeEventListener("storage", syncLanguage);
+    };
+  }, []);
+
+  // Opened from a WhatsApp link (?q=...): start with that search.
   useEffect(() => {
     const q = new URLSearchParams(window.location.search).get("q");
     if (q) setSearch(q);
   }, []);
-
 
   useEffect(() => {
     async function load() {
@@ -72,7 +120,7 @@ export default function OrderPage() {
         return;
       }
 
-      // The shop_id filter keeps this page to this shop's orders only
+      // The shop_id filter keeps this page to this shop's orders only.
       const { data, error: ordersErr } = await supabase
         .from("orders")
         .select(
@@ -97,15 +145,18 @@ export default function OrderPage() {
     setError("");
 
     // Cancelling is permanent (stock goes back), so ask first.
-    // If the seller says no, the dropdown snaps back to the old status.
     if (newStatus === "cancelled") {
       const ok = window.confirm(
-        "Cancel this order? The stock will be returned and the order cannot be reopened."
+        t(
+          "Cancel this order? The stock will be returned and the order cannot be reopened.",
+          "Umeghairi oda hii? Bidhaa zitarudishwa kwenye stoo na oda hii haitaweza kufunguliwa tena."
+        )
       );
+
       if (!ok) return;
     }
 
-    // .select() lets us see whether a row was really updated
+    // Keep original database status values in English.
     const { data, error: updateErr } = await supabase
       .from("orders")
       .update({ status: newStatus })
@@ -124,6 +175,7 @@ export default function OrderPage() {
   }
 
   const q = search.toLowerCase();
+
   const filtered = orders.filter(
     (o) =>
       o.customer_name.toLowerCase().includes(q) ||
@@ -133,40 +185,54 @@ export default function OrderPage() {
   );
 
   if (loading) {
-    return <p>Loading orders...</p>;
+    return <p>{t("Loading orders...", "Inapakia oda...")}</p>;
   }
 
   return (
     <div className="products-page">
       <div className="product-header">
-        <h2>Orders</h2>
+        <h2>{t("Orders", "Oda")}</h2>
       </div>
 
       <div className="search-wrapper">
         <i className="fa-solid fa-magnifying-glass search-icon"></i>
+
         <input
           type="text"
-          placeholder="Search order, customer, phone ..."
+          placeholder={t(
+            "Search order, customer, phone ...",
+            "Tafuta oda, mteja au namba ya simu ..."
+          )}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="search-input"
         />
       </div>
 
-      {error && <p style={{ color: "#dc2626" }}>{error}</p>}
+      {error && (
+        <p style={{ color: "#dc2626" }}>
+          {error === "No shop found for this account"
+            ? t(error, "Hakuna duka lililopatikana kwenye akaunti hii")
+            : error === "Could not load orders"
+              ? t(error, "Imeshindwa kupakia oda")
+              : error === "Could not update the status"
+                ? t(error, "Imeshindwa kubadilisha hali ya oda")
+                : error}
+        </p>
+      )}
 
       {/* Table: shown on large screens */}
       <div className="table-wrapper orders-table">
         <table className="products-table">
           <thead>
             <tr>
-              <th>Id</th>
-              <th>Date</th>
-              <th>Customer</th>
-              <th>Phone</th>
-              <th>Items</th>
-              <th>Total</th>
-              <th>Status</th>
+              <th>{t("Id", "Namba")}</th>
+              <th>{t("Date", "Tarehe")}</th>
+              <th>{t("Customer", "Mteja")}</th>
+              <th>{t("Phone", "Simu")}</th>
+              <th>{t("Items", "Bidhaa")}</th>
+              <th>{t("Total", "Jumla")}</th>
+              <th>{t("Status", "Hali")}</th>
             </tr>
           </thead>
 
@@ -179,18 +245,23 @@ export default function OrderPage() {
                 <td>{o.customer_phone}</td>
                 <td>{itemsSummary(o.items)}</td>
                 <td>{Number(o.total).toLocaleString()} TZS</td>
+
                 <td>
                   <span className={`badge badge-${o.status.toLowerCase()}`}>
-                    {o.status}
+                    {statusLabel(o.status)}
                   </span>{" "}
+
                   <select
                     value={o.status}
                     disabled={o.status === "cancelled"}
-                    onChange={(e) => handleStatusChange(o.id, e.target.value)}
+                    onChange={(e) =>
+                      handleStatusChange(o.id, e.target.value)
+                    }
+                    aria-label={t("Change order status", "Badilisha hali ya oda")}
                   >
                     {STATUSES.map((s) => (
                       <option key={s} value={s}>
-                        {s}
+                        {statusLabel(s)}
                       </option>
                     ))}
                   </select>
@@ -201,13 +272,15 @@ export default function OrderPage() {
             {filtered.length === 0 && (
               <tr>
                 <td className="no-prod" colSpan={7}>
-                  No order found
+                  {t("No order found", "Hakuna oda iliyopatikana")}
                 </td>
               </tr>
             )}
 
             <tr>
-              <td colSpan={7}>Total {filtered.length.toLocaleString()}</td>
+              <td colSpan={7}>
+                {t("Total", "Jumla")} {filtered.length.toLocaleString()}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -221,8 +294,9 @@ export default function OrderPage() {
               <strong>
                 #{o.id} · {o.customer_name}
               </strong>
+
               <span className={`badge badge-${o.status.toLowerCase()}`}>
-                {o.status}
+                {statusLabel(o.status)}
               </span>
             </div>
 
@@ -242,14 +316,18 @@ export default function OrderPage() {
 
             <div className="order-card-bottom">
               <strong>{Number(o.total).toLocaleString()} TZS</strong>
+
               <select
                 value={o.status}
                 disabled={o.status === "cancelled"}
-                onChange={(e) => handleStatusChange(o.id, e.target.value)}
+                onChange={(e) =>
+                  handleStatusChange(o.id, e.target.value)
+                }
+                aria-label={t("Change order status", "Badilisha hali ya oda")}
               >
                 {STATUSES.map((s) => (
                   <option key={s} value={s}>
-                    {s}
+                    {statusLabel(s)}
                   </option>
                 ))}
               </select>
@@ -257,7 +335,9 @@ export default function OrderPage() {
           </div>
         ))}
 
-        {filtered.length === 0 && <p>No order found</p>}
+        {filtered.length === 0 && (
+          <p>{t("No order found", "Hakuna oda iliyopatikana")}</p>
+        )}
       </div>
     </div>
   );
