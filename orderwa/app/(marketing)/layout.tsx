@@ -1,54 +1,48 @@
+import { Analytics } from '@vercel/analytics/next'
+import type { Metadata, Viewport } from 'next'
+import { Manrope } from 'next/font/google'
+import './globals.css'
+import './odalink-routes.css'
 
-import Link from "next/link";
-import { LanguageProvider } from "./LanguageContext";
-import LanguageSwitcher from "./LanguageSwitcher";
+const manrope = Manrope({
+  subsets: ['latin'],
+  variable: '--font-manrope',
+  display: 'swap',
+  weight: ['400', '500', '600', '700', '800'],
+})
 
-export default function MarketingLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <LanguageProvider>
-      <header className="site-header">
-        <div className="nav">
-          <Link href="/" className="brand">
-            <span className="brand-mark">O</span>
-            <span className="brand-name">OdaLink</span>
-          </Link>
-
-          <nav className="nav-links">
-            <LanguageSwitcher />
-            <Link href="/login">Log in</Link>
-            <Link href="/signup" className="nav-login">
-              Start free
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      <main>{children}</main>
-
-      <footer className="footer">
-        <div className="footer-inner">
-          <div className="footer-brand">
-            <span className="brand-mark">O</span>
-            <span className="brand-name">OdaLink</span>
-          </div>
-
-          <p className="footer-tag">WhatsApp orders, organized.</p>
-
-          <div className="footer-links">
-            <Link href="/login">Login</Link>
-            <Link href="/dashboard">Dashboard</Link>
-            <Link href="/store/demo">Demo store</Link>
-          </div>
-
-          <p className="footer-copy">
-            © 2026 OdaLink. All rights reserved.
-          </p>
-        </div>
-      </footer>
-    </LanguageProvider>
-  );
+export const metadata: Metadata = {
+  title: 'OdaLink | WhatsApp orders, organized',
+  description:
+    'Take WhatsApp orders without the chaos. Customers shop from your store link, while you keep names, items, phone numbers, and totals in one place.',
+  applicationName: 'OdaLink',
+  generator: 'v0.app',
+  manifest: '/manifest.json',
+  icons: {
+    icon: '/odalink-mark.svg',
+    apple: '/odalink-mark.svg',
+  },
 }
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  colorScheme: 'light',
+  themeColor: '#f7f9fb',
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
+  return (
+    <html lang="en">
+      <body className={`${manrope.variable} antialiased`}>
+        {children}
+        {process.env.NODE_ENV === 'production' && <Analytics />}
+      </body>
+    </html>
+  )
