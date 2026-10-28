@@ -1,420 +1,367 @@
-
 "use client";
 
 import Link from "next/link";
 import { useLanguage } from "./LanguageContext";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Boxes,
+  Check,
+  Clock3,
+  MessageCircle,
+  PackageCheck,
+  ShoppingBag,
+  Store,
+  UsersRound,
+} from 'lucide-react';
 
 export default function HomePage() {
   const { lang } = useLanguage();
 
   const t = (en: string, sw: string) => (lang === "en" ? en : sw);
 
+
+
+const features = [
+  {
+    icon: Store,
+    label: 'STORE LINK',
+    title: 'Your own store link',
+    description:
+      'Share your shop on WhatsApp, your status, or your bio so customers can browse before they order.',
+  },
+  {
+    icon: ShoppingBag,
+    label: 'CLEAR ORDERS',
+    title: 'Every detail in one place',
+    description:
+      'See each customer, phone number, item, and total without searching through chat history.',
+  },
+  {
+    icon: Boxes,
+    label: 'LIVE DASHBOARD',
+    title: 'A simple order dashboard',
+    description:
+      'Track orders and stock totals, then update each order from pending through delivery.',
+  },
+  {
+    icon: MessageCircle,
+    label: 'WHATSAPP FOLLOW-UP',
+    title: 'Chat with one tap',
+    description:
+      'Reach customers directly on WhatsApp to confirm details and coordinate delivery.',
+  },
+  {
+    icon: PackageCheck,
+    label: 'STOCK THAT STAYS IN SYNC',
+    title: 'Keep stock up to date',
+    description:
+      'Stock adjusts when an order comes in and is restored if you cancel that order.',
+  },
+  {
+    icon: UsersRound,
+    label: 'CUSTOMER DETAILS',
+    title: 'Follow up with confidence',
+    description:
+      'Customer names and phone numbers stay attached to each order for easy follow-up.',
+  },
+]
+
+const steps = [
+  {
+    number: '01',
+    icon: ArrowUpRight,
+    title: 'Share your store link',
+    description:
+      'Send your OdaLink link on WhatsApp, your status, or your social bio.',
+  },
+  {
+    number: '02',
+    icon: ShoppingBag,
+    title: 'Customers place an order',
+    description:
+      'They browse, add products to cart, and send their name, phone, items, and total. The order also reaches you on WhatsApp.',
+  },
+  {
+    number: '03',
+    icon: MessageCircle,
+    title: 'Follow up and deliver',
+    description:
+      'Manage each order from your dashboard, contact the customer on WhatsApp, and deliver.',
+  },
+]
+
+function BrandLockup() {
   return (
-    <div className="landing">
-      {/* HERO */}
-      <section className="hero">
-        <div className="hero-inner">
-          <p className="badge">
-            <svg className="icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 2C6.48 2 2 6.48 2 12c0 1.88.53 3.63 1.46 5.13L2 22l4.98-1.42A9.94 9.94 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z" />
-            </svg>
-            {t("WhatsApp orders, organized", "Oda za WhatsApp, zilizopangwa vizuri")}
-          </p>
+    <a className="brand-lockup" href="#top" aria-label="OdaLink home">
+      <span className="brand-mark" aria-hidden="true">
+        <MessageCircle size={18} strokeWidth={2.2} />
+        <span className="brand-mark-dot" />
+      </span>
+      <span className="brand-wordmark">
+        oda<span>link</span>
+      </span>
+    </a>
+  )
+}
 
-          <h1 className="hero-title">
-            {t("Take WhatsApp orders", "Pokea oda za WhatsApp")}
-            <span className="hero-highlight">
-              {t(" without the chaos", " bila vurugu")}
-            </span>
-          </h1>
-
-          <p className="subtitle">
-            {t(
-              "Customers order from your store link. You see every order in one place — name, items, phone, total.",
-              "Wateja wanaagiza kupitia link ya duka lako. Unaona oda zote sehemu moja — jina, bidhaa, simu na jumla ya malipo."
-            )}
-          </p>
-
-          <div className="hero-buttons">
-            <Link href="/signup" className="btn-primary">
-              {t("Start for free", "Anza bure")}
-            </Link>
-          </div>
-
-          <p className="hero-trust">
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-            </svg>
-            {t(
-              "Free to start · No credit card needed · Set up in 2 minutes",
-              "Kuanza ni bure · Hakuna kadi ya benki inayohitajika · Weka tayari kwa dakika 2"
-            )}
-          </p>
-        </div>
-
-        {/* ORDER PREVIEW MOCKUP (an example, not a real order) */}
-        <div className="mockup-wrap">
-          <div className="mockup-phone">
-            <div className="mockup-header">
-              <span className="mockup-avatar">
-                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M12 2C6.48 2 2 6.48 2 12c0 1.88.53 3.63 1.46 5.13L2 22l4.98-1.42A9.94 9.94 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z" />
-                </svg>
-              </span>
-
-              <div className="mockup-title">
-                <strong>{t("New order received", "Oda mpya imepokelewa")}</strong>
-                <span>OdaLink · {t("example", "mfano")}</span>
-              </div>
-
-              <span className="mockup-unread">1</span>
-            </div>
-
-            <div className="mockup-body">
-              <div className="mockup-order">
-                <p className="mockup-order-label">
-                  {t("Order #1042", "Oda #1042")}
-                </p>
-                <h4>Asha Mbwana</h4>
-                <p className="mockup-order-phone">+255 712 345 678</p>
-
-                <ul>
-                  <li><span>Black shirt</span><strong>x3</strong>45,000 TZS</li>
-                  <li><span>Grey Pant</span><strong>x1</strong>30,000 TZS</li>
-                  <li><span>Jordan 4</span><strong>x1</strong>70,000 TZS</li>
-                </ul>
-
-                <div className="mockup-total">
-                  <span>{t("Total", "Jumla")}</span>
-                  <strong>TZS 145,000</strong>
-                </div>
-
-                <div className="mockup-actions">
-                  <span className="mockup-confirm">
-                    {t("Confirm order", "Thibitisha oda")}
-                  </span>
-                  <span className="mockup-chat">
-                    {t("Chat on WhatsApp", "Wasiliana WhatsApp")}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* TRUST BAR */}
-      <section className="trust-bar">
-        <div className="trust-item">
-          <strong>{t("Free", "Bure")}</strong>
-          <span>{t("To start", "Kuanza")}</span>
-        </div>
-        <div className="trust-item">
-          <strong>{t("1 link", "Link 1")}</strong>
-          <span>{t("For your whole shop", "Kwa duka lako lote")}</span>
-        </div>
-        <div className="trust-item">
-          <strong>{t("No app", "Hakuna app")}</strong>
-          <span>{t("For your customers", "Kwa wateja wako")}</span>
-        </div>
-        <div className="trust-item">
-          <strong>{t("2 min", "Dakika 2")}</strong>
-          <span>{t("Setup time", "Muda wa kujiandaa")}</span>
-        </div>
-      </section>
-
-      {/* HOW IT WORKS */}
-      <section className="how-it-works">
-        <div className="section-head">
-          <p className="eyebrow">{t("How it works", "Jinsi inavyofanya kazi")}</p>
-          <h2>
-            {t(
-              "Three simple steps to take control of your orders",
-              "Hatua tatu rahisi za kusimamia oda zako"
-            )}
-          </h2>
-        </div>
-
-        <div className="steps">
-          <div className="step">
-            <span className="step-number">1</span>
-            <h3>{t("Share your store link", "Shiriki link ya duka lako")}</h3>
-            <p>
-              {t(
-                "Send customers your OdaLink link on WhatsApp, status, or bio.",
-                "Watumie wateja link ya OdaLink kupitia WhatsApp, status au bio yako."
-              )}
-            </p>
-          </div>
-
-          <div className="step">
-            <span className="step-number">2</span>
-            <h3>{t("Customer orders", "Mteja anaagiza")}</h3>
-            <p>
-              {t(
-                "They browse your products, add to cart, and send the order with their name and phone. It also reaches you on WhatsApp.",
-                "Wateja wanaangalia bidhaa zako, wanaweka kwenye kikapu na kutuma oda pamoja na majina na namba zao za simu. Oda pia inakufikia WhatsApp."
-              )}
-            </p>
-          </div>
-
-          <div className="step">
-            <span className="step-number">3</span>
-            <h3>{t("You deliver", "Unakabidhi bidhaa")}</h3>
-            <p>
-              {t(
-                "See it on your dashboard, contact them on WhatsApp, and deliver.",
-                "Unaiona oda kwenye dashboard yako, unawasiliana na mteja WhatsApp na kumkabidhi bidhaa."
-              )}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* BENEFITS */}
-      <section className="benefits-wrap">
-        <div className="section-head">
-          <p className="eyebrow">{t("Why OdaLink", "Kwa nini OdaLink")}</p>
-          <h2>
-            {t(
-              "Everything your business needs",
-              "Kila kitu ambacho biashara yako inahitaji"
-            )}
-          </h2>
-        </div>
-
-        <div className="benefits">
-          <div className="card">
-            <div className="card-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-              </svg>
-            </div>
-            <h3>{t("Store link", "Link ya duka")}</h3>
-            <p>{t("Share your shop link on WhatsApp with customers.", "Shiriki link ya duka lako na wateja kupitia WhatsApp.")}</p>
-          </div>
-
-          <div className="card">
-            <div className="card-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <line x1="8" y1="6" x2="21" y2="6" />
-                <line x1="8" y1="12" x2="21" y2="12" />
-                <line x1="8" y1="18" x2="21" y2="18" />
-                <line x1="3" y1="6" x2="3.01" y2="6" />
-                <line x1="3" y1="12" x2="3.01" y2="12" />
-                <line x1="3" y1="18" x2="3.01" y2="18" />
-              </svg>
-            </div>
-            <h3>{t("Clear orders", "Oda zilizo wazi")}</h3>
-            <p>{t("Name, phone, items, and total — not messy DMs.", "Jina, simu, bidhaa na jumla ya malipo — bila kuchanganyikiwa na jumbe nyingi.")}</p>
-          </div>
-
-          <div className="card">
-            <div className="card-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <rect x="3" y="3" width="7" height="7" rx="1" />
-                <rect x="14" y="3" width="7" height="7" rx="1" />
-                <rect x="3" y="14" width="7" height="7" rx="1" />
-                <rect x="14" y="14" width="7" height="7" rx="1" />
-              </svg>
-            </div>
-            <h3>{t("Dashboard", "Dashibodi")}</h3>
-            <p>{t("Track all your orders from one simple dashboard.", "Fuatilia oda zako zote kupitia dashibodi moja rahisi.")}</p>
-          </div>
-
-          <div className="card">
-            <div className="card-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
-            </div>
-            <h3>{t("Instant WhatsApp chat", "Wasiliana WhatsApp papo hapo")}</h3>
-            <p>{t("Reach customers directly on WhatsApp with one tap.", "Wasiliana na wateja moja kwa moja WhatsApp kwa kugusa mara moja.")}</p>
-          </div>
-
-          <div className="card">
-            <div className="card-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M21 8 12 3 3 8v8l9 5 9-5z" />
-                <path d="M3 8l9 5 9-5" />
-                <line x1="12" y1="13" x2="12" y2="21" />
-              </svg>
-            </div>
-            <h3>{t("Stock that updates itself", "Stoo inayojisasisha")}</h3>
-            <p>
-              {t(
-                "Stock goes down when an order comes in, and comes back if you cancel it.",
-                "Idadi ya bidhaa hupungua oda inapopokelewa na hurudi oda ikifutwa."
-              )}
-            </p>
-          </div>
-
-          <div className="card">
-            <div className="card-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
-            </div>
-            <h3>{t("Customer details", "Taarifa za mteja")}</h3>
-            <p>{t("Every order includes name and phone, ready to follow up.", "Kila oda ina jina na namba ya simu ya mteja kwa ajili ya mawasiliano ya baadaye.")}</p>
-          </div>
-        </div>
-      </section>
-
-      {/* EARLY SELLERS */}
-      <section className="testimonials-wrap">
-        <div className="section-head">
-          <p className="eyebrow">{t("Just getting started", "Tunaanza safari")}</p>
-          <h2>{t("Be one of our first sellers", "Kuwa mmoja wa wauzaji wetu wa kwanza")}</h2>
-        </div>
-
-        <div className="testimonials">
-          <div className="testimonial">
-            <p>
-              {t(
-                "OdaLink is new, and we are looking for our first sellers. Message us on WhatsApp and we will help you set up your shop.",
-                "OdaLink ni mpya, na tunatafuta wauzaji wetu wa kwanza. Tutumie ujumbe WhatsApp nasi tutakusaidia kuandaa duka lako."
-              )}
-            </p>
-
-            <a
-              className="btn-whatsapp"
-              href="https://wa.me/255659148967?text=Hi%2C%20I%20want%20to%20set%20up%20my%20shop%20on%20OdaLink"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {t("Chat with us on WhatsApp", "Wasiliana nasi WhatsApp")}
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* PRICING */}
-      <section className="pricing-wrap">
-        <div className="section-head">
-          <p className="eyebrow">{t("Pricing", "Bei")}</p>
-          <h2>{t("Free while we grow", "Bure tunapoendelea kukua")}</h2>
-        </div>
-
-        <div
-          className="pricing"
-          style={{ display: "block", maxWidth: 420, margin: "0 auto" }}
-        >
-          <div className="price-card featured">
-            <span className="price-tag">{t("Early sellers", "Wauzaji wa mwanzo")}</span>
-            <h3>{t("Free", "Bure")}</h3>
-            <p className="price">
-              TZS 0<span>{t("/month", "/mwezi")}</span>
-            </p>
-
-            <ul>
-              <li>{t("Your own store link", "Link yako binafsi ya duka")}</li>
-              <li>{t("Product photos, prices and stock", "Picha za bidhaa, bei na stoo")}</li>
-              <li>{t("Orders with name, phone, items and total", "Oda zenye jina, simu, bidhaa na jumla ya malipo")}</li>
-              <li>{t("Order status: pending, confirmed, delivered, cancelled", "Hali ya oda: inasubiri, imethibitishwa, imefikishwa, imefutwa")}</li>
-              <li>{t("Order message sent to your WhatsApp", "Ujumbe wa oda unatumiwa WhatsApp yako")}</li>
-              <li>{t("Dashboard with order and stock totals", "Dashibodi yenye jumla ya oda na bidhaa stoo")}</li>
-            </ul>
-
-            <Link href="/signup" className="btn-primary price-btn">
-              {t("Start for free", "Anza bure")}
-            </Link>
-          </div>
-        </div>
-
-        <p style={{ textAlign: "center", marginTop: 16 }}>
-          {t(
-            "Paid plans may come later. If they do, you will hear from us first.",
-            "Mipango ya kulipia inaweza kuja baadaye. Ikifika, tutakujulisha kwanza."
-          )}
-        </p>
-      </section>
-
-      {/* FAQ */}
-      <section className="faq-wrap">
-        <div className="section-head">
-          <p className="eyebrow">FAQ</p>
-          <h2>{t("Frequently asked questions", "Maswali yanayoulizwa mara kwa mara")}</h2>
-        </div>
-
-        <div className="faq">
-          <details>
-            <summary>{t("How do customers place an order?", "Wateja wanaagizaje?")}</summary>
-            <p>
-              {t(
-                "You share your OdaLink store link on WhatsApp, status, or bio. Customers browse your products, add them to the cart, enter their name and phone, and send the order — no app to download.",
-                "Unashiriki link ya duka lako la OdaLink kupitia WhatsApp, status au bio. Wateja wanaangalia bidhaa, wanaziweka kwenye kikapu, wanaingiza majina na namba zao za simu, kisha wanatuma oda — hakuna app ya kupakua."
-              )}
-            </p>
-          </details>
-
-          <details>
-            <summary>{t("How do I receive orders?", "Ninapokeaje oda?")}</summary>
-            <p>
-              {t(
-                "Every order shows up in your dashboard with the customer's name, phone number, items, and total. The customer can also send the order to your WhatsApp with one tap, and you can chat with them directly from your dashboard.",
-                "Kila oda inaonekana kwenye dashibodi yako ikiwa na jina la mteja, namba ya simu, bidhaa na jumla ya malipo. Mteja anaweza pia kutuma oda WhatsApp yako kwa kugusa mara moja, na unaweza kuwasiliana naye moja kwa moja kupitia dashibodi."
-              )}
-            </p>
-          </details>
-
-          <details>
-            <summary>{t("What happens to my stock?", "Nini hutokea kwa bidhaa zangu stoo?")}</summary>
-            <p>
-              {t(
-                "Stock goes down automatically when an order comes in. If you cancel an order, the stock comes back. Customers cannot order more than you have.",
-                "Idadi ya bidhaa stoo hupungua moja kwa moja oda inapopokelewa. Ukifuta oda, bidhaa hurudi stoo. Wateja hawawezi kuagiza bidhaa nyingi kuliko ulizonazo."
-              )}
-            </p>
-          </details>
-
-          <details>
-            <summary>{t("Is it really free?", "Je, ni bure kweli?")}</summary>
-            <p>
-              {t(
-                "Yes. OdaLink is free while we are getting started. If we add paid plans later, you will hear from us before anything changes.",
-                "Ndiyo. OdaLink ni bure tunapoanza. Tukiongeza mipango ya kulipia baadaye, tutakujulisha kabla ya mabadiliko yoyote."
-              )}
-            </p>
-          </details>
-
-          <details>
-            <summary>{t("Do customers need the WhatsApp app?", "Je, wateja wanahitaji app ya WhatsApp?")}</summary>
-            <p>
-              {t(
-                "No. Customers just open your store link in any browser and place an order. The WhatsApp connection is on your side so you can follow up easily.",
-                "Hapana. Wateja wanafungua tu link ya duka lako kwenye browser yoyote na kuweka oda. Muunganisho wa WhatsApp uko upande wako ili uweze kuwasiliana nao kwa urahisi."
-              )}
-            </p>
-          </details>
-        </div>
-      </section>
-
-      {/* BOTTOM CTA */}
-      <section className="bottom-cta">
-        <h2>{t("Ready to organize your orders?", "Uko tayari kupanga oda zako?")}</h2>
-        <p>{t("Set up your shop in a couple of minutes. It's free.", "Andaa duka lako kwa dakika chache tu. Ni bure.")}</p>
-
-        <div className="cta-buttons">
-          <Link href="/signup" className="btn-primary">
-            {t("Start for free", "Anza bure")}
-          </Link>
-
-          <a
-            className="btn-whatsapp"
-            href="https://wa.me/255659148967?text=Hi%2C%20I%20want%20to%20know%20more%20about%20OdaLink"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <svg className="icon wa" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 2C6.48 2 2 6.48 2 12c0 1.88.53 3.63 1.46 5.13L2 22l4.98-1.42A9.94 9.94 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z" />
-            </svg>
-            {t("Chat with us on WhatsApp", "Wasiliana nasi WhatsApp")}
+function SiteHeader() {
+  return (
+    <header className="site-header">
+      <div className="site-header-inner">
+        <BrandLockup />
+        <nav className="main-nav" aria-label="Main navigation">
+          <a href="#how-it-works">How it works</a>
+          <a href="#features">Features</a>
+          <a href="#about">Why OdaLink</a>
+        </nav>
+        <div className="header-actions">
+          <a className="header-login" href="/login">Log in</a>
+          <a className="header-cta" href="/signup">
+            Start free <ArrowUpRight aria-hidden="true" size={16} />
           </a>
         </div>
-      </section>
-    </div>
-  );
+      </div>
+    </header>
+  )
 }
+
+function StorePreview() {
+  return (
+    <div className="hero-visual" role="group" aria-label="Sample WhatsApp order notification">
+      <div className="visual-glow" aria-hidden="true" />
+      <article className="order-notification">
+        <header className="order-notification-header">
+          <span className="notification-icon" aria-hidden="true">
+            <MessageCircle size={25} strokeWidth={2.2} />
+          </span>
+          <span className="notification-copy">
+            <strong>New order received</strong>
+            <span>OdaLink · example</span>
+          </span>
+          <span className="notification-count" role="img" aria-label="One new order">1</span>
+        </header>
+
+        <div className="order-receipt">
+          <div className="receipt-meta">
+            <span>ORDER #1042</span>
+            <span className="receipt-status">NEW</span>
+          </div>
+          <div className="receipt-customer">
+            <div>
+              <h2>Asha M.</h2>
+              <p>Customer phone included</p>
+            </div>
+            <span className="receipt-avatar" aria-hidden="true">AM</span>
+          </div>
+          <ul className="receipt-items" aria-label="Order items">
+            <li><span>Black shirt</span><strong>x3</strong><span>45,000 TZS</span></li>
+            <li><span>Grey Pant</span><strong>x1</strong><span>30,000 TZS</span></li>
+            <li><span>Jordan 4</span><strong>x1</strong><span>70,000 TZS</span></li>
+          </ul>
+          <div className="receipt-total">
+            <span>Total</span>
+            <strong>TZS 145,000</strong>
+          </div>
+          <div className="receipt-actions" role="group" aria-label="Order actions preview">
+            <span className="receipt-confirm"><Check aria-hidden="true" size={15} /> Confirm order</span>
+            <span className="receipt-whatsapp"><MessageCircle aria-hidden="true" size={15} /> Chat on WhatsApp</span>
+          </div>
+        </div>
+        <p className="preview-caption">A sample order with the details you need to follow up.</p>
+      </article>
+    </div>
+  )
+}
+
+function HeroSection() {
+  return (
+    <section className="hero-section" aria-labelledby="hero-title">
+      <div className="hero-grid">
+        <div className="hero-copy">
+          <p className="hero-kicker">
+            <span className="hero-kicker-dot" aria-hidden="true" />
+            WhatsApp orders, organized
+          </p>
+          <h1 id="hero-title" className="hero-title">
+            Take WhatsApp
+            <span>orders without the chaos.</span>
+          </h1>
+          <p className="hero-description">
+            Customers order from your store link. You see every order in one place — name, items, phone, and total.
+          </p>
+          <div className="hero-actions">
+            <a className="button-primary" href="/signup">
+              Start for free <ArrowRight aria-hidden="true" size={17} />
+            </a>
+            <a className="button-secondary" href="#how-it-works">
+              See how it works <ArrowDownIcon />
+            </a>
+          </div>
+          <div className="hero-benefits" aria-label="Getting started details">
+            <span><Check aria-hidden="true" size={14} /> Free to start</span>
+            <span><Check aria-hidden="true" size={14} /> No credit card needed</span>
+            <span><Check aria-hidden="true" size={14} /> Set up in 2 minutes</span>
+          </div>
+        </div>
+        <StorePreview />
+      </div>
+    </section>
+  )
+}
+
+function ArrowDownIcon() {
+  return <ArrowRight className="downward-arrow" aria-hidden="true" size={16} />
+}
+
+function FeaturesSection() {
+  return (
+    <section className="content-section features-section" id="features" aria-labelledby="features-title">
+      <div className="section-intro">
+        <p className="section-kicker">A BETTER EVERYDAY WORKFLOW</p>
+        <h2 id="features-title">Everything you need to sell, <span>all in one link.</span></h2>
+        <p className="section-description">
+          Less back-and-forth to find the details. More time to give your customers a great experience.
+        </p>
+      </div>
+      <div className="feature-grid">
+        {features.map((feature) => {
+          const Icon = feature.icon
+          return (
+            <article className="feature-card" key={feature.title}>
+              <span className="feature-icon"><Icon aria-hidden="true" size={22} strokeWidth={1.8} /></span>
+              <p className="feature-label">{feature.label}</p>
+              <h3>{feature.title}</h3>
+              <p className="feature-description">{feature.description}</p>
+              <span className="feature-link" aria-hidden="true"><ArrowUpRight size={17} /></span>
+            </article>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+function HowItWorksSection() {
+  return (
+    <section className="how-section" id="how-it-works" aria-labelledby="how-title">
+      <div className="how-inner">
+        <div className="how-heading">
+          <div>
+            <p className="section-kicker">THREE SIMPLE STEPS</p>
+            <h2 id="how-title">From product list to <span>new order.</span></h2>
+          </div>
+          <p className="how-description">
+            Set up the basics once, then give customers an easier way to browse and reach you.
+          </p>
+        </div>
+        <ol className="steps-grid">
+          {steps.map((step) => {
+            const Icon = step.icon
+            return (
+              <li className="step-card" key={step.number}>
+                <div className="step-topline">
+                  <span className="step-number">{step.number}</span>
+                  <span className="step-icon"><Icon aria-hidden="true" size={20} strokeWidth={1.8} /></span>
+                </div>
+                <h3>{step.title}</h3>
+                <p>{step.description}</p>
+              </li>
+            )
+          })}
+        </ol>
+      </div>
+    </section>
+  )
+}
+
+function AboutSection() {
+  return (
+    <section className="about-section" id="about" aria-labelledby="about-title">
+      <div className="about-copy">
+        <span className="about-icon"><UsersRound aria-hidden="true" size={21} /></span>
+        <p className="section-kicker">MADE FOR YOUR WAY OF WORKING</p>
+        <h2 id="about-title">A smoother day for you. A clearer experience for your customers.</h2>
+        <p>
+          Your business already runs on conversations. OdaLink gives those conversations a little more structure — without taking the personal touch away.
+        </p>
+      </div>
+      <div className="about-note" aria-label="A simple order journey">
+        <div className="about-note-header">
+          <span className="note-avatar">O</span>
+          <span><strong>A better order flow</strong><span>Storefront to conversation</span></span>
+          <span className="note-check"><Check size={15} aria-hidden="true" /></span>
+        </div>
+        <div className="journey-line">
+          <span className="journey-step"><span className="journey-dot journey-dot-store"><Store size={15} aria-hidden="true" /></span><span>Browse your store</span></span>
+          <span className="journey-connector" aria-hidden="true" />
+          <span className="journey-step"><span className="journey-dot journey-dot-order"><ShoppingBag size={15} aria-hidden="true" /></span><span>Send an order</span></span>
+          <span className="journey-connector" aria-hidden="true" />
+          <span className="journey-step"><span className="journey-dot journey-dot-chat"><MessageCircle size={15} aria-hidden="true" /></span><span>Chat on WhatsApp</span></span>
+        </div>
+        <div className="about-note-footer"><Clock3 size={14} aria-hidden="true" /> Clear details, right when you need them.</div>
+      </div>
+    </section>
+  )
+}
+
+function ClosingCta() {
+  return (
+    <section className="closing-cta" aria-labelledby="closing-title">
+      <div className="closing-copy">
+        <p className="closing-kicker">JUST GETTING STARTED</p>
+        <h2 id="closing-title">Be one of our first sellers.</h2>
+        <p>OdaLink is new, and we are looking for our first sellers. Message us and we will help you set up your shop.</p>
+      </div>
+      <div className="closing-actions">
+        <a className="closing-button" href="/signup">
+          Start for free <ArrowUpRight aria-hidden="true" size={17} />
+        </a>
+        <a className="closing-contact" href="https://wa.me/255659148967?text=Hi%2C%20I%20want%20to%20set%20up%20my%20shop%20on%20OdaLink">
+          Chat with us on WhatsApp <MessageCircle aria-hidden="true" size={16} />
+        </a>
+      </div>
+      <span className="closing-decoration" aria-hidden="true" />
+    </section>
+  )
+}
+
+function SiteFooter() {
+  return (
+    <footer className="site-footer">
+      <div className="footer-main">
+        <div className="footer-brand-block">
+          <BrandLockup />
+          <p>A little more structure for the way you already sell.</p>
+        </div>
+        <nav className="footer-nav" aria-label="Footer navigation">
+          <a href="/login">Log in</a>
+          <a href="/dashboard">Dashboard</a>
+          <a href="/store/demo">Demo store</a>
+          <a href="#top">Back to top <ArrowUpRight aria-hidden="true" size={14} /></a>
+        </nav>
+      </div>
+      <div className="footer-bottom">
+        <span>© {new Date().getFullYear()} OdaLink</span>
+        <span>Made for small businesses that sell through conversation.</span>
+      </div>
+    </footer>
+  )
+}
+
+export default function OdaLinkLanding() {
+  return (
+    <div className="oda-page" id="top">
+      <SiteHeader />
+      <main>
+        <div className="hero-shell">
+          <HeroSection />
+        </div>
+        <FeaturesSection />
+        <HowItWorksSection />
+        <AboutSection />
+        <ClosingCta />
+      </main>
+      <SiteFooter />
+    </div>
+  )
