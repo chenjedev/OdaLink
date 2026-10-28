@@ -1,6 +1,6 @@
-“use client”;
+"use client";
 
-import { ArrowUpRight, MessageCircle } from “lucide-react”;
+import { ArrowUpRight, MessageCircle } from "lucide-react";
 
 function BrandLockup() {
 return (
