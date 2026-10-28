@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -20,14 +21,48 @@ type Shop = {
   slug: string;
 };
 
+type Lang = "en" | "sw";
+
 export default function ProductPage() {
   const router = useRouter();
+
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<Product | null>(null); // product being edited
+  const [editing, setEditing] = useState<Product | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [shop, setShop] = useState<Shop | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lang, setLang] = useState<Lang>("en");
+
+  const t = (en: string, sw: string) => (lang === "en" ? en : sw);
+
+  // Read the language selected in the dashboard Sidebar.
+  useEffect(() => {
+    function syncLanguage(event?: Event) {
+      const customEvent = event as CustomEvent<Lang> | undefined;
+      const eventLang = customEvent?.detail;
+      const saved = localStorage.getItem("odLinkLanguage");
+
+      const nextLang =
+        eventLang === "en" || eventLang === "sw"
+          ? eventLang
+          : saved === "en" || saved === "sw"
+            ? saved
+            : "en";
+
+      setLang(nextLang);
+    }
+
+    syncLanguage();
+
+    window.addEventListener("odLinkLanguageChange", syncLanguage);
+    window.addEventListener("storage", syncLanguage);
+
+    return () => {
+      window.removeEventListener("odLinkLanguageChange", syncLanguage);
+      window.removeEventListener("storage", syncLanguage);
+    };
+  }, []);
 
   async function load() {
     const {
@@ -39,7 +74,7 @@ export default function ProductPage() {
       return;
     }
 
-    // Get current user shop settings
+    // Get current user shop settings.
     const { data: shopData, error: shopErr } = await supabase
       .from("shops")
       .select("id, name, slug")
@@ -51,7 +86,7 @@ export default function ProductPage() {
     setShop(shopData as Shop | null);
 
     if (shopData) {
-      // Only active products: deleted ones are hidden
+      // Only active products: deleted ones are hidden.
       const { data, error } = await supabase
         .from("products")
         .select("id, name, price, category, stock, image_url")
@@ -86,16 +121,21 @@ export default function ProductPage() {
   );
 
   if (loading) {
-    return <p>Loading products...</p>;
+    return <p>{t("Loading products...", "Inapakia bidhaa...")}</p>;
   }
 
   return (
     <div
       className="products-page"
-      style={{ padding: "12px", maxWidth: "100%", boxSizing: "border-box" }}
+      style={{
+        padding: "12px",
+        maxWidth: "100%",
+        boxSizing: "border-box",
+      }}
     >
       <div className="product-header" style={{ marginBottom: "16px" }}>
-        <h2>Products</h2>
+        <h2>{t("Products", "Bidhaa")}</h2>
+
         <div className="header-actions">
           <button
             className="add-product-btn"
@@ -103,20 +143,29 @@ export default function ProductPage() {
             onClick={() => setShowForm(true)}
             disabled={!shop}
           >
-            Add product
+            {t("Add product", "Ongeza bidhaa")}
           </button>
         </div>
       </div>
 
       {!shop && (
-        <p style={{ color: "#dc2626" }}>No store . Check console for error.</p>
+        <p style={{ color: "#dc2626" }}>
+          {t(
+            "No store. Check console for error.",
+            "Hakuna duka. Angalia console kwa maelezo ya hitilafu."
+          )}
+        </p>
       )}
 
       <div className="search-wrapper" style={{ marginBottom: "16px" }}>
         <i className="fa-solid fa-magnifying-glass search-icon"></i>
+
         <input
           type="text"
-          placeholder="Search by product, variant names or SKU"
+          placeholder={t(
+            "Search by product, variant names or SKU",
+            "Tafuta bidhaa, majina ya aina au SKU"
+          )}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="search-input"
@@ -124,8 +173,7 @@ export default function ProductPage() {
         />
       </div>
 
-      {/* One form for both: no product = add, a product = edit.
-          The key makes React start the form fresh for each product. */}
+      {/* One form for both: no product = add, a product = edit. */}
       {(showForm || editing) && shop && (
         <AddProduct
           key={editing ? String(editing.id) : "new"}
@@ -150,6 +198,7 @@ export default function ProductPage() {
           }}
         >
           <thead></thead>
+
           <tbody>
             {filtered.map((p) => (
               <tr
@@ -224,6 +273,7 @@ export default function ProductPage() {
                   >
                     {p.name}
                   </span>
+
                   <span
                     style={{
                       fontSize: "12px",
@@ -256,6 +306,7 @@ export default function ProductPage() {
                   >
                     {Number(p.price).toLocaleString()} TZS
                   </span>
+
                   <span
                     style={{
                       fontSize: "12px",
@@ -264,7 +315,7 @@ export default function ProductPage() {
                       marginTop: "2px",
                     }}
                   >
-                    {p.stock ?? 0} left
+                    {p.stock ?? 0} {t("left", "zimebaki")}
                   </span>
                 </td>
               </tr>
@@ -282,7 +333,7 @@ export default function ProductPage() {
                     fontSize: "14px",
                   }}
                 >
-                  No product found
+                  {t("No product found", "Hakuna bidhaa iliyopatikana")}
                 </td>
               </tr>
             )}
@@ -297,7 +348,7 @@ export default function ProductPage() {
                   color: "#374151",
                 }}
               >
-                Total {filtered.length}
+                {t("Total", "Jumla")} {filtered.length}
               </td>
             </tr>
           </tbody>
