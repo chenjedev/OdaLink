@@ -552,13 +552,7 @@ export default function AuthForm({ initialMode = 'signup', lang = 'en' }) {
         )}
       </form>
 
-      <p className="auth-preview-note" role="note">
-        <ShieldCheck aria-hidden="true" />
-        {t(
-          'Your account is protected by Supabase authentication.',
-          'Akaunti yako inalindwa na mfumo wa Supabase.'
-        )}
-      </p>
+     
 
       {mode === 'reset' ? (
         <button
