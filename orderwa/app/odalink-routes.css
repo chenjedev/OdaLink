@@ -2564,6 +2564,7 @@
   }
 }
 
+
 @media (max-width: 380px) {
   .auth-main {
     width: min(100% - 24px, 500px);
@@ -2609,3 +2610,4 @@
   .store-shop-owner strong {
     font-size: 12px;
   }
+}
