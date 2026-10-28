@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -12,7 +13,7 @@ const UserIcon = () => (
 );
 const PhoneIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 0 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
   </svg>
 );
 const MailIcon = () => (
@@ -60,29 +61,39 @@ const SpinnerIcon = () => (
   </svg>
 );
 
-// Emails: remove spaces around them and use lowercase, so "John@Gmail.com " matches "john@gmail.com"
 function cleanEmail(value) {
   return value.trim().toLowerCase();
 }
 
-// Turn Supabase's technical login messages into something a seller understands
-function friendlyLoginError(message) {
+function friendlyLoginError(message, lang) {
+  const t = (en, sw) => lang === "sw" ? sw : en;
+
   if (/invalid login credentials/i.test(message)) {
-    return "Invalid login credentials.";
+    return t("Invalid login credentials.", "Barua pepe au nenosiri si sahihi.");
   }
   if (/email not confirmed/i.test(message)) {
-    return "Please confirm your email first. Check your inbox.";
+    return t(
+      "Please confirm your email first. Check your inbox.",
+      "Tafadhali thibitisha barua pepe yako kwanza. Angalia inbox yako."
+    );
   }
   if (/rate limit|too many/i.test(message)) {
-    return "Too many attempts. Please wait a few minutes and try again.";
+    return t(
+      "Too many attempts. Please wait a few minutes and try again.",
+      "Umejaribu mara nyingi. Subiri dakika chache kisha ujaribu tena."
+    );
   }
-  return "Could not log in. Please try again.";
+  return t(
+    "Could not log in. Please try again.",
+    "Imeshindikana kuingia. Tafadhali jaribu tena."
+  );
 }
 
-function AuthForm({ initialMode = "register" }) {
+function AuthForm({ initialMode = "register", lang = "en" }) {
   const router = useRouter();
+  const t = (en, sw) => lang === "sw" ? sw : en;
 
-  const [mode, setMode] = useState(initialMode); // "register", "login" or "forgot"
+  const [mode, setMode] = useState(initialMode);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -98,7 +109,6 @@ function AuthForm({ initialMode = "register" }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  // Forgot password
   const [resetError, setResetError] = useState("");
   const [resetSent, setResetSent] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
@@ -113,10 +123,10 @@ function AuthForm({ initialMode = "register" }) {
     loginEmail.trim() === "" || loginPassword.length < 6;
 
   const missingFields = [];
-  if (name.trim() === "") missingFields.push("name");
-  if (phone.trim().length < 10) missingFields.push("a valid phone number");
-  if (email.trim() === "") missingFields.push("email");
-  if (password.length < 6) missingFields.push("a password (6+ characters)");
+  if (name.trim() === "") missingFields.push(t("name", "jina"));
+  if (phone.trim().length < 10) missingFields.push(t("a valid phone number", "namba sahihi ya simu"));
+  if (email.trim() === "") missingFields.push(t("email", "barua pepe"));
+  if (password.length < 6) missingFields.push(t("a password (6+ characters)", "nenosiri (herufi/tarakimu 6+)"));
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -129,7 +139,10 @@ function AuthForm({ initialMode = "register" }) {
       email.trim() === "" ||
       password.length < 6
     ) {
-      setError("Please fill all fields before submitting");
+      setError(t(
+        "Please fill all fields before submitting",
+        "Tafadhali jaza sehemu zote kabla ya kuendelea"
+      ));
       setIsSubmitting(false);
       return;
     }
@@ -151,7 +164,10 @@ function AuthForm({ initialMode = "register" }) {
       router.push("/dashboard");
     } catch (err) {
       console.error("Signup failed:", err);
-      setError("Something went wrong, try again");
+      setError(t(
+        "Something went wrong, try again",
+        "Kuna hitilafu imetokea, tafadhali jaribu tena"
+      ));
     } finally {
       setIsSubmitting(false);
     }
@@ -164,65 +180,93 @@ function AuthForm({ initialMode = "register" }) {
     setLoginSuccess(false);
 
     if (isInvalidLogin) {
-      setLoginError("Please enter email and password");
+      setLoginError(t(
+        "Please enter email and password",
+        "Tafadhali weka barua pepe na nenosiri"
+      ));
       setIsLoggingIn(false);
       return;
     }
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: cleanEmail(loginEmail),
-      password: loginPassword,
-    });
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: cleanEmail(loginEmail),
+        password: loginPassword,
+      });
 
-    if (signInError) {
-      console.error("Login failed:", signInError.message);
-      setLoginError(friendlyLoginError(signInError.message));
+      if (signInError) {
+        console.error("Login failed:", signInError.message);
+        setLoginError(friendlyLoginError(signInError.message, lang));
+        setIsLoggingIn(false);
+        return;
+      }
+
+      router.push("/dashboard");
+
+      setLoginSuccess(true);
+      setLoginEmail("");
+      setLoginPassword("");
+      setLoginError("");
       setIsLoggingIn(false);
-      return;
+      setTimeout(() => setLoginSuccess(false), 3000);
+    } catch (err) {
+      console.error("Login failed:", err);
+      setLoginError(t(
+        "Could not log in. Please try again.",
+        "Imeshindikana kuingia. Tafadhali jaribu tena."
+      ));
+      setIsLoggingIn(false);
     }
-
-    router.push("/dashboard");
-
-    setLoginSuccess(true);
-    setLoginEmail("");
-    setLoginPassword("");
-    setLoginError("");
-    setIsLoggingIn(false);
-    setTimeout(() => setLoginSuccess(false), 3000);
   }
 
-  // Sends the "reset your password" email
   async function handleForgot(e) {
     e.preventDefault();
     setResetError("");
     setResetSent(false);
 
     if (loginEmail.trim() === "") {
-      setResetError("Enter the email you registered with");
+      setResetError(t(
+        "Enter the email you registered with",
+        "Weka barua pepe uliyotumia kujisajili"
+      ));
       return;
     }
 
     setIsResetting(true);
 
-    const { error: resetErr } = await supabase.auth.resetPasswordForEmail(
-      cleanEmail(loginEmail),
-      { redirectTo: `${window.location.origin}/reset-password` }
-    );
-
-    setIsResetting(false);
-
-    if (resetErr) {
-      console.error("Reset email failed:", resetErr.message);
-      setResetError(
-        /rate limit|too many/i.test(resetErr.message)
-          ? "Too many requests. Please wait a few minutes and try again."
-          : "Could not send the email. Please try again."
+    try {
+      const { error: resetErr } = await supabase.auth.resetPasswordForEmail(
+        cleanEmail(loginEmail),
+        { redirectTo: `${window.location.origin}/reset-password` }
       );
-      return;
-    }
 
-    // Same message whether or not the email exists, so strangers cannot check who has an account
-    setResetSent(true);
+      setIsResetting(false);
+
+      if (resetErr) {
+        console.error("Reset email failed:", resetErr.message);
+        setResetError(
+          /rate limit|too many/i.test(resetErr.message)
+            ? t(
+                "Too many requests. Please wait a few minutes and try again.",
+                "Maombi ni mengi sana. Subiri dakika chache kisha ujaribu tena."
+              )
+            : t(
+                "Could not send the email. Please try again.",
+                "Imeshindikana kutuma barua pepe. Tafadhali jaribu tena."
+              )
+        );
+        return;
+      }
+
+      setResetSent(true);
+    } catch (err) {
+      console.error("Reset email failed:", err);
+      setIsResetting(false);
+      setResetError(t(
+        "Could not send the email. Please try again.",
+        "Imeshindikana kutuma barua pepe. Tafadhali jaribu tena."
+      ));
+    }
   }
 
   function switchToLogin() {
@@ -251,15 +295,15 @@ function AuthForm({ initialMode = "register" }) {
       <div className="auth-card">
         {mode === "register" && (
           <form className="register-form" onSubmit={handleSubmit}>
-            <h2 className="register-title">Create Account</h2>
+            <h2 className="register-title">{t("Create Account", "Fungua Akaunti")}</h2>
 
             <div className="form-group">
               <label>
-                <UserIcon /> Name
+                <UserIcon /> {t("Name", "Jina")}
               </label>
               <input
                 type="text"
-                placeholder="eg. John Doe"
+                placeholder={t("eg. John Doe", "mf. John Doe")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -267,7 +311,7 @@ function AuthForm({ initialMode = "register" }) {
 
             <div className="form-group">
               <label>
-                <PhoneIcon /> Phone
+                <PhoneIcon /> {t("Phone", "Namba ya Simu")}
               </label>
               <input
                 type="text"
@@ -279,14 +323,17 @@ function AuthForm({ initialMode = "register" }) {
               />
               {phone.length > 0 && phone.length < 10 && (
                 <p className="field-hint">
-                  <AlertIcon /> Phone must be at least 10 digits
+                  <AlertIcon /> {t(
+                    "Phone must be at least 10 digits",
+                    "Namba ya simu iwe na tarakimu 10 au zaidi"
+                  )}
                 </p>
               )}
             </div>
 
             <div className="form-group">
               <label>
-                <MailIcon /> Email
+                <MailIcon /> {t("Email", "Barua Pepe")}
               </label>
               <input
                 type="email"
@@ -300,7 +347,7 @@ function AuthForm({ initialMode = "register" }) {
 
             <div className="form-group">
               <label>
-                <LockIcon /> Password
+                <LockIcon /> {t("Password", "Nenosiri")}
               </label>
               <div className="input-with-action">
                 <input
@@ -313,21 +360,24 @@ function AuthForm({ initialMode = "register" }) {
                   type="button"
                   className="input-action-btn"
                   onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={showPassword ? t("Hide password", "Ficha nenosiri") : t("Show password", "Onyesha nenosiri")}
                 >
                   {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                 </button>
               </div>
               {password.length > 0 && password.length < 6 && (
                 <p className="field-hint">
-                  <AlertIcon /> Password must be at least 6 characters
+                  <AlertIcon /> {t(
+                    "Password must be at least 6 characters",
+                    "Nenosiri liwe na herufi au tarakimu 6 au zaidi"
+                  )}
                 </p>
               )}
             </div>
 
             {success && (
               <div className="success-box">
-                <CheckCircleIcon /> Account created successfully!
+                <CheckCircleIcon /> {t("Account created successfully!", "Akaunti imefunguliwa kikamilifu!")}
               </div>
             )}
 
@@ -340,27 +390,27 @@ function AuthForm({ initialMode = "register" }) {
             <button type="submit" disabled={isInvalid || isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <SpinnerIcon /> Creating account...
+                  <SpinnerIcon /> {t("Creating account...", "Akaunti inafunguliwa...")}
                 </>
               ) : (
-                "Create Account"
+                t("Create Account", "Fungua Akaunti")
               )}
             </button>
 
             {isInvalid && missingFields.length > 0 && (
               <p className="button-hint">
-                Still needed: {missingFields.join(", ")}
+                {t("Still needed:", "Bado vinahitajika:")} {missingFields.join(", ")}
               </p>
             )}
 
             <p className="auth-switch">
-              Already have an account?{" "}
+              {t("Already have an account?", "Tayari una akaunti?")}{" "}
               <button
                 type="button"
                 className="auth-switch-btn"
                 onClick={switchToLogin}
               >
-                Login to your account
+                {t("Login to your account", "Ingia kwenye akaunti yako")}
               </button>
             </p>
           </form>
@@ -369,12 +419,12 @@ function AuthForm({ initialMode = "register" }) {
         {mode === "login" && (
           <form className="login-form" onSubmit={handleLogin}>
             <h2 className="register-title">
-              <LockIcon /> Login
+              <LockIcon /> {t("Login", "Ingia")}
             </h2>
 
             <div className="form-group">
               <label>
-                <MailIcon /> Email
+                <MailIcon /> {t("Email", "Barua Pepe")}
               </label>
               <input
                 type="email"
@@ -388,7 +438,7 @@ function AuthForm({ initialMode = "register" }) {
 
             <div className="form-group">
               <label>
-                <LockIcon /> Password
+                <LockIcon /> {t("Password", "Nenosiri")}
               </label>
               <div className="input-with-action">
                 <input
@@ -401,9 +451,7 @@ function AuthForm({ initialMode = "register" }) {
                   type="button"
                   className="input-action-btn"
                   onClick={() => setShowLoginPassword((v) => !v)}
-                  aria-label={
-                    showLoginPassword ? "Hide password" : "Show password"
-                  }
+                  aria-label={showLoginPassword ? t("Hide password", "Ficha nenosiri") : t("Show password", "Onyesha nenosiri")}
                 >
                   {showLoginPassword ? <EyeOffIcon /> : <EyeIcon />}
                 </button>
@@ -413,13 +461,13 @@ function AuthForm({ initialMode = "register" }) {
                 className="auth-switch-btn"
                 onClick={switchToForgot}
               >
-                Forgot password?
+                {t("Forgot password?", "Umesahau nenosiri?")}
               </button>
             </div>
 
             {loginSuccess && (
               <div className="success-box">
-                <CheckCircleIcon /> Login successful!
+                <CheckCircleIcon /> {t("Login successful!", "Umefanikiwa kuingia!")}
               </div>
             )}
 
@@ -432,21 +480,21 @@ function AuthForm({ initialMode = "register" }) {
             <button type="submit" disabled={isInvalidLogin || isLoggingIn}>
               {isLoggingIn ? (
                 <>
-                  <SpinnerIcon /> Logging in...
+                  <SpinnerIcon /> {t("Logging in...", "Unaingia...")}
                 </>
               ) : (
-                "Login"
+                t("Login", "Ingia")
               )}
             </button>
 
             <p className="auth-switch">
-              Don&apos;t have an account?{" "}
+              {t("Don't have an account?", "Huna akaunti?")}{" "}
               <button
                 type="button"
                 className="auth-switch-btn"
                 onClick={switchToRegister}
               >
-                Create account
+                {t("Create account", "Fungua akaunti")}
               </button>
             </p>
           </form>
@@ -455,17 +503,19 @@ function AuthForm({ initialMode = "register" }) {
         {mode === "forgot" && (
           <form className="login-form" onSubmit={handleForgot}>
             <h2 className="register-title">
-              <MailIcon /> Reset password
+              <MailIcon /> {t("Reset password", "Weka nenosiri jipya")}
             </h2>
 
             <p>
-              Enter your email and we will send you a link to choose a new
-              password.
+              {t(
+                "Enter your email and we will send you a link to choose a new password.",
+                "Weka barua pepe yako tutakutumia kiungo cha kuweka nenosiri jipya."
+              )}
             </p>
 
             <div className="form-group">
               <label>
-                <MailIcon /> Email
+                <MailIcon /> {t("Email", "Barua Pepe")}
               </label>
               <input
                 type="email"
@@ -479,8 +529,10 @@ function AuthForm({ initialMode = "register" }) {
 
             {resetSent && (
               <div className="success-box">
-                <CheckCircleIcon /> If an account exists for that email, a reset
-                link is on its way. Check your inbox and spam folder.
+                <CheckCircleIcon /> {t(
+                  "If an account exists for that email, a reset link is on its way. Check your inbox and spam folder.",
+                  "Ikiwa akaunti yenye barua pepe hiyo ipo, kiungo cha kubadilisha nenosiri kimetumwa. Angalia inbox na spam folder."
+                )}
               </div>
             )}
 
@@ -493,21 +545,21 @@ function AuthForm({ initialMode = "register" }) {
             <button type="submit" disabled={isResetting}>
               {isResetting ? (
                 <>
-                  <SpinnerIcon /> Sending...
+                  <SpinnerIcon /> {t("Sending...", "Inatuma...")}
                 </>
               ) : (
-                "Send reset link"
+                t("Send reset link", "Tuma kiungo cha kubadilisha nenosiri")
               )}
             </button>
 
             <p className="auth-switch">
-              Remembered it?{" "}
+              {t("Remembered it?", "Umelikumbuka nenosiri?")}{" "}
               <button
                 type="button"
                 className="auth-switch-btn"
                 onClick={switchToLogin}
               >
-                Back to login
+                {t("Back to login", "Rudi kuingia")}
               </button>
             </p>
           </form>
