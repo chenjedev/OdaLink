@@ -43,7 +43,7 @@ const inputStyle = {
   fontSize: "15px",
 };
 
-const buttonStyle = {
+const actionButtonStyle = {
   padding: "10px 14px",
   border: "none",
   borderRadius: "8px",
@@ -75,8 +75,7 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [lang, setLang] = useState<Lang>("en");
 
-  const t = (en: string, sw: string) =>
-    lang === "en" ? en : sw;
+  const t = (en: string, sw: string) => (lang === "en" ? en : sw);
 
   useEffect(() => {
     function syncLanguage(event?: Event) {
@@ -186,8 +185,7 @@ export default function SettingsPage() {
   }, [router]);
 
   const phoneDigits = phone.replace(/\D/g, "");
-  const phoneOk =
-    phoneDigits.length >= 9 && phoneDigits.length <= 15;
+  const phoneOk = phoneDigits.length >= 9 && phoneDigits.length <= 15;
 
   const accountDigits = accountNumber.replace(/\D/g, "");
   const accountNumberOk =
@@ -223,7 +221,6 @@ export default function SettingsPage() {
     setIsEnabled(item.is_enabled);
     setError("");
     setSaved(false);
-
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -287,7 +284,6 @@ export default function SettingsPage() {
 
   async function handlePaymentSubmit(e: FormEvent) {
     e.preventDefault();
-
     if (!shop) return;
 
     setError("");
@@ -437,8 +433,7 @@ export default function SettingsPage() {
 
   function methodLabel(value: string) {
     return (
-      PAYMENT_OPTIONS.find((option) => option.value === value)?.label ??
-      value
+      PAYMENT_OPTIONS.find((option) => option.value === value)?.label ?? value
     );
   }
 
@@ -618,7 +613,9 @@ export default function SettingsPage() {
         )}
 
         <div className="form-group">
-          <label>{t("Account / recipient name", "Jina la akaunti / mpokeaji")}</label>
+          <label>
+            {t("Account / recipient name", "Jina la akaunti / mpokeaji")}
+          </label>
           <input
             style={inputStyle}
             type="text"
@@ -668,12 +665,7 @@ export default function SettingsPage() {
             checked={isEnabled}
             onChange={(e) => setIsEnabled(e.target.checked)}
           />
-          <span>
-            {t(
-              "Available to customers",
-              "Ionekane kwa wateja"
-            )}
-          </span>
+          <span>{t("Available to customers", "Ionekane kwa wateja")}</span>
         </label>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -681,11 +673,6 @@ export default function SettingsPage() {
             type="submit"
             className="save-btn"
             disabled={saving || !paymentFormValid}
-            style={{
-              ...buttonStyle,
-              color: "#fff",
-              opacity: saving || !paymentFormValid ? 0.6 : 1,
-            }}
           >
             {saving
               ? t("Saving...", "Inahifadhi...")
@@ -699,7 +686,7 @@ export default function SettingsPage() {
               type="button"
               onClick={resetPaymentForm}
               style={{
-                ...buttonStyle,
+                ...actionButtonStyle,
                 background: "#e5e7eb",
                 color: "#111827",
               }}
@@ -742,48 +729,38 @@ export default function SettingsPage() {
                 background: "#fff",
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  gap: 10,
-                  flexWrap: "wrap",
-                }}
-              >
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <strong>{methodLabel(item.method)}</strong>
+              <div style={{ minWidth: 0 }}>
+                <strong>{methodLabel(item.method)}</strong>
 
-                  <p style={{ margin: "8px 0 4px", overflowWrap: "anywhere" }}>
-                    {t("Account name", "Jina la akaunti")}: {item.account_name}
+                <p style={{ margin: "8px 0 4px", overflowWrap: "anywhere" }}>
+                  {t("Account name", "Jina la akaunti")}: {item.account_name}
+                </p>
+
+                <p style={{ margin: "4px 0", overflowWrap: "anywhere" }}>
+                  {t("Number", "Namba")}: {item.account_number}
+                </p>
+
+                {item.method === "bank" && item.bank_name && (
+                  <p style={{ margin: "4px 0" }}>
+                    {t("Bank", "Benki")}: {item.bank_name}
                   </p>
+                )}
 
-                  <p style={{ margin: "4px 0", overflowWrap: "anywhere" }}>
-                    {t("Number", "Namba")}: {item.account_number}
-                  </p>
-
-                  {item.method === "bank" && item.bank_name && (
-                    <p style={{ margin: "4px 0" }}>
-                      {t("Bank", "Benki")}: {item.bank_name}
-                    </p>
-                  )}
-
-                  <span
-                    style={{
-                      display: "inline-block",
-                      marginTop: 8,
-                      padding: "4px 8px",
-                      borderRadius: 6,
-                      fontSize: 12,
-                      background: item.is_enabled ? "#dcfce7" : "#f3f4f6",
-                      color: item.is_enabled ? "#166534" : "#4b5563",
-                    }}
-                  >
-                    {item.is_enabled
-                      ? t("Enabled", "Imewashwa")
-                      : t("Disabled", "Imezimwa")}
-                  </span>
-                </div>
+                <span
+                  style={{
+                    display: "inline-block",
+                    marginTop: 8,
+                    padding: "4px 8px",
+                    borderRadius: 6,
+                    fontSize: 12,
+                    background: item.is_enabled ? "#dcfce7" : "#f3f4f6",
+                    color: item.is_enabled ? "#166534" : "#4b5563",
+                  }}
+                >
+                  {item.is_enabled
+                    ? t("Enabled", "Imewashwa")
+                    : t("Disabled", "Imezimwa")}
+                </span>
               </div>
 
               <div
@@ -798,7 +775,7 @@ export default function SettingsPage() {
                   type="button"
                   onClick={() => editPaymentMethod(item)}
                   style={{
-                    ...buttonStyle,
+                    ...actionButtonStyle,
                     background: "#e5e7eb",
                     color: "#111827",
                   }}
@@ -810,7 +787,7 @@ export default function SettingsPage() {
                   type="button"
                   onClick={() => togglePaymentMethod(item)}
                   style={{
-                    ...buttonStyle,
+                    ...actionButtonStyle,
                     background: item.is_enabled ? "#fef3c7" : "#dcfce7",
                     color: "#111827",
                   }}
@@ -825,7 +802,7 @@ export default function SettingsPage() {
                   onClick={() => deletePaymentMethod(item)}
                   disabled={deletingId === item.id}
                   style={{
-                    ...buttonStyle,
+                    ...actionButtonStyle,
                     background: "#fee2e2",
                     color: "#991b1b",
                     opacity: deletingId === item.id ? 0.6 : 1,
