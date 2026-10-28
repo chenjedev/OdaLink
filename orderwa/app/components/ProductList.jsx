@@ -323,15 +323,15 @@ function ProductList({ products = [], shopSlug, shopId, shopName , shopPhone}) {
                   {t("Total:", "Jumla:")} {totalCartPrice.toLocaleString()} TZS
                 </p>
               )}
-
-              <CheckoutForm
-                cart={cart}
-                setCart={setCart}
-                cartTotal={totalCartPrice}
-                shopId={shopId}
-                shopName={shopName}
-                shopPhone={shopPhone}
-              />
+<CheckoutForm
+  cart={cart}
+  cartTotal={totalCartPrice}
+  shopId={shopId}
+  shopName={shopName}
+  shopPhone={shopPhone}
+  shopSlug={shopSlug}
+  lang={lang}
+/>
             </div>
           </div>
         </div>
