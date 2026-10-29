@@ -169,6 +169,19 @@ export default function DashboardPage() {
     }
 
     syncLanguage();
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const tab = params.get("tab");
+  const q = params.get("q");
+
+  if (
+    tab === "overview" || tab === "orders" || tab === "products" ||
+    tab === "store" || tab === "settings"
+  ) {
+    setActiveTab(tab);
+  }
+  if (q) setSearch(q);
+}, []);
 
     window.addEventListener("odLinkLanguageChange", syncLanguage);
     window.addEventListener("storage", syncLanguage);
