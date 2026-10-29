@@ -435,7 +435,7 @@ export default function DashboardPage() {
               href={shopUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="dashboard-primary-button"
+              className="inline-flex items-center gap-1.5 font-semibold text-teal-700 hover:underline"
             >
               {t("View Storefront", "Angalia Duka")}
               <ArrowUpRight size={16} />
@@ -465,8 +465,12 @@ export default function DashboardPage() {
       <main className="dashboard-content">
         <div className="dashboard-page-heading">
           <div>
-            <p className="dashboard-page-kicker">ODA LINK · SELLER</p>
-            <h1>{pageTitle[activeTab]}</h1>
+            {activeTab !== "orders" && (
+              <>
+                <p className="dashboard-page-kicker">ODA LINK · SELLER</p>
+                <h1>{pageTitle[activeTab]}</h1>
+              </>
+            )}
             <p>{pageDescription[activeTab]}</p>
           </div>
         </div>
@@ -558,28 +562,15 @@ export default function DashboardPage() {
         )}
 
         {activeTab === "orders" && shop && (
-          <section className="dashboard-panel">
-            <div className="dashboard-panel-heading">
-              <div>
-                <p className="dashboard-section-kicker">ORDER MANAGEMENT</p>
-                <h2>{t("All orders", "Oda zote")}</h2>
-              </div>
-
-              <span className="dashboard-soft-badge">
-                {orders.length} {t("orders", "oda")}
-              </span>
-            </div>
-
-            <OrdersPanel
-              orders={orders}
-              lang={lang}
-              onStatusChanged={(id, status) =>
-                setOrders((prev) =>
-                  prev.map((o) => (o.id === id ? { ...o, status } : o))
-                )
-              }
-            />
-          </section>
+          <OrdersPanel
+            orders={orders}
+            lang={lang}
+            onStatusChanged={(id, status) =>
+              setOrders((prev) =>
+                prev.map((o) => (o.id === id ? { ...o, status } : o))
+              )
+            }
+          />
         )}
 
         {activeTab === "products" && shop && (
