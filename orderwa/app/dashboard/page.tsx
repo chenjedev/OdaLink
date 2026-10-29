@@ -627,19 +627,7 @@ export default function DashboardPage() {
           </section>
         )}
 
-        {activeTab === "store" && shop && (
-          <section className="dashboard-panel">
-            <div className="dashboard-panel-heading">
-              <div>
-                <p className="dashboard-section-kicker">PUBLIC STOREFRONT</p>
-                <h2>{t("Your store link", "Link ya duka lako")}</h2>
-              </div>
-            </div>
-
-            <StoreLink slug={shop.slug} shopName={shop.name} />
-          </section>
-        )}
-
+        
         {activeTab === "settings" && shop && (
           <div className="dashboard-panel-stack">
             <section className="dashboard-panel mb-5">
