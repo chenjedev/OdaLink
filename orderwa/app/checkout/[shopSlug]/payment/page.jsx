@@ -13,6 +13,9 @@ const PAYMENT_OPTIONS = [
   { value: "bank", label: "Bank", short: "B", color: "#374151" },
 ];
 
+// The public storefront lives at /store/<slug>.
+const storePath = (slug) => `/store/${slug}`;
+
 export default function PaymentPage() {
   const router = useRouter();
   const params = useParams();
@@ -35,7 +38,7 @@ export default function PaymentPage() {
         const saved = sessionStorage.getItem("odLinkCheckout");
 
         if (!saved) {
-          router.replace(`/${shopSlug}`);
+          router.replace(storePath(shopSlug));
           return;
         }
 
@@ -48,7 +51,7 @@ export default function PaymentPage() {
           !checkoutData.phone
         ) {
           sessionStorage.removeItem("odLinkCheckout");
-          router.replace(`/${shopSlug}`);
+          router.replace(storePath(shopSlug));
           return;
         }
 
@@ -175,7 +178,7 @@ export default function PaymentPage() {
 
           <button
             type="button"
-            onClick={() => router.push(`/${shopSlug}`)}
+            onClick={() => router.push(storePath(shopSlug))}
             style={styles.primaryButton}
           >
             Back to shop
@@ -195,7 +198,7 @@ export default function PaymentPage() {
 
           <button
             type="button"
-            onClick={() => router.push(`/${shopSlug}`)}
+            onClick={() => router.push(storePath(shopSlug))}
             style={styles.primaryButton}
           >
             Back to shop
