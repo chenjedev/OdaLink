@@ -37,7 +37,7 @@ export function itemsSummary(items: OrderItem[]) {
 }
 
 // "AGNES MICHAEL" / "halima" -> "Agnes Michael" / "Halima"
-function niceName(name: string) {
+export function niceName(name: string) {
   return (name ?? "")
     .trim()
     .toLowerCase()
@@ -286,13 +286,15 @@ export default function OrdersPanel({
   orders,
   lang,
   onStatusChanged,
+  initialStatus = "all",
 }: {
   orders: Order[];
   lang: Lang;
   onStatusChanged: (id: number | string, status: string) => void;
+  initialStatus?: string;
 }) {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [showDates, setShowDates] = useState(false);
