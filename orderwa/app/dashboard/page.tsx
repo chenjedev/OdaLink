@@ -1,8 +1,8 @@
 "use client";
+
 import StoreLink from "../components/dashboard/StoreLink";
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowUpRight,
@@ -12,14 +12,13 @@ import {
   LayoutDashboard,
   MessageCircle,
   Package,
-  Plus,
   Search,
   ShoppingBag,
   Store,
+  Menu,
   X,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-
 
 type Shop = {
   id: string;
@@ -32,8 +31,6 @@ type Product = {
   name: string;
   price: number;
   stock: number | null;
-  category?: string;
-  image?: string | null;
 };
 
 type OrderRow = {
@@ -82,7 +79,6 @@ function DashboardNavigation({
           type="button"
           className={`dashboard-nav-button${activeTab === tab.id ? " is-active" : ""}`}
           onClick={() => onChange(tab.id)}
-          aria-pressed={activeTab === tab.id}
         >
           {tab.icon}
           <span>{tab.label}</span>
@@ -165,10 +161,10 @@ export default function DashboardPage() {
   const [filter, setFilter] = useState<OrderFilter>("All");
   const [search, setSearch] = useState("");
   const [notice, setNotice] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const t = (en: string, sw: string) => (lang === "en" ? en : sw);
 
-  // Language sync
   useEffect(() => {
     function syncLanguage(event?: Event) {
       const customEvent = event as CustomEvent<Lang> | undefined;
@@ -195,7 +191,6 @@ export default function DashboardPage() {
     };
   }, []);
 
-  // Load real data
   useEffect(() => {
     async function load() {
       const {
@@ -214,33 +209,30 @@ export default function DashboardPage() {
           "User"
       );
 
-      const { data: shopData, error: shopErr } = await supabase
+      const { data: shopData } = await supabase
         .from("shops")
         .select("id, name, slug")
         .eq("owner_id", user.id)
         .maybeSingle();
 
-      if (shopErr) console.error("Load shop failed:", shopErr.message);
       setShop(shopData as Shop | null);
 
       if (shopData) {
-        const { data: productsData, error: productsErr } = await supabase
+        const { data: productsData } = await supabase
           .from("products")
           .select("id, name, price, stock")
           .eq("shop_id", shopData.id)
           .eq("is_active", true)
           .order("id");
 
-        if (productsErr) console.error("Load products failed:", productsErr.message);
         setProducts((productsData as Product[]) ?? []);
 
-        const { data: ordersData, error: ordersErr } = await supabase
+        const { data: ordersData } = await supabase
           .from("orders")
           .select("id, total, status, created_at, customer_name, customer_phone, items_summary")
           .eq("shop_id", shopData.id)
           .order("created_at", { ascending: false });
 
-        if (ordersErr) console.error("Load orders failed:", ordersErr.message);
         setOrders((ordersData as OrderRow[]) ?? []);
       }
 
@@ -250,7 +242,6 @@ export default function DashboardPage() {
     load();
   }, [router]);
 
-  // Stats
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
@@ -290,6 +281,19 @@ export default function DashboardPage() {
     setNotice(t("Order confirmed", "Oda imethibitishwa"));
   }
 
+  async function handleLogout() {
+    setMobileMenuOpen(false);
+    await supabase.auth.signOut();
+    router.replace("/login");
+  }
+
+  function changeLanguage() {
+    const next = lang === "en" ? "sw" : "en";
+    setLang(next);
+    localStorage.setItem("odLinkLanguage", next);
+    window.dispatchEvent(new CustomEvent("odLinkLanguageChange", { detail: next }));
+  }
+
   if (loading) {
     return (
       <div className="oda-dashboard">
@@ -312,14 +316,8 @@ export default function DashboardPage() {
       "Here is what is happening at your shop today.",
       "Hapa ndipo unavyoona kinachoendelea dukani leo."
     ),
-    orders: t(
-      "Review orders and keep customers updated.",
-      "Angalia oda na sasisha wateja."
-    ),
-    products: t(
-      "Manage the products and stock in your store.",
-      "Dhibiti bidhaa na stoo yako."
-    ),
+    orders: t("Review orders and keep customers updated.", "Angalia oda na sasisha wateja."),
+    products: t("Manage the products and stock in your store.", "Dhibiti bidhaa na stoo yako."),
     store: t(
       "Share your storefront and review your shop details.",
       "Shiriki link ya duka lako na angalia maelezo."
@@ -328,50 +326,111 @@ export default function DashboardPage() {
 
   return (
     <div className="oda-dashboard">
-      {/* Top bar */}
+      {/* ========== TOP BAR ========== */}
       <header className="dashboard-topbar">
         <div className="dashboard-topbar-inner">
           <div className="dashboard-topbar-brand">
+            {/* Hamburger */}
+            <button
+              type="button"
+              className="dashboard-menu-btn"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu size={20} />
+            </button>
+
             <Link href="/" className="font-bold text-teal-800 text-lg">
               odalink
             </Link>
             <span className="dashboard-preview-pill">SELLER</span>
           </div>
+
           {shop && (
             <Link className="dashboard-topbar-store" href={`/store/${shop.slug}`}>
-              View storefront <ArrowUpRight aria-hidden="true" />
+              View storefront <ArrowUpRight size={16} />
             </Link>
           )}
         </div>
       </header>
 
+      {/* ========== MOBILE MENU ========== */}
+      {mobileMenuOpen && (
+        <>
+          <div
+            className="dashboard-mobile-overlay"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <div className="dashboard-mobile-menu">
+            <div className="dashboard-mobile-menu-header">
+              <span className="font-bold text-lg text-teal-800">odalink</span>
+              <button type="button" onClick={() => setMobileMenuOpen(false)}>
+                <X size={22} />
+              </button>
+            </div>
+
+            <nav className="dashboard-mobile-menu-links">
+              {dashboardTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  className={activeTab === tab.id ? "is-active" : ""}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  {tab.icon}
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </nav>
+
+            <div className="dashboard-mobile-menu-footer">
+              <button type="button" className="dashboard-lang-btn" onClick={changeLanguage}>
+                {lang === "en" ? "English / Kiswahili" : "Kiswahili / English"}
+              </button>
+
+              <button type="button" className="dashboard-logout-btn" onClick={handleLogout}>
+                {t("Logout", "Toka")}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ========== MAIN LAYOUT ========== */}
       <div className="dashboard-layout">
-        {/* Sidebar */}
+        {/* Desktop Sidebar */}
         <aside className="dashboard-sidebar">
           <p className="dashboard-sidebar-label">WORKSPACE</p>
-          <nav aria-label="Dashboard sections">
+          <nav>
             <DashboardNavigation activeTab={activeTab} onChange={setActiveTab} />
           </nav>
 
           <div className="dashboard-sidebar-note">
             <span className="dashboard-sidebar-note-icon">
-              <MessageCircle aria-hidden="true" />
+              <MessageCircle size={18} />
             </span>
             <strong>{t("Orders, a little clearer.", "Oda, kwa uhakika zaidi.")}</strong>
             <span>{t("Made for the way you already sell.", "Imetengenezwa kwa jinsi unavyouza.")}</span>
           </div>
+
+          <button type="button" className="dashboard-lang-btn mt-4" onClick={changeLanguage}>
+            {lang === "en" ? "English / Kiswahili" : "Kiswahili / English"}
+          </button>
+
+          <button type="button" className="dashboard-logout-btn mt-2" onClick={handleLogout}>
+            {t("Logout", "Toka")}
+          </button>
 
           <Link className="dashboard-back-link" href="/">
             {t("Back to OdaLink", "Rudi OdaLink")}
           </Link>
         </aside>
 
-        {/* Main */}
+        {/* Main Content */}
         <div className="dashboard-main-column">
-          <nav className="dashboard-mobile-nav" aria-label="Dashboard sections">
-            <DashboardNavigation activeTab={activeTab} onChange={setActiveTab} />
-          </nav>
-
           <main className="dashboard-content">
             <div className="dashboard-page-heading">
               <div>
@@ -384,7 +443,7 @@ export default function DashboardPage() {
                   className="dashboard-primary-button dashboard-heading-action"
                   href={`/store/${shop.slug}`}
                 >
-                  <Store aria-hidden="true" /> {t("View store", "Angalia duka")}
+                  <Store size={16} /> {t("View store", "Angalia duka")}
                 </Link>
               )}
             </div>
@@ -400,25 +459,25 @@ export default function DashboardPage() {
               <div className="dashboard-panel-stack">
                 <section className="dashboard-metrics">
                   <MetricCard
-                    icon={<ShoppingBag aria-hidden="true" />}
+                    icon={<ShoppingBag size={18} />}
                     label={t("Orders today", "Oda za leo")}
                     value={String(todayOrders.length).padStart(2, "0")}
-                    note={`${formatTzs(sumTotals(todayOrders))}`}
+                    note={formatTzs(sumTotals(todayOrders))}
                   />
                   <MetricCard
-                    icon={<ClipboardList aria-hidden="true" />}
+                    icon={<ClipboardList size={18} />}
                     label={t("Pending orders", "Zinazosubiri")}
                     value={String(pendingOrders.length).padStart(2, "0")}
                     note={t("Ready for follow-up", "Zinazohitaji hatua")}
                   />
                   <MetricCard
-                    icon={<Package aria-hidden="true" />}
+                    icon={<Package size={18} />}
                     label={t("Products listed", "Bidhaa")}
                     value={String(products.length).padStart(2, "0")}
                     note={`${t("Stock worth", "Thamani ya stoo")} ${formatTzs(stockWorth)}`}
                   />
                   <MetricCard
-                    icon={<CircleDollarSign aria-hidden="true" />}
+                    icon={<CircleDollarSign size={18} />}
                     label={t("Revenue", "Mapato")}
                     value={formatTzs(revenue)}
                     note={t("Confirmed + Delivered", "Zilizothibitishwa + Zilizofikishwa")}
@@ -442,7 +501,7 @@ export default function DashboardPage() {
                       type="button"
                       onClick={() => setActiveTab("orders")}
                     >
-                      {t("View all", "Angalia zote")} <ArrowUpRight aria-hidden="true" />
+                      {t("View all", "Angalia zote")} <ArrowUpRight size={14} />
                     </button>
                   </div>
                   <div className="dashboard-order-list">
@@ -459,10 +518,10 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* ORDERS */}
+            {/* ORDERS TAB */}
             {activeTab === "orders" && (
               <section className="dashboard-panel">
-                <div className="dashboard-panel-heading orders-panel-heading">
+                <div className="dashboard-panel-heading">
                   <div>
                     <p className="dashboard-section-kicker">ORDER MANAGEMENT</p>
                     <h2>{t("All orders", "Oda zote")}</h2>
@@ -486,7 +545,7 @@ export default function DashboardPage() {
                     ))}
                   </div>
                   <label className="dashboard-search">
-                    <Search aria-hidden="true" />
+                    <Search size={16} />
                     <input
                       type="search"
                       value={search}
@@ -500,8 +559,7 @@ export default function DashboardPage() {
                   {orders
                     .filter((o) => {
                       const statusMatch =
-                        filter === "All" ||
-                        o.status.toLowerCase() === filter.toLowerCase();
+                        filter === "All" || o.status.toLowerCase() === filter.toLowerCase();
                       const q = search.toLowerCase();
                       const searchMatch =
                         !q ||
@@ -525,7 +583,7 @@ export default function DashboardPage() {
               </section>
             )}
 
-            {/* PRODUCTS */}
+            {/* PRODUCTS TAB */}
             {activeTab === "products" && (
               <section className="dashboard-panel">
                 <div className="dashboard-panel-heading">
@@ -563,23 +621,9 @@ export default function DashboardPage() {
               </section>
             )}
 
-            {/* STORE */}
+            {/* STORE TAB */}
             {activeTab === "store" && shop && (
-              <div className="dashboard-panel-stack">
-                <section className="dashboard-panel">
-                  <div className="dashboard-panel-heading">
-                    <div>
-                      <p className="dashboard-section-kicker">PUBLIC STOREFRONT</p>
-                      <h2>{t("Your store link", "Link ya duka lako")}</h2>
-                    </div>
-                  </div>
-                  <StoreLink slug={shop.slug} shopName={shop.name} />
-                </section>
-              </div>
-            )}
-          </main>
-        </div>
-      </div>
-    </div>
-  );
-}
+              <section className="dashboard-panel">
+                <div className="dashboard-panel-heading">
+                  <div>
+                    <p className="dashboard-section-kicker">PUBLIC STOREFRONT</p>
