@@ -19,7 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import StoreLink from "@/components/dashboard/StoreLink";
+
 
 type Shop = {
   id: string;
