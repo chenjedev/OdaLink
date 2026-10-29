@@ -3,17 +3,19 @@
 import StoreLink from "../components/dashboard/StoreLink";
 import AddProduct from "../components/dashboard/AddProduct";
 import ShopSettings from "../components/dashboard/ShopSettings";
+import OrdersPanel, {
+  type Order,
+  itemsSummary,
+} from "../components/dashboard/OrdersPanel";
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowUpRight,
-  Check,
   ClipboardList,
   CircleDollarSign,
   LayoutDashboard,
   Package,
-  Search,
   ShoppingBag,
   Store,
   Settings as SettingsIcon,
@@ -37,15 +39,7 @@ type Product = {
   image_url?: string | null;
 };
 
-type OrderRow = {
-  id?: string;
-  total: number;
-  status: string;
-  created_at: string;
-  customer_name?: string;
-  customer_phone?: string;
-  items_summary?: string;
-};
+type OrderRow = Order;
 
 type Lang = "en" | "sw";
 
@@ -55,13 +49,6 @@ type DashboardTab =
   | "products"
   | "store"
   | "settings";
-
-type OrderFilter =
-  | "All"
-  | "Pending"
-  | "Confirmed"
-  | "Delivered"
-  | "Cancelled";
 
 function sumTotals(list: OrderRow[]) {
   return list.reduce(
@@ -86,14 +73,6 @@ const dashboardTabs: {
   { id: "settings", label: "Settings", icon: <SettingsIcon size={16} /> },
 ];
 
-const filterOptions: OrderFilter[] = [
-  "All",
-  "Pending",
-  "Confirmed",
-  "Delivered",
-  "Cancelled",
-];
-
 function StatusTag({ status }: { status: string }) {
   const normalized =
     status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
@@ -105,13 +84,7 @@ function StatusTag({ status }: { status: string }) {
   );
 }
 
-function OrderCard({
-  order,
-  onConfirm,
-}: {
-  order: OrderRow;
-  onConfirm?: () => void;
-}) {
+function OrderCard({ order }: { order: OrderRow }) {
   return (
     <article className="dashboard-order-card">
       <div className="dashboard-order-person">
@@ -120,7 +93,7 @@ function OrderCard({
       </div>
 
       <p className="dashboard-order-items">
-        {order.items_summary || "Items"}
+        {itemsSummary(order.items) || "Items"}
       </p>
 
       <time className="dashboard-order-time">
@@ -131,16 +104,6 @@ function OrderCard({
         <strong>{formatTzs(Number(order.total))}</strong>
         <StatusTag status={order.status} />
       </div>
-
-      {onConfirm && order.status.toLowerCase() === "pending" && (
-        <button
-          className="dashboard-order-action"
-          type="button"
-          onClick={onConfirm}
-        >
-          <Check size={14} /> Confirm
-        </button>
-      )}
     </article>
   );
 }
@@ -176,8 +139,6 @@ export default function DashboardPage() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [lang, setLang] = useState<Lang>("en");
   const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
-  const [filter, setFilter] = useState<OrderFilter>("All");
-  const [search, setSearch] = useState("");
   const [notice, setNotice] = useState("");
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -350,37 +311,6 @@ export default function DashboardPage() {
       ["confirmed", "delivered"].includes(order.status.toLowerCase())
     )
   );
-
-  async function confirmOrder(orderId: string) {
-    if (!shop) return;
-
-    setNotice("");
-
-    const { error } = await supabase
-      .from("orders")
-      .update({ status: "confirmed" })
-      .eq("id", orderId)
-      .eq("shop_id", shop.id);
-
-    if (error) {
-      console.error(error.message);
-      setNotice(
-        t(
-          "Failed to confirm order.",
-          "Imeshindikana kuthibitisha oda."
-        )
-      );
-      return;
-    }
-
-    setOrders((previous) =>
-      previous.map((order) =>
-        order.id === orderId ? { ...order, status: "confirmed" } : order
-      )
-    );
-
-    setNotice(t("Order confirmed.", "Oda imethibitishwa."));
-  }
 
   async function copyShopLink() {
     if (!shopUrl) return;
@@ -650,10 +580,7 @@ export default function DashboardPage() {
 
               <div className="dashboard-order-list">
                 {orders.slice(0, 3).map((order) => (
-                  <OrderCard
-                    key={order.id || order.created_at}
-                    order={order}
-                  />
+                  <OrderCard key={order.id} order={order} />
                 ))}
 
                 {orders.length === 0 && (
@@ -679,64 +606,15 @@ export default function DashboardPage() {
               </span>
             </div>
 
-            <div className="dashboard-order-tools">
-              <div className="dashboard-filter-row">
-                {filterOptions.map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    className={`dashboard-filter-button${
-                      filter === option ? " is-active" : ""
-                    }`}
-                    onClick={() => setFilter(option)}
-                  >
-                    {option}
-                  </button>
-                ))}
-              </div>
-
-              <label className="dashboard-search">
-                <Search size={16} />
-                <input
-                  type="search"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder={t("Search orders", "Tafuta oda")}
-                />
-              </label>
-            </div>
-
-            <div className="dashboard-order-list">
-              {orders
-                .filter((order) => {
-                  const statusMatch =
-                    filter === "All" ||
-                    order.status.toLowerCase() === filter.toLowerCase();
-
-                  const query = search.toLowerCase();
-
-                  const searchMatch =
-                    !query ||
-                    `${order.customer_name ?? ""} ${
-                      order.customer_phone ?? ""
-                    } ${order.items_summary ?? ""} ${order.id ?? ""}`
-                      .toLowerCase()
-                      .includes(query);
-
-                  return statusMatch && searchMatch;
-                })
-                .map((order) => (
-                  <OrderCard
-                    key={order.id || order.created_at}
-                    order={order}
-                    onConfirm={
-                      order.status.toLowerCase() === "pending" && order.id
-                        ? () => void confirmOrder(order.id!)
-                        : undefined
-                    }
-                  />
-                ))}
-            </div>
+            <OrdersPanel
+              orders={orders}
+              lang={lang}
+              onStatusChanged={(id, status) =>
+                setOrders((prev) =>
+                  prev.map((o) => (o.id === id ? { ...o, status } : o))
+                )
+              }
+            />
           </section>
         )}
 
