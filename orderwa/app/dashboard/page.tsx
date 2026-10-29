@@ -105,7 +105,24 @@ const layoutFix = `
 }
 .oda-dashboard .product-header { gap: 12px; }
 .oda-dashboard img { max-width: 100%; }
+
+/* View Storefront: no background, accent color text */
+.oda-dashboard .dashboard-storefront-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 4px;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: var(--brand, #0d9488) !important;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.oda-dashboard .dashboard-storefront-link:hover { opacity: 0.8; }
 `;
+
 
 const dashboardTabs: {
   id: DashboardTab;
@@ -456,7 +473,7 @@ export default function DashboardPage() {
               href={shopUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="dashboard-primary-button"
+              className="dashboard-storefront-link"
             >
               {t("View Storefront", "Angalia Duka")}
               <ArrowUpRight size={16} />
