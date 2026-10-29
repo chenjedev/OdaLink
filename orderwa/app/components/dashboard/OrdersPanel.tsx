@@ -48,6 +48,7 @@ const styles = `
   padding: 10px 14px;
   margin-bottom: 14px;
   border-radius: 12px;
+  border: 1px solid #e2e8fø;
   background: #fff;
 }
 .op-search input {
