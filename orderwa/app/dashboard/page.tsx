@@ -1,6 +1,6 @@
 
 "use client";
-import StatCard from "../components/dashboard/StatCard";
+import StatCard from "../components/dashboard/statcard";
 import StoreLink from "../components/dashboard/StoreLink";
 import AddProduct from "../components/dashboard/AddProduct";
 import ShopSettings from "../components/dashboard/ShopSettings";
