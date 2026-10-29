@@ -572,18 +572,7 @@ export default function DashboardPage() {
         )}
 
         {activeTab === "orders" && shop && (
-          <section className="dashboard-panel">
-            <div className="dashboard-panel-heading">
-              <div>
-                <p className="dashboard-section-kicker">ORDER MANAGEMENT</p>
-                <h2>{t("All orders", "Oda zote")}</h2>
-              </div>
-
-              <span className="dashboard-soft-badge">
-                {orders.length} {t("orders", "oda")}
-              </span>
-            </div>
-
+          <div style={{ paddingBottom: 96 }}>
             <OrdersPanel
               orders={orders}
               lang={lang}
@@ -593,7 +582,7 @@ export default function DashboardPage() {
                 )
               }
             />
-          </section>
+          </div>
         )}
 
         {activeTab === "products" && shop && (
