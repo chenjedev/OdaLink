@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDown, Search, SlidersHorizontal } from "lucide-react";
+import {
+  ChevronDown,
+  MessageCircle,
+  Phone,
+  Search,
+  SlidersHorizontal,
+} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export type OrderItem = {
@@ -31,10 +37,11 @@ export function itemsSummary(items: OrderItem[]) {
 }
 
 // Assumes Tanzanian numbers: 0712... becomes 255712...
-function toWhatsApp(phone: string) {
+function toWhatsApp(phone: string, text?: string) {
   const digits = (phone ?? "").replace(/\D/g, "");
   const intl = digits.startsWith("0") ? "255" + digits.slice(1) : digits;
-  return `https://wa.me/${intl}`;
+  const query = text ? `?text=${encodeURIComponent(text)}` : "";
+  return `https://wa.me/${intl}${query}`;
 }
 
 const styles = `
@@ -66,6 +73,7 @@ const styles = `
   background: transparent;
   color: #475569;
   font-size: 15px;
+  text-transform: capitalize;
   cursor: pointer;
 }
 .op-tab.is-active { background: #eef2f6; color: #0f172a; font-weight: 600; }
@@ -117,7 +125,7 @@ const styles = `
 /* ---------- Date panel (hidden until the filter icon is tapped) ---------- */
 .op-datepanel {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
   padding: 12px 16px;
   border-bottom: 1px solid #e2e8f0;
@@ -173,10 +181,18 @@ const styles = `
   width: 100%;
   padding: 14px 44px 14px 16px;
   border: 0;
+  border-radius: 0;
   background: transparent;
   text-align: left;
   color: inherit;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.op-row-main:hover,
+.op-row-main:active,
+.op-row-main:focus {
+  background: transparent;
+  outline: none;
 }
 .op-row-title { font-size: 16px; font-weight: 600; color: #0f172a; overflow-wrap: anywhere; }
 .op-row-title span { color: #64748b; font-weight: 500; margin-right: 6px; }
@@ -195,11 +211,34 @@ const styles = `
 .op-detail {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   padding: 0 16px 16px;
 }
 .op-detail p { margin: 0; font-size: 14px; color: #0f172a; overflow-wrap: anywhere; }
-.op-detail a { color: #0f766e; font-weight: 600; }
+.op-phone { color: #64748b; }
+
+/* Call + WhatsApp buttons */
+.op-contact {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+.op-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 44px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.op-btn-wa { background: #0f766e; border-color: #0f766e; color: #fff; }
+
 .op-detail-row { display: flex; align-items: center; gap: 10px; }
 .op-detail-row span { font-size: 13px; color: #64748b; }
 
@@ -278,14 +317,25 @@ export default function OrdersPanel({
   }
 
   function formatDate(value: string) {
-    return new Date(value)
-      .toLocaleString(lang === "sw" ? "sw-TZ" : "en-GB", {
-        day: "numeric",
-        month: "short",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-      .replace(",", "");
+    const d = new Date(value);
+    const loc = lang === "sw" ? "sw-TZ" : "en-GB";
+    const day = d.toLocaleDateString(loc, { day: "numeric", month: "short" });
+    const time = d.toLocaleTimeString(loc, {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    return `${day} ${time}`;
+  }
+
+  // Picking "From" starts "To" on the same day, and "To" can never be before "From".
+  function handleFromChange(value: string) {
+    setFrom(value);
+    if (value && (!to || to < value)) setTo(value);
+  }
+
+  function handleToChange(value: string) {
+    setTo(from && value && value < from ? from : value);
   }
 
   function clearFilters() {
@@ -377,10 +427,7 @@ export default function OrdersPanel({
         <Search size={20} />
         <input
           type="search"
-          placeholder={t(
-            "Search by customer, phone, order number",
-            "Tafuta mteja, simu au namba ya oda"
-          )}
+          placeholder={t("Search orders", "Tafuta oda")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -403,8 +450,7 @@ export default function OrdersPanel({
             <input
               type="date"
               value={from}
-              max={to || undefined}
-              onChange={(e) => setFrom(e.target.value)}
+              onChange={(e) => handleFromChange(e.target.value)}
             />
           </label>
 
@@ -414,7 +460,7 @@ export default function OrdersPanel({
               type="date"
               value={to}
               min={from || undefined}
-              onChange={(e) => setTo(e.target.value)}
+              onChange={(e) => handleToChange(e.target.value)}
             />
           </label>
         </div>
@@ -437,6 +483,10 @@ export default function OrdersPanel({
       {/* Orders */}
       {filtered.map((o) => {
         const open = openId === o.id;
+        const greeting = t(
+          `Hello ${o.customer_name}, this is about your order #${o.id}.`,
+          `Habari ${o.customer_name}, kuhusu oda yako #${o.id}.`
+        );
 
         return (
           <div key={o.id} className="op-row">
@@ -468,18 +518,24 @@ export default function OrdersPanel({
             {open && (
               <div className="op-detail">
                 <p>{itemsSummary(o.items) || "—"}</p>
+                <p className="op-phone">{o.customer_phone}</p>
 
-                <p>
-                  <a href={`tel:${o.customer_phone}`}>{o.customer_phone}</a>
-                  {" · "}
+                <div className="op-contact">
+                  <a className="op-btn" href={`tel:${o.customer_phone}`}>
+                    <Phone size={16} />
+                    {t("Call", "Piga simu")}
+                  </a>
+
                   <a
-                    href={toWhatsApp(o.customer_phone)}
+                    className="op-btn op-btn-wa"
+                    href={toWhatsApp(o.customer_phone, greeting)}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
+                    <MessageCircle size={16} />
                     WhatsApp
                   </a>
-                </p>
+                </div>
 
                 <div className="op-detail-row">
                   <span>{t("Status", "Hali")}</span>
