@@ -42,15 +42,6 @@ const inputStyle = {
   fontSize: "15px",
 };
 
-const buttonStyle = {
-  padding: "10px 14px",
-  border: "none",
-  borderRadius: "8px",
-  cursor: "pointer",
-  fontSize: "14px",
-  fontWeight: 600 as const,
-};
-
 const styles = `
 .sp-head {
   display: flex;
@@ -140,6 +131,48 @@ const styles = `
   font-size: 12px;
   font-weight: 600;
 }
+
+.sp-menu-wrap { position: relative; flex: none; }
+.sp-dots {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.sp-backdrop { position: fixed; inset: 0; z-index: 40; background: transparent; }
+.sp-menu {
+  position: absolute;
+  right: 0;
+  top: 42px;
+  z-index: 50;
+  min-width: 160px;
+  padding: 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+}
+.sp-menu button {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+.sp-menu button:hover { background: #f1f5f9; }
+.sp-menu button.is-danger { color: #dc2626; }
+.sp-menu button:disabled { opacity: 0.5; }
 
 .sp-overlay {
   position: fixed;
@@ -253,6 +286,7 @@ export default function ShopSettings() {
   const [methods, setMethods] = useState<PaymentMethod[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [sheet, setSheet] = useState<"picker" | "form" | null>(null);
+  const [menuId, setMenuId] = useState<string | null>(null);
 
   const [method, setMethod] = useState("mpesa");
   const [accountName, setAccountName] = useState("");
@@ -846,6 +880,65 @@ export default function ShopSettings() {
                       ? t("Enabled", "Imewashwa")
                       : t("Disabled", "Imezimwa")}
                   </span>
+
+                  <div className="sp-menu-wrap">
+                    <button
+                      type="button"
+                      className="sp-dots"
+                      aria-label={t("More actions", "Vitendo zaidi")}
+                      onClick={() =>
+                        setMenuId(menuId === item.id ? null : item.id)
+                      }
+                    >
+                      ⋯
+                    </button>
+
+                    {menuId === item.id && (
+                      <>
+                        <div
+                          className="sp-backdrop"
+                          onClick={() => setMenuId(null)}
+                        />
+                        <div className="sp-menu" role="menu">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMenuId(null);
+                              editPaymentMethod(item);
+                            }}
+                          >
+                            {t("Edit", "Hariri")}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMenuId(null);
+                              void togglePaymentMethod(item);
+                            }}
+                          >
+                            {item.is_enabled
+                              ? t("Disable", "Zima")
+                              : t("Enable", "Washa")}
+                          </button>
+
+                          <button
+                            type="button"
+                            className="is-danger"
+                            disabled={deletingId === item.id}
+                            onClick={() => {
+                              setMenuId(null);
+                              void deletePaymentMethod(item);
+                            }}
+                          >
+                            {deletingId === item.id
+                              ? t("Deleting...", "Inafuta...")
+                              : t("Delete", "Futa")}
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 <p
@@ -859,56 +952,6 @@ export default function ShopSettings() {
                   {t("Account name", "Jina la akaunti")}: {item.account_name}
                 </p>
 
-                <div
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: 8,
-                    marginTop: 12,
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => editPaymentMethod(item)}
-                    style={{
-                      ...buttonStyle,
-                      background: "#e5e7eb",
-                      color: "#111827",
-                    }}
-                  >
-                    {t("Edit", "Hariri")}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => void togglePaymentMethod(item)}
-                    style={{
-                      ...buttonStyle,
-                      background: item.is_enabled ? "#fef3c7" : "#dcfce7",
-                      color: "#111827",
-                    }}
-                  >
-                    {item.is_enabled
-                      ? t("Disable", "Zima")
-                      : t("Enable", "Washa")}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => void deletePaymentMethod(item)}
-                    disabled={deletingId === item.id}
-                    style={{
-                      ...buttonStyle,
-                      background: "#fee2e2",
-                      color: "#991b1b",
-                      opacity: deletingId === item.id ? 0.6 : 1,
-                    }}
-                  >
-                    {deletingId === item.id
-                      ? t("Deleting...", "Inafuta...")
-                      : t("Delete", "Futa")}
-                  </button>
-                </div>
               </div>
             );
           })}
