@@ -144,7 +144,13 @@ const styles = `
   line-height: 1;
   cursor: pointer;
 }
-.sp-dots:active { background: #f1f5f9; }
+.sp-dots:hover,
+.sp-dots:focus,
+.sp-dots:active {
+  background: transparent;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
 .sp-backdrop { position: fixed; inset: 0; z-index: 40; background: transparent; }
 .sp-menu {
   position: absolute;
@@ -846,6 +852,8 @@ export default function ShopSettings() {
                   <div style={{ minWidth: 0 }}>
                     <strong>{opt.label}</strong>
                     <small>
+                      {item.account_name}
+                      {" · "}
                       {item.method === "bank" && item.bank_name
                         ? `${item.bank_name} · `
                         : ""}
