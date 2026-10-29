@@ -1,6 +1,6 @@
 "use client";
 
-import "./products-list.css";
+import "./products.css";
 import AddProduct from "../components/dashboard/AddProduct";
 import ShopSettings from "../components/dashboard/ShopSettings";
 import OrdersPanel, {
