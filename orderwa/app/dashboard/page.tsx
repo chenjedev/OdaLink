@@ -1,6 +1,5 @@
 "use client";
 
-import  "./products/products.css";
 import AddProduct from "../components/dashboard/AddProduct";
 import ShopSettings from "../components/dashboard/ShopSettings";
 import OrdersPanel, {
@@ -12,13 +11,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowUpRight,
-  ChevronLeft,
-  ChevronRight,
   ClipboardList,
   CircleDollarSign,
   LayoutDashboard,
   Package,
-  Search,
   ShoppingBag,
   Settings as SettingsIcon,
   Share2,
@@ -139,12 +135,6 @@ export default function DashboardPage() {
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
-  // Product list: search, selection and pagination
-  const [productSearch, setProductSearch] = useState("");
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [pageSize, setPageSize] = useState(50);
-  const [page, setPage] = useState(1);
-
   const t = (en: string, sw: string) => (lang === "en" ? en : sw);
 
   // Shop URL: domain + /store/ + slug
@@ -169,19 +159,6 @@ export default function DashboardPage() {
     }
 
     syncLanguage();
-useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  const tab = params.get("tab");
-  const q = params.get("q");
-
-  if (
-    tab === "overview" || tab === "orders" || tab === "products" ||
-    tab === "store" || tab === "settings"
-  ) {
-    setActiveTab(tab);
-  }
-  if (q) setSearch(q);
-}, []);
 
     window.addEventListener("odLinkLanguageChange", syncLanguage);
     window.addEventListener("storage", syncLanguage);
@@ -190,6 +167,20 @@ useEffect(() => {
       window.removeEventListener("odLinkLanguageChange", syncLanguage);
       window.removeEventListener("storage", syncLanguage);
     };
+  }, []);
+
+  // Open the right tab from the link: /dashboard?tab=orders
+  useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get("tab");
+
+    if (
+      tab === "overview" ||
+      tab === "orders" ||
+      tab === "products" ||
+      tab === "settings"
+    ) {
+      setActiveTab(tab);
+    }
   }, []);
 
   // select("*") so a missing column can never break the query.
@@ -326,53 +317,6 @@ useEffect(() => {
       ["confirmed", "delivered"].includes(order.status.toLowerCase())
     )
   );
-
-  // Product list: filter, paginate, select
-  const searchTerm = productSearch.trim().toLowerCase();
-
-  const filteredProducts = products.filter(
-    (product) =>
-      !searchTerm ||
-      product.name.toLowerCase().includes(searchTerm) ||
-      (product.category ?? "").toLowerCase().includes(searchTerm)
-  );
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredProducts.length / pageSize)
-  );
-  const currentPage = Math.min(page, totalPages);
-  const pageProducts = filteredProducts.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
-  const allOnPageSelected =
-    pageProducts.length > 0 &&
-    pageProducts.every((product) =>
-      selectedIds.includes(String(product.id))
-    );
-
-  function toggleProduct(id: string) {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-  }
-
-  function toggleAllOnPage() {
-    const pageIds = pageProducts.map((product) => String(product.id));
-
-    setSelectedIds((prev) =>
-      allOnPageSelected
-        ? prev.filter((id) => !pageIds.includes(id))
-        : Array.from(new Set([...prev, ...pageIds]))
-    );
-  }
-
-  function openProduct(product: Product) {
-    setEditingProduct(product);
-    setShowProductForm(true);
-  }
 
   async function copyShopLink() {
     if (!shopUrl) return;
@@ -521,7 +465,8 @@ useEffect(() => {
       <main className="dashboard-content">
         <div className="dashboard-page-heading">
           <div>
-            
+            <p className="dashboard-page-kicker">ODA LINK · SELLER</p>
+            <h1>{pageTitle[activeTab]}</h1>
             <p>{pageDescription[activeTab]}</p>
           </div>
         </div>
@@ -638,9 +583,12 @@ useEffect(() => {
         )}
 
         {activeTab === "products" && shop && (
-          <section className="pl-wrap">
-            <div className="pl-top">
-              <h2>{t("Products", "Bidhaa")}</h2>
+          <section className="dashboard-panel">
+            <div className="dashboard-panel-heading">
+              <div>
+                <p className="dashboard-section-kicker">YOUR CATALOG</p>
+                <h2>{t("Products", "Bidhaa")}</h2>
+              </div>
 
               <button
                 type="button"
@@ -650,147 +598,65 @@ useEffect(() => {
                   setShowProductForm(true);
                 }}
               >
-                {t("Add product", "Ongeza bidhaa")}
+                + {t("Add product", "Ongeza bidhaa")}
               </button>
             </div>
 
-            <div className="pl-card">
-              <label className="pl-search">
-                <Search size={22} />
-                <input
-                  type="search"
-                  value={productSearch}
-                  placeholder={t(
-                    "Search by product name or category",
-                    "Tafuta kwa jina la bidhaa au aina"
-                  )}
-                  onChange={(e) => {
-                    setProductSearch(e.target.value);
-                    setPage(1);
+            <div className="dashboard-products-grid">
+              {products.map((product) => (
+                <button
+                  key={product.id}
+                  type="button"
+                  className="dashboard-product-card"
+                  onClick={() => {
+                    setEditingProduct(product);
+                    setShowProductForm(true);
                   }}
-                />
-              </label>
-
-              <div className="pl-selectbar">
-                <input
-                  type="checkbox"
-                  className="pl-check"
-                  checked={allOnPageSelected}
-                  onChange={toggleAllOnPage}
-                  aria-label={t("Select all", "Chagua zote")}
-                />
-                <span>
-                  {selectedIds.length > 0
-                    ? `${selectedIds.length} ${t("selected", "zimechaguliwa")}`
-                    : t("Select all", "Chagua zote")}
-                </span>
-              </div>
-
-              {pageProducts.map((product) => {
-                const id = String(product.id);
-                const isSelected = selectedIds.includes(id);
-                const stock = product.stock ?? 0;
-
-                return (
-                  <div
-                    key={id}
-                    role="button"
-                    tabIndex={0}
-                    className={`pl-row${isSelected ? " is-selected" : ""}`}
-                    onClick={() => openProduct(product)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") openProduct(product);
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      className="pl-check"
-                      checked={isSelected}
-                      onChange={() => toggleProduct(id)}
-                      onClick={(e) => e.stopPropagation()}
-                      aria-label={product.name}
-                    />
-
-                    <div className="pl-info">
-                      <h3 className="pl-name">{product.name}</h3>
-                      <p className="pl-meta">
-                        {formatTzs(Number(product.price))}
-                        {product.category && (
-                          <span> · {product.category}</span>
-                        )}
-                      </p>
-                      <span
-                        className={`pl-stock${stock <= 4 ? " is-low" : ""}`}
-                      >
-                        {stock} {t("in stock", "stoo")}
-                      </span>
-                    </div>
-
-                    <div className="pl-thumb">
-                      {product.image_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={product.image_url} alt={product.name} />
-                      ) : (
-                        <span>{product.name.charAt(0).toUpperCase()}</span>
-                      )}
-                    </div>
+                  style={{
+                    textAlign: "left",
+                    cursor: "pointer",
+                    color: "inherit",
+                  }}
+                >
+                  <div className="dashboard-product-image">
+                    {product.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          borderRadius: 8,
+                        }}
+                      />
+                    ) : (
+                      <span>{product.name.charAt(0).toUpperCase()}</span>
+                    )}
                   </div>
-                );
-              })}
 
-              {pageProducts.length === 0 && (
-                <p className="pl-empty">
-                  {products.length === 0
-                    ? t("No products yet.", "Bado hakuna bidhaa.")
-                    : t(
-                        "No product found",
-                        "Hakuna bidhaa iliyopatikana"
-                      )}
+                  <div className="dashboard-product-copy">
+                    <h3>{product.name}</h3>
+                    <strong>{formatTzs(Number(product.price))}</strong>
+                    {product.category && <p>{product.category}</p>}
+                  </div>
+
+                  <span
+                    className={`dashboard-stock-count${
+                      (product.stock ?? 0) <= 4 ? " is-low" : ""
+                    }`}
+                  >
+                    {product.stock ?? 0} {t("in stock", "stoo")}
+                  </span>
+                </button>
+              ))}
+
+              {products.length === 0 && (
+                <p className="dashboard-muted-copy">
+                  {t("No products yet.", "Bado hakuna bidhaa.")}
                 </p>
               )}
-
-              <div className="pl-footer">
-                <div className="pl-total">
-                  {t("Total", "Jumla")}
-                  <span>{filteredProducts.length}</span>
-                </div>
-
-                <div className="pl-footer-right">
-                  <select
-                    className="pl-size"
-                    value={pageSize}
-                    aria-label={t("Items per page", "Bidhaa kwa ukurasa")}
-                    onChange={(e) => {
-                      setPageSize(Number(e.target.value));
-                      setPage(1);
-                    }}
-                  >
-                    <option value={10}>10</option>
-                    <option value={25}>25</option>
-                    <option value={50}>50</option>
-                    <option value={100}>100</option>
-                  </select>
-
-                  <div className="pl-pager">
-                    <button
-                      type="button"
-                      disabled={currentPage <= 1}
-                      onClick={() => setPage(currentPage - 1)}
-                      aria-label={t("Previous page", "Ukurasa uliopita")}
-                    >
-                      <ChevronLeft size={20} />
-                    </button>
-                    <button
-                      type="button"
-                      disabled={currentPage >= totalPages}
-                      onClick={() => setPage(currentPage + 1)}
-                      aria-label={t("Next page", "Ukurasa unaofuata")}
-                    >
-                      <ChevronRight size={20} />
-                    </button>
-                  </div>
-                </div>
-              </div>
             </div>
 
             {showProductForm && (
