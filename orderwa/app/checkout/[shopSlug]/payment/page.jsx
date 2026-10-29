@@ -5,46 +5,32 @@ import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
 
 const PAYMENT_OPTIONS = [
-  { value: "mpesa", label: "M-Pesa", ussd: "*150*00#", short: "M", color: "#dc2626" },
-  { value: "airtel_money", label: "Airtel Money", ussd: "*150*60#", short: "A", color: "#e11d48" },
-  { value: "tigopesa", label: "Tigo Pesa", ussd: "*150*01#", short: "T", color: "#2563eb" },
-  { value: "halopesa", label: "HaloPesa", ussd: "*150*88#", short: "H", color: "#ea580c" },
-  { value: "selcom", label: "Selcom", ussd: "", short: "S", color: "#0f766e" },
-  { value: "bank", label: "Bank", ussd: "", short: "B", color: "#374151" },
+  { value: "mpesa", label: "M-Pesa", short: "M", color: "#dc2626" },
+  { value: "airtel_money", label: "Airtel Money", short: "A", color: "#e11d48" },
+  { value: "tigopesa", label: "Tigo Pesa", short: "T", color: "#2563eb" },
+  { value: "halopesa", label: "HaloPesa", short: "H", color: "#ea580c" },
+  { value: "selcom", label: "Selcom", short: "S", color: "#0f766e" },
+  { value: "bank", label: "Bank", short: "B", color: "#374151" },
 ];
 
-// Turns 0712345678 into 255712345678, the format wa.me expects.
-function toWhatsAppNumber(phone) {
-  let digits = String(phone || "").replace(/\D/g, "");
-
-  if (digits.startsWith("00")) digits = digits.slice(2);
-  if (digits.startsWith("0")) digits = "255" + digits.slice(1);
-  if (digits.length === 9) digits = "255" + digits;
-
-  return digits;
-}
-
-export default function InstructionsPage() {
+export default function PaymentPage() {
   const router = useRouter();
   const params = useParams();
   const shopSlug = params.shopSlug;
 
   const [checkout, setCheckout] = useState(null);
-  const [payment, setPayment] = useState(null);
+  const [paymentMethods, setPaymentMethods] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-  const [copiedField, setCopiedField] = useState("");
-  const [confirmation, setConfirmation] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const [whatsappUrl, setWhatsappUrl] = useState("");
   const [orderId, setOrderId] = useState(null);
 
-  // Load checkout data and the payment method the customer chose.
+  // Load the checkout data saved by CheckoutForm, then the seller's payment methods.
   useEffect(() => {
     let active = true;
 
-    async function loadCheckout() {
+    async function loadPaymentMethods() {
       try {
         const saved = sessionStorage.getItem("odLinkCheckout");
 
@@ -53,94 +39,67 @@ export default function InstructionsPage() {
           return;
         }
 
-        const data = JSON.parse(saved);
+        const checkoutData = JSON.parse(saved);
 
-        if (!data.shopId || !data.cart?.length || !data.name || !data.phone) {
+        if (
+          !checkoutData.shopId ||
+          !checkoutData.cart?.length ||
+          !checkoutData.name ||
+          !checkoutData.phone
+        ) {
           sessionStorage.removeItem("odLinkCheckout");
           router.replace(`/${shopSlug}`);
           return;
         }
 
-        if (!data.selectedPaymentId) {
-          router.replace(`/checkout/${shopSlug}/payment`);
-          return;
-        }
+        if (active) setCheckout(checkoutData);
 
-        if (active) setCheckout(data);
-
-        const { data: method, error: paymentError } = await supabase
+        const { data, error: paymentError } = await supabase
           .from("shop_payment_methods")
           .select("id, shop_id, method, account_name, account_number, bank_name")
-          .eq("shop_id", data.shopId)
-          .eq("id", data.selectedPaymentId)
+          .eq("shop_id", checkoutData.shopId)
           .eq("is_enabled", true)
-          .maybeSingle();
+          .order("created_at", { ascending: true });
 
         if (paymentError) throw paymentError;
         if (!active) return;
 
-        if (!method) {
-          setError("This payment method is not available. Please choose another.");
-        } else {
-          setPayment(method);
-        }
+        setPaymentMethods(data || []);
       } catch (err) {
-        console.error("Checkout loading error:", err);
+        console.error("Payment methods error:", err);
         if (active) {
-          setError("Could not load payment details. Please try again.");
+          setError("Could not load payment methods. Please try again.");
         }
       } finally {
         if (active) setLoading(false);
       }
     }
 
-    loadCheckout();
+    loadPaymentMethods();
 
     return () => {
       active = false;
     };
   }, [shopSlug, router]);
 
-  const paymentInfo = PAYMENT_OPTIONS.find((item) => item.value === payment?.method);
-  const paymentLabel = paymentInfo?.label || payment?.method || "Payment";
-  const ussd = paymentInfo?.ussd || "";
+  // Tapping a method saves the choice and opens the instructions screen.
+  function choosePayment(item) {
+    if (!checkout) return;
 
-  async function copyValue(field, value) {
-    if (!value) return;
+    sessionStorage.setItem(
+      "odLinkCheckout",
+      JSON.stringify({ ...checkout, selectedPaymentId: item.id })
+    );
 
-    try {
-      await navigator.clipboard.writeText(String(value));
-      setCopiedField(field);
-      setError("");
-      setTimeout(() => setCopiedField(""), 2000);
-    } catch {
-      setError("Could not copy. Please type it in yourself.");
-    }
+    router.push(`/checkout/${shopSlug}/instructions`);
   }
 
-  // '#' must be encoded in a tel: link, otherwise the phone drops it.
-  function openUSSD() {
-    if (!ussd) return;
-    window.location.href = `tel:${ussd.replace("#", "%23")}`;
-  }
+  // Used only when the seller has no payment methods set up.
+  async function submitOrderWithoutPayment() {
+    if (submitting || !checkout) return;
 
-  // "I have paid": save the order, open WhatsApp with a prefilled message, show thank-you.
-  async function handleIHavePaid() {
-    if (sending || success || !checkout || !payment) return;
-
+    setSubmitting(true);
     setError("");
-
-    const sellerNumber = toWhatsAppNumber(checkout.shopPhone);
-
-    if (!sellerNumber) {
-      setError("This shop has no WhatsApp number. Please contact the seller.");
-      return;
-    }
-
-    setSending(true);
-
-    // Open the tab inside the click so the browser does not block it as a popup.
-    const whatsappWindow = window.open("about:blank", "_blank");
 
     try {
       const items = checkout.cart.map((item) => ({
@@ -150,7 +109,6 @@ export default function InstructionsPage() {
         quantity: Number(item.quantity),
       }));
 
-      // The order stays "pending" until the seller confirms the payment.
       const { data: order, error: insertError } = await supabase
         .from("orders")
         .insert({
@@ -166,62 +124,22 @@ export default function InstructionsPage() {
 
       if (insertError) throw insertError;
 
-      const itemLines = checkout.cart.map(
-        (item) =>
-          `- ${item.name} x${item.quantity}: ${(
-            Number(item.price) * Number(item.quantity)
-          ).toLocaleString()} TZS`
-      );
-
-      const message = [
-        `Hello ${checkout.shopName || ""}, I have paid via ${paymentLabel}.`,
-        "",
-        `Order: #${order.id}`,
-        `Name: ${checkout.name.trim()}`,
-        `Phone: ${checkout.phone.trim()}`,
-        "",
-        "Items:",
-        ...itemLines,
-        "",
-        `Total: ${Number(checkout.cartTotal).toLocaleString()} TZS`,
-        `Payment method: ${paymentLabel}`,
-        `Paid to: ${payment.account_name || "-"} (${payment.account_number || "-"})`,
-        ...(payment.bank_name ? [`Bank: ${payment.bank_name}`] : []),
-        "",
-        // Only added when the customer pasted their payment SMS.
-        ...(confirmation.trim()
-          ? ["Payment SMS:", confirmation.trim(), ""]
-          : []),
-        "Please confirm my payment and my order.",
-      ].join("\n");
-
-      const url = `https://wa.me/${sellerNumber}?text=${encodeURIComponent(message)}`;
-
       setOrderId(order.id);
-      setWhatsappUrl(url);
-      setSuccess(true);
-
       localStorage.removeItem(`cart:${shopSlug}`);
       sessionStorage.removeItem("odLinkCheckout");
-
-      // If the tab was blocked, the thank-you screen shows a WhatsApp button instead.
-      if (whatsappWindow) {
-        whatsappWindow.location.href = url;
-      }
+      setSuccess(true);
     } catch (err) {
-      console.error("Order submission failed:", err);
-
-      if (whatsappWindow) whatsappWindow.close();
+      console.error("Submit order failed:", err);
 
       setError(
         err?.message?.includes("Not enough stock") ||
           err?.message?.includes("Product not available") ||
           err?.message?.includes("Invalid quantity")
           ? err.message
-          : "Your order could not be saved. Please try again."
+          : "Your order could not be submitted. Please try again."
       );
     } finally {
-      setSending(false);
+      setSubmitting(false);
     }
   }
 
@@ -229,7 +147,7 @@ export default function InstructionsPage() {
     return (
       <main style={styles.page}>
         <div style={styles.card}>
-          <p style={styles.muted}>Loading payment details...</p>
+          <p style={styles.muted}>Loading checkout...</p>
         </div>
       </main>
     );
@@ -241,36 +159,24 @@ export default function InstructionsPage() {
         <div style={styles.card}>
           <div style={styles.successIcon}>✓</div>
 
-          <h1 style={styles.successHeading}>Thank you for your order!</h1>
+          <h1 style={styles.heading}>Thank you for your order!</h1>
 
           <p style={styles.bodyText}>
-            Your order #{orderId} has been received. Please wait for the
-            seller to confirm your payment.
+            Your order #{orderId} has been received. The seller will contact
+            you to arrange payment and delivery.
           </p>
 
           <div style={styles.pending}>
             <strong>Status: Pending</strong>
-            <p style={styles.pendingText}>
-              In WhatsApp, tap Send so the seller gets your message. If
-              WhatsApp did not open, use the button below.
+            <p style={styles.detail}>
+              Payment has not been confirmed yet.
             </p>
           </div>
-
-          {whatsappUrl && (
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noreferrer"
-              style={styles.primaryButton}
-            >
-              Open WhatsApp
-            </a>
-          )}
 
           <button
             type="button"
             onClick={() => router.push(`/${shopSlug}`)}
-            style={styles.secondaryButton}
+            style={styles.primaryButton}
           >
             Back to shop
           </button>
@@ -279,54 +185,25 @@ export default function InstructionsPage() {
     );
   }
 
-  if (!checkout || !payment) {
+  if (!checkout) {
     return (
       <main style={styles.page}>
         <div style={styles.card}>
           <p role="alert" style={styles.error}>
-            {error || "Payment details not found."}
+            {error || "Checkout not found."}
           </p>
 
           <button
             type="button"
-            onClick={() => router.push(`/checkout/${shopSlug}/payment`)}
+            onClick={() => router.push(`/${shopSlug}`)}
             style={styles.primaryButton}
           >
-            Choose another payment method
+            Back to shop
           </button>
         </div>
       </main>
     );
   }
-
-  const total = Number(checkout.cartTotal || 0);
-
-  const rows = [
-    payment.bank_name && {
-      field: "bank",
-      label: "Bank",
-      value: payment.bank_name,
-      copy: payment.bank_name,
-    },
-    {
-      field: "number",
-      label: payment.method === "bank" ? "Account number" : "Phone number",
-      value: payment.account_number || "—",
-      copy: payment.account_number,
-    },
-    {
-      field: "name",
-      label: "Payee name",
-      value: payment.account_name || "—",
-      copy: payment.account_name,
-    },
-    {
-      field: "amount",
-      label: "Amount",
-      value: `TSh ${total.toLocaleString()}`,
-      copy: String(total),
-    },
-  ].filter(Boolean);
 
   return (
     <main style={styles.page}>
@@ -336,101 +213,95 @@ export default function InstructionsPage() {
           onClick={() => router.back()}
           style={styles.back}
         >
-          ← {paymentLabel}
+          ← Back
         </button>
 
-        <div style={styles.header}>
-          <div style={{ minWidth: 0 }}>
-            <p style={styles.amount}>TSh {total.toLocaleString()}</p>
-            <p style={styles.muted}>Please follow instructions to pay</p>
-          </div>
+        <p style={styles.shopName}>{checkout.shopName || shopSlug}</p>
 
-          <span
-            style={{
-              ...styles.paymentIcon,
-              background: paymentInfo?.color || "#374151",
-            }}
-          >
-            {paymentInfo?.short || paymentLabel.charAt(0)}
-          </span>
+        <div style={styles.amountBox}>
+          <span style={styles.amountLabel}>Amount to pay</span>
+          <strong style={styles.amount}>
+            TSh {Number(checkout.cartTotal || 0).toLocaleString()}
+          </strong>
         </div>
 
-        {ussd && (
-          <button type="button" onClick={openUSSD} style={styles.callButton}>
-            Pay · dial {ussd}
-          </button>
-        )}
-
-        <div style={styles.detailsBox}>
-          {rows.map((row) => (
-            <div key={row.field} style={styles.row}>
-              <div style={styles.rowText}>
-                <span style={styles.rowLabel}>{row.label}</span>
-                <strong style={styles.rowValue}>{row.value}</strong>
-              </div>
-
-              {row.copy && (
-                <button
-                  type="button"
-                  onClick={() => copyValue(row.field, row.copy)}
-                  style={styles.copyButton}
-                >
-                  {copiedField === row.field ? "Copied ✓" : "Copy"}
-                </button>
-              )}
+        {paymentMethods.length === 0 ? (
+          <>
+            <div style={styles.infoBox}>
+              <h2 style={styles.infoTitle}>No payment methods available</h2>
+              <p style={styles.detail}>
+                You can still submit your order. The seller will contact you
+                to arrange payment and delivery.
+              </p>
             </div>
-          ))}
-        </div>
 
-        <h2 style={styles.sectionTitle}>How to pay</h2>
+            {error && (
+              <p role="alert" style={styles.error}>
+                {error}
+              </p>
+            )}
 
-        <ol style={styles.instructions}>
-          <li>
-            Dial <strong>{ussd || "your payment service code"}</strong>.
-          </li>
-          <li>
-            Choose <strong>Send money</strong> or{" "}
-            <strong>Merchant payment</strong>.
-          </li>
-          <li>Enter the number above and the amount.</li>
-          <li>Confirm with your PIN, then tap “I have paid” below.</li>
-        </ol>
+            <button
+              type="button"
+              onClick={submitOrderWithoutPayment}
+              disabled={submitting}
+              style={{
+                ...styles.primaryButton,
+                opacity: submitting ? 0.65 : 1,
+              }}
+            >
+              {submitting ? "Submitting order..." : "Submit order"}
+            </button>
+          </>
+        ) : (
+          <>
+            <h1 style={styles.heading}>Choose payment method</h1>
 
-        <h2 style={styles.sectionTitle}>Payment SMS (optional)</h2>
-        <p style={styles.muted}>
-          Paste the confirmation SMS to help the seller check your payment
-          faster.
-        </p>
+            <div style={styles.methods}>
+              {paymentMethods.map((item) => {
+                const option = PAYMENT_OPTIONS.find(
+                  (o) => o.value === item.method
+                );
+                const label = option?.label || item.method;
 
-        <textarea
-          value={confirmation}
-          onChange={(event) => setConfirmation(event.target.value)}
-          placeholder="Paste your payment confirmation SMS here..."
-          rows={4}
-          style={styles.textarea}
-        />
-      </div>
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => choosePayment(item)}
+                    style={styles.method}
+                  >
+                    <span
+                      style={{
+                        ...styles.methodIcon,
+                        background: option?.color || "#374151",
+                      }}
+                    >
+                      {option?.short || label.charAt(0)}
+                    </span>
 
-      <div style={styles.bottomBar}>
-        <div style={styles.bottomInner}>
-          {error && (
-            <p role="alert" style={styles.errorInBar}>
-              {error}
-            </p>
-          )}
+                    <span style={styles.methodText}>
+                      <strong style={styles.methodTitle}>{label}</strong>
+                      {item.account_name && (
+                        <span style={styles.methodSub}>
+                          {item.account_name}
+                        </span>
+                      )}
+                    </span>
 
-          <button
-            type="button"
-            onClick={handleIHavePaid}
-            disabled={sending}
-            style={{
-              ...styles.payButton,
-              opacity: sending ? 0.65 : 1,
-            }}
-          >
-            {sending ? "Saving order..." : "I have paid"}
-          </button>
-        </div>
+                    <span style={styles.chevron}>›</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {error && (
+              <p role="alert" style={styles.error}>
+                {error}
+              </p>
+            )}
+          </>
+        )}
       </div>
     </main>
   );
@@ -440,8 +311,8 @@ const styles = {
   page: {
     width: "100%",
     minHeight: "100vh",
-    padding: "20px 12px 140px",
     background: "#f8fafc",
+    padding: "20px 14px",
     color: "#111827",
     boxSizing: "border-box",
     fontFamily: "Arial, Helvetica, sans-serif",
@@ -458,206 +329,148 @@ const styles = {
     borderRadius: 14,
     boxSizing: "border-box",
     textAlign: "left",
-    writingMode: "horizontal-tb",
   },
   back: {
     display: "inline-block",
-    padding: "6px 0",
-    marginBottom: 10,
-    color: "#111827",
-    background: "transparent",
     border: 0,
-    fontSize: 16,
-    fontWeight: 700,
+    background: "transparent",
+    padding: "6px 0",
     cursor: "pointer",
+    fontSize: 15,
+    color: "#0f766e",
   },
-  header: {
+  shopName: {
+    margin: "10px 0 0",
+    textAlign: "center",
+    fontSize: 14,
+    color: "#6b7280",
+    overflowWrap: "anywhere",
+  },
+  amountBox: {
     display: "flex",
-    flexDirection: "row",
+    flexDirection: "column",
     alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    width: "100%",
-    minWidth: 0,
-    marginBottom: 16,
+    gap: 6,
+    padding: "18px 0 22px",
+  },
+  amountLabel: {
+    fontSize: 14,
+    color: "#6b7280",
   },
   amount: {
-    margin: 0,
-    fontSize: 28,
+    fontSize: 32,
     lineHeight: 1.2,
     fontWeight: 700,
     overflowWrap: "anywhere",
   },
-  paymentIcon: {
-    display: "flex",
-    flex: "0 0 52px",
-    alignItems: "center",
-    justifyContent: "center",
-    width: 52,
-    height: 52,
-    borderRadius: "50%",
-    color: "#ffffff",
-    fontSize: 20,
+  heading: {
+    display: "block",
+    margin: "0 0 12px",
+    fontSize: 18,
+    lineHeight: 1.4,
     fontWeight: 700,
   },
   muted: {
-    display: "block",
-    margin: "4px 0 0",
     color: "#6b7280",
     fontSize: 14,
     lineHeight: 1.6,
-    overflowWrap: "anywhere",
+    margin: 0,
   },
-  callButton: {
-    display: "block",
+  methods: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 10,
     width: "100%",
-    padding: 14,
-    marginBottom: 16,
-    background: "#ffffff",
-    color: "#111827",
-    border: "1px solid #d1d5db",
-    borderRadius: 10,
-    fontSize: 16,
-    fontWeight: 700,
-    cursor: "pointer",
-    boxSizing: "border-box",
   },
-  detailsBox: {
-    display: "block",
-    width: "100%",
-    padding: "4px 14px",
-    border: "1px solid #e5e7eb",
-    borderRadius: 12,
-    boxSizing: "border-box",
-  },
-  row: {
+  method: {
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    padding: "12px 0",
-    borderBottom: "1px solid #f1f5f9",
+    gap: 14,
+    width: "100%",
+    padding: "14px 14px",
+    background: "#ffffff",
+    border: "1px solid #e5e7eb",
+    borderRadius: 14,
+    cursor: "pointer",
+    textAlign: "left",
+    boxSizing: "border-box",
+    color: "#111827",
+    font: "inherit",
   },
-  rowText: {
+  methodIcon: {
     display: "flex",
+    flex: "0 0 40px",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 40,
+    height: 40,
+    borderRadius: "50%",
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: 700,
+  },
+  methodText: {
+    display: "flex",
+    flex: "1 1 0%",
     flexDirection: "column",
-    gap: 3,
+    gap: 2,
     minWidth: 0,
   },
-  rowLabel: {
+  methodTitle: {
+    fontSize: 16,
+    lineHeight: 1.4,
+    overflowWrap: "anywhere",
+  },
+  methodSub: {
     fontSize: 13,
     color: "#6b7280",
-  },
-  rowValue: {
-    fontSize: 16,
-    color: "#111827",
     overflowWrap: "anywhere",
   },
-  copyButton: {
+  chevron: {
     flex: "0 0 auto",
-    padding: "8px 12px",
-    color: "#0f766e",
-    background: "#ffffff",
-    border: "1px solid #0f766e",
-    borderRadius: 8,
-    fontSize: 13,
-    fontWeight: 700,
-    cursor: "pointer",
+    fontSize: 24,
+    lineHeight: 1,
+    color: "#9ca3af",
   },
-  sectionTitle: {
-    display: "block",
-    margin: "22px 0 8px",
+  infoBox: {
+    padding: 15,
+    border: "1px solid #fed7aa",
+    background: "#fff7ed",
+    borderRadius: 10,
+    marginBottom: 14,
+  },
+  infoTitle: {
     fontSize: 17,
-    lineHeight: 1.4,
+    lineHeight: 1.5,
+    margin: "0 0 8px",
   },
-  instructions: {
-    display: "block",
-    paddingLeft: 22,
-    margin: "8px 0 0",
+  detail: {
     fontSize: 14,
-    lineHeight: 1.8,
+    lineHeight: 1.6,
+    color: "#4b5563",
+    margin: "7px 0 0",
     overflowWrap: "anywhere",
   },
-  textarea: {
-    display: "block",
-    width: "100%",
-    minHeight: 100,
-    marginTop: 10,
-    padding: 12,
-    border: "1px solid #d1d5db",
-    borderRadius: 9,
-    boxSizing: "border-box",
-    background: "#ffffff",
-    color: "#111827",
+  bodyText: {
     fontSize: 15,
-    lineHeight: 1.5,
-    resize: "vertical",
-    fontFamily: "inherit",
-  },
-  bottomBar: {
-    position: "fixed",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    padding: "12px 12px calc(12px + env(safe-area-inset-bottom, 0px))",
-    background: "#ffffff",
-    borderTop: "1px solid #e5e7eb",
-    boxSizing: "border-box",
-  },
-  bottomInner: {
-    width: "100%",
-    maxWidth: 480,
-    margin: "0 auto",
-  },
-  payButton: {
-    display: "block",
-    width: "100%",
-    padding: 15,
-    color: "#ffffff",
-    background: "#111827",
-    border: 0,
-    borderRadius: 12,
-    fontSize: 16,
-    fontWeight: 700,
-    cursor: "pointer",
-    boxSizing: "border-box",
-  },
-  errorInBar: {
-    margin: "0 0 10px",
-    color: "#dc2626",
-    fontSize: 14,
-    lineHeight: 1.5,
+    lineHeight: 1.7,
     overflowWrap: "anywhere",
   },
   primaryButton: {
     display: "block",
     width: "100%",
-    marginTop: 16,
+    boxSizing: "border-box",
+    marginTop: 18,
     padding: 14,
-    color: "#ffffff",
     background: "#0f766e",
+    color: "#ffffff",
     border: 0,
     borderRadius: 9,
     fontSize: 16,
+    lineHeight: 1.5,
     fontWeight: 700,
-    textAlign: "center",
-    textDecoration: "none",
     cursor: "pointer",
-    boxSizing: "border-box",
-  },
-  secondaryButton: {
-    display: "block",
-    width: "100%",
-    marginTop: 10,
-    padding: 12,
-    color: "#111827",
-    background: "#ffffff",
-    border: "1px solid #d1d5db",
-    borderRadius: 9,
-    fontSize: 15,
-    cursor: "pointer",
-    boxSizing: "border-box",
   },
   successIcon: {
     display: "flex",
@@ -671,35 +484,17 @@ const styles = {
     fontSize: 30,
     fontWeight: 700,
   },
-  successHeading: {
-    margin: "16px 0 8px",
-    fontSize: 22,
-    lineHeight: 1.35,
-  },
-  bodyText: {
-    margin: 0,
-    fontSize: 15,
-    lineHeight: 1.7,
-    overflowWrap: "anywhere",
-  },
   pending: {
-    marginTop: 16,
     padding: 14,
     background: "#fef3c7",
     borderRadius: 10,
-  },
-  pendingText: {
-    margin: "6px 0 0",
-    fontSize: 14,
-    lineHeight: 1.6,
-    color: "#92400e",
+    marginTop: 16,
   },
   error: {
-    display: "block",
-    marginTop: 12,
     color: "#dc2626",
     fontSize: 14,
     lineHeight: 1.6,
+    marginTop: 14,
     overflowWrap: "anywhere",
   },
 };
