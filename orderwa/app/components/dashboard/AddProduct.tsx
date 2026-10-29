@@ -18,6 +18,7 @@ async function resizeImage(file: File): Promise<Blob> {
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
+
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Could not process the image");
 
@@ -60,13 +61,157 @@ type Props = {
   onAdded: () => void; // called after add, edit or delete so the list reloads
 };
 
-export default function AddProduct({ shopId, product, onClose, onAdded }: Props) {
+const styles = `
+.ap-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.55);
+  padding: 0;
+}
+.ap-dialog {
+  width: 100%;
+  max-width: 480px;
+  max-height: 92vh;
+  max-height: 92dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  padding: 20px 18px calc(24px + env(safe-area-inset-bottom, 0px));
+  color: #0f172a;
+}
+@media (min-width: 640px) {
+  .ap-overlay { align-items: center; padding: 16px; }
+  .ap-dialog { border-radius: 18px; padding: 24px; }
+}
+.ap-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.ap-header h2 { margin: 0; font-size: 20px; font-weight: 700; }
+.ap-close {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 16px;
+  cursor: pointer;
+}
+.ap-field { margin-bottom: 16px; }
+.ap-field label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+.ap-field input[type="text"],
+.ap-field input[type="number"] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 16px;
+  color: #0f172a;
+  outline: none;
+}
+.ap-field input:focus {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+.ap-field input[type="file"] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  font-size: 14px;
+}
+.ap-preview {
+  display: block;
+  margin-top: 10px;
+  width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+.ap-link-danger {
+  display: block;
+  margin-top: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #dc2626;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ap-error { margin: 0 0 14px; color: #dc2626; font-size: 14px; }
+.ap-save {
+  width: 100%;
+  padding: 14px;
+  border: 0;
+  border-radius: 12px;
+  background: #0f766e;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ap-save:disabled { background: #94c8c1; cursor: not-allowed; }
+.ap-delete {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid #dc2626;
+  border-radius: 12px;
+  background: #fff;
+  color: #dc2626;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ap-delete:disabled { opacity: 0.6; }
+.ap-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 15px;
+}
+.ap-row span { color: #64748b; }
+.ap-row strong { text-align: right; overflow-wrap: anywhere; }
+`;
+
+export default function AddProduct({
+  shopId,
+  product,
+  onClose,
+  onAdded,
+}: Props) {
   const editing = !!product;
 
   const [name, setName] = useState(product?.name ?? "");
   const [category, setCategory] = useState(product?.category ?? "");
   const [price, setPrice] = useState(product ? String(product.price) : "");
-  const [stock, setStock] = useState(product ? String(product.stock ?? 0) : "");
+  const [stock, setStock] = useState(
+    product ? String(product.stock ?? 0) : ""
+  );
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState(""); // preview of a newly picked photo
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(
@@ -94,6 +239,15 @@ export default function AddProduct({ shopId, product, onClose, onAdded }: Props)
     };
   }, [preview]);
 
+  // Stop the page behind the modal from scrolling
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, []);
+
   function handleImageChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     setError("");
@@ -103,11 +257,13 @@ export default function AddProduct({ shopId, product, onClose, onAdded }: Props)
       setPreview("");
       return;
     }
+
     if (!file.type.startsWith("image/")) {
       setError("Please choose an image file");
       e.target.value = "";
       return;
     }
+
     if (file.size > MAX_PICK_BYTES) {
       setError("That photo is too large. Choose one under 15 MB.");
       e.target.value = "";
@@ -182,11 +338,13 @@ export default function AddProduct({ shopId, product, onClose, onAdded }: Props)
 
         if (updateError) saveError = updateError.message;
         else if (!data || data.length === 0)
-          saveError = "Nothing was updated. Check the update policy on products.";
+          saveError =
+            "Nothing was updated. Check the update policy on products.";
       } else {
         const { error: insertError } = await supabase
           .from("products")
           .insert({ ...fields, shop_id: shopId });
+
         if (insertError) saveError = insertError.message;
       }
 
@@ -251,81 +409,82 @@ export default function AddProduct({ shopId, product, onClose, onAdded }: Props)
     onClose();
   }
 
+  function finish() {
+    onAdded();
+    onClose();
+  }
+
   if (isSuccess) {
     return (
-      <div className="modal-overlay">
-        <div className="add-prod-page">
-          <div className="register-form">
-            <div className="add-prod-header">
-              <h2>{editing ? "Product updated" : "Product added successfully"}</h2>
-              <button
-                type="button"
-                className="cancel-btn"
-                onClick={() => {
-                  onAdded();
-                  onClose();
-                }}
-              >
-                x
-              </button>
-            </div>
-
-            {displayImage && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={displayImage}
-                alt={name}
-                style={{ maxWidth: "100%", maxHeight: 160, objectFit: "contain", borderRadius: 8 }}
-              />
-            )}
-
-            <div className="detail-row">
-              <span>Name</span>
-              <strong>{name}</strong>
-            </div>
-            <div className="detail-row">
-              <span>Category</span>
-              <strong>{category || "—"}</strong>
-            </div>
-            <div className="detail-row">
-              <span>Price</span>
-              <strong>{Number(price).toLocaleString()} TZS</strong>
-            </div>
-            <div className="detail-row">
-              <span>Stock</span>
-              <strong>{stock}</strong>
-            </div>
-
-            <div className="form-group">
-              <button
-                type="button"
-                className="save-btn"
-                onClick={() => {
-                  onAdded();
-                  onClose();
-                }}
-              >
-                Done
-              </button>
-            </div>
+      <div className="ap-overlay">
+        <style>{styles}</style>
+        <div className="ap-dialog" role="dialog" aria-modal="true">
+          <div className="ap-header">
+            <h2>{editing ? "Product updated" : "Product added"}</h2>
+            <button
+              type="button"
+              className="ap-close"
+              onClick={finish}
+              aria-label="Close"
+            >
+              ✕
+            </button>
           </div>
+
+          {displayImage && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img className="ap-preview" src={displayImage} alt={name} />
+          )}
+
+          <div className="ap-row">
+            <span>Name</span>
+            <strong>{name}</strong>
+          </div>
+          <div className="ap-row">
+            <span>Category</span>
+            <strong>{category || "—"}</strong>
+          </div>
+          <div className="ap-row">
+            <span>Price</span>
+            <strong>{Number(price).toLocaleString()} TZS</strong>
+          </div>
+          <div className="ap-row">
+            <span>Stock</span>
+            <strong>{stock}</strong>
+          </div>
+
+          <button
+            type="button"
+            className="ap-save"
+            style={{ marginTop: 20 }}
+            onClick={finish}
+          >
+            Done
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="modal-overlay">
-      <div className="add-prod-page">
-        <form className="register-form" onSubmit={handleSubmit}>
-          <div className="add-prod-header">
+    <div className="ap-overlay">
+      <style>{styles}</style>
+
+      <div className="ap-dialog" role="dialog" aria-modal="true">
+        <form onSubmit={handleSubmit}>
+          <div className="ap-header">
             <h2>{editing ? "Edit Product" : "Add Product"}</h2>
-            <button type="button" className="cancel-btn" onClick={onClose}>
-              x
+            <button
+              type="button"
+              className="ap-close"
+              onClick={onClose}
+              aria-label="Close"
+            >
+              ✕
             </button>
           </div>
 
-          <div className="form-group">
+          <div className="ap-field">
             <label>Name</label>
             <input
               type="text"
@@ -336,7 +495,7 @@ export default function AddProduct({ shopId, product, onClose, onAdded }: Props)
             />
           </div>
 
-          <div className="form-group">
+          <div className="ap-field">
             <label>Category</label>
             <input
               type="text"
@@ -346,10 +505,11 @@ export default function AddProduct({ shopId, product, onClose, onAdded }: Props)
             />
           </div>
 
-          <div className="form-group">
+          <div className="ap-field">
             <label>Price (TZS)</label>
             <input
               type="number"
+              inputMode="numeric"
               placeholder="eg. 25000"
               value={price}
               min={1}
@@ -358,10 +518,11 @@ export default function AddProduct({ shopId, product, onClose, onAdded }: Props)
             />
           </div>
 
-          <div className="form-group">
+          <div className="ap-field">
             <label>Stock</label>
             <input
               type="number"
+              inputMode="numeric"
               placeholder="eg. 20"
               value={stock}
               min={0}
@@ -370,7 +531,7 @@ export default function AddProduct({ shopId, product, onClose, onAdded }: Props)
             />
           </div>
 
-          <div className="form-group">
+          <div className="ap-field">
             <label>Photo (optional)</label>
             <input
               key={inputKey}
@@ -378,27 +539,15 @@ export default function AddProduct({ shopId, product, onClose, onAdded }: Props)
               accept="image/jpeg,image/png,image/webp"
               onChange={handleImageChange}
             />
+
             {displayImage && (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={displayImage}
-                  alt="Preview"
-                  style={{ marginTop: 8, maxWidth: "100%", maxHeight: 160, objectFit: "contain", borderRadius: 8 }}
-                />
+                <img className="ap-preview" src={displayImage} alt="Preview" />
                 <button
                   type="button"
+                  className="ap-link-danger"
                   onClick={removePhoto}
-                  style={{
-                    display: "block",
-                    marginTop: 6,
-                    background: "none",
-                    border: "none",
-                    color: "#dc2626",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    padding: 0,
-                  }}
                 >
                   Remove photo
                 </button>
@@ -406,38 +555,25 @@ export default function AddProduct({ shopId, product, onClose, onAdded }: Props)
             )}
           </div>
 
-          {error && <p className="form-error">{error}</p>}
+          {error && <p className="ap-error">{error}</p>}
 
-          <div className="form-group">
-            <button
-              type="submit"
-              className="save-btn"
-              disabled={isInvalid || loading}
-            >
-              {loading ? "Saving..." : editing ? "Save changes" : "Save"}
-            </button>
-          </div>
+          <button
+            type="submit"
+            className="ap-save"
+            disabled={isInvalid || loading}
+          >
+            {loading ? "Saving..." : editing ? "Save changes" : "Save"}
+          </button>
 
           {editing && (
-            <div className="form-group">
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={loading}
-                style={{
-                  width: "100%",
-                  background: "none",
-                  border: "1px solid #dc2626",
-                  color: "#dc2626",
-                  borderRadius: 8,
-                  padding: "10px 14px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                Delete product
-              </button>
-            </div>
+            <button
+              type="button"
+              className="ap-delete"
+              onClick={handleDelete}
+              disabled={loading}
+            >
+              Delete product
+            </button>
           )}
         </form>
       </div>
