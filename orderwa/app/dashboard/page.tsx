@@ -451,8 +451,7 @@ export default function DashboardPage() {
       <main className="dashboard-content">
         <div className="dashboard-page-heading">
           <div>
-            <p className="dashboard-page-kicker">ODA LINK · SELLER</p>
-            <h1>{pageTitle[activeTab]}</h1>
+          
             <p>{pageDescription[activeTab]}</p>
           </div>
         </div>
