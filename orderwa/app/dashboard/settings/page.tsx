@@ -1,9 +1,8 @@
-
 "use client";
 
 import { useEffect, useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "../../../lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 type Shop = {
   id: string;
@@ -52,7 +51,7 @@ const buttonStyle = {
   fontWeight: 600 as const,
 };
 
-export default function SettingsPage() {
+export default function ShopSettings() {
   const router = useRouter();
 
   const [shop, setShop] = useState<Shop | null>(null);
@@ -75,8 +74,7 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [lang, setLang] = useState<Lang>("en");
 
-  const t = (en: string, sw: string) =>
-    lang === "en" ? en : sw;
+  const t = (en: string, sw: string) => (lang === "en" ? en : sw);
 
   useEffect(() => {
     function syncLanguage(event?: Event) {
@@ -178,16 +176,16 @@ export default function SettingsPage() {
       if (!cancelled) setLoading(false);
     }
 
-    load();
+    void load();
 
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   const phoneDigits = phone.replace(/\D/g, "");
-  const phoneOk =
-    phoneDigits.length >= 9 && phoneDigits.length <= 15;
+  const phoneOk = phoneDigits.length >= 9 && phoneDigits.length <= 15;
 
   const accountDigits = accountNumber.replace(/\D/g, "");
   const accountNumberOk =
@@ -444,7 +442,7 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="products-page" style={{ padding: 12 }}>
+      <div style={{ padding: 12 }}>
         {t("Loading settings...", "Inapakia mipangilio...")}
       </div>
     );
@@ -452,10 +450,7 @@ export default function SettingsPage() {
 
   if (!shop) {
     return (
-      <div className="products-page" style={{ padding: 12 }}>
-        <div className="product-header">
-          <h2>{t("Settings", "Mipangilio")}</h2>
-        </div>
+      <div style={{ padding: 12 }}>
         <p style={{ color: "#dc2626" }}>
           {error ||
             t(
@@ -469,18 +464,12 @@ export default function SettingsPage() {
 
   return (
     <div
-      className="products-page"
       style={{
-        padding: 12,
         maxWidth: 560,
         width: "100%",
         boxSizing: "border-box",
       }}
     >
-      <div className="product-header" style={{ marginBottom: 16 }}>
-        <h2>{t("Settings", "Mipangilio")}</h2>
-      </div>
-
       {error && (
         <p className="form-error" role="alert">
           {error}
@@ -530,7 +519,7 @@ export default function SettingsPage() {
           <input
             style={inputStyle}
             type="text"
-            value={`https://odalink.vercel.app/${shop?.slug ?? ""}`}
+            value={`https://odalink.vercel.app/store/${shop.slug}`}
             readOnly
             disabled
           />
@@ -561,9 +550,9 @@ export default function SettingsPage() {
 
       <hr style={{ margin: "28px 0", borderColor: "#e5e7eb" }} />
 
-      <div className="product-header" style={{ marginBottom: 12 }}>
-        <h3>{t("Payment methods", "Njia za malipo")}</h3>
-      </div>
+      <h3 style={{ marginBottom: 12 }}>
+        {t("Payment methods", "Njia za malipo")}
+      </h3>
 
       <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 20 }}>
         {t(
@@ -618,7 +607,9 @@ export default function SettingsPage() {
         )}
 
         <div className="form-group">
-          <label>{t("Account / recipient name", "Jina la akaunti / mpokeaji")}</label>
+          <label>
+            {t("Account / recipient name", "Jina la akaunti / mpokeaji")}
+          </label>
           <input
             style={inputStyle}
             type="text"
@@ -668,12 +659,7 @@ export default function SettingsPage() {
             checked={isEnabled}
             onChange={(e) => setIsEnabled(e.target.checked)}
           />
-          <span>
-            {t(
-              "Available to customers",
-              "Ionekane kwa wateja"
-            )}
-          </span>
+          <span>{t("Available to customers", "Ionekane kwa wateja")}</span>
         </label>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -742,48 +728,38 @@ export default function SettingsPage() {
                 background: "#fff",
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  gap: 10,
-                  flexWrap: "wrap",
-                }}
-              >
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <strong>{methodLabel(item.method)}</strong>
+              <div style={{ minWidth: 0 }}>
+                <strong>{methodLabel(item.method)}</strong>
 
-                  <p style={{ margin: "8px 0 4px", overflowWrap: "anywhere" }}>
-                    {t("Account name", "Jina la akaunti")}: {item.account_name}
+                <p style={{ margin: "8px 0 4px", overflowWrap: "anywhere" }}>
+                  {t("Account name", "Jina la akaunti")}: {item.account_name}
+                </p>
+
+                <p style={{ margin: "4px 0", overflowWrap: "anywhere" }}>
+                  {t("Number", "Namba")}: {item.account_number}
+                </p>
+
+                {item.method === "bank" && item.bank_name && (
+                  <p style={{ margin: "4px 0" }}>
+                    {t("Bank", "Benki")}: {item.bank_name}
                   </p>
+                )}
 
-                  <p style={{ margin: "4px 0", overflowWrap: "anywhere" }}>
-                    {t("Number", "Namba")}: {item.account_number}
-                  </p>
-
-                  {item.method === "bank" && item.bank_name && (
-                    <p style={{ margin: "4px 0" }}>
-                      {t("Bank", "Benki")}: {item.bank_name}
-                    </p>
-                  )}
-
-                  <span
-                    style={{
-                      display: "inline-block",
-                      marginTop: 8,
-                      padding: "4px 8px",
-                      borderRadius: 6,
-                      fontSize: 12,
-                      background: item.is_enabled ? "#dcfce7" : "#f3f4f6",
-                      color: item.is_enabled ? "#166534" : "#4b5563",
-                    }}
-                  >
-                    {item.is_enabled
-                      ? t("Enabled", "Imewashwa")
-                      : t("Disabled", "Imezimwa")}
-                  </span>
-                </div>
+                <span
+                  style={{
+                    display: "inline-block",
+                    marginTop: 8,
+                    padding: "4px 8px",
+                    borderRadius: 6,
+                    fontSize: 12,
+                    background: item.is_enabled ? "#dcfce7" : "#f3f4f6",
+                    color: item.is_enabled ? "#166534" : "#4b5563",
+                  }}
+                >
+                  {item.is_enabled
+                    ? t("Enabled", "Imewashwa")
+                    : t("Disabled", "Imezimwa")}
+                </span>
               </div>
 
               <div
@@ -808,7 +784,7 @@ export default function SettingsPage() {
 
                 <button
                   type="button"
-                  onClick={() => togglePaymentMethod(item)}
+                  onClick={() => void togglePaymentMethod(item)}
                   style={{
                     ...buttonStyle,
                     background: item.is_enabled ? "#fef3c7" : "#dcfce7",
@@ -822,7 +798,7 @@ export default function SettingsPage() {
 
                 <button
                   type="button"
-                  onClick={() => deletePaymentMethod(item)}
+                  onClick={() => void deletePaymentMethod(item)}
                   disabled={deletingId === item.id}
                   style={{
                     ...buttonStyle,
