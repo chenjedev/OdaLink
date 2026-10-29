@@ -56,6 +56,7 @@ const styles = `
   border: 0;
   outline: 0;
   background: transparent;
+  border: 1px solid #e2e8fø;
   font-size: 15px;
 }
 
