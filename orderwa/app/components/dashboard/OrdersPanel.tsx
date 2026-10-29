@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ChevronDown, Search, SlidersHorizontal } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export type OrderItem = {
@@ -31,52 +32,97 @@ export function itemsSummary(items: OrderItem[]) {
 
 // Assumes Tanzanian numbers: 0712... becomes 255712...
 function toWhatsApp(phone: string) {
-  const digits = phone.replace(/\D/g, "");
+  const digits = (phone ?? "").replace(/\D/g, "");
   const intl = digits.startsWith("0") ? "255" + digits.slice(1) : digits;
   return `https://wa.me/${intl}`;
 }
 
 const styles = `
-.op-root { width: 100%; min-width: 0; }
+.op-root {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #fff;
+  overflow: hidden;
+}
 
-/* ---------- Filters ---------- */
-.op-filters { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+/* ---------- Status tabs ---------- */
+.op-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  border-bottom: 1px solid #e2e8f0;
+  scrollbar-width: none;
+}
+.op-tabs::-webkit-scrollbar { display: none; }
+.op-tab {
+  flex: none;
+  height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #475569;
+  font-size: 15px;
+  cursor: pointer;
+}
+.op-tab.is-active { background: #eef2f6; color: #0f172a; font-weight: 600; }
 
-.op-search {
+/* ---------- Search row ---------- */
+.op-searchbar {
   display: flex;
   align-items: center;
-  width: 100%;
-  box-sizing: border-box;
-  height: 46px;
-  padding: 0 14px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #fff;
+  gap: 10px;
+  height: 52px;
+  padding: 0 10px 0 16px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #94a3b8;
 }
-.op-search input {
+.op-searchbar input {
   flex: 1;
   min-width: 0;
   height: 100%;
   border: 0;
   outline: 0;
   background: transparent;
+  color: #0f172a;
   font-size: 16px;
 }
-
-.op-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.op-chip {
-  height: 36px;
-  padding: 0 14px;
-  border: 1px solid #e2e8f0;
-  border-radius: 999px;
-  background: #fff;
-  color: #334155;
-  font-size: 14px;
+.op-filter-btn {
+  position: relative;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #475569;
   cursor: pointer;
 }
-.op-chip.is-active { background: #0f766e; border-color: #0f766e; color: #fff; }
+.op-filter-btn.is-open { background: #eef2f6; }
+.op-dot {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #0f766e;
+}
 
-.op-dates { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+/* ---------- Date panel (hidden until the filter icon is tapped) ---------- */
+.op-datepanel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
 .op-date { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .op-date span { font-size: 13px; color: #64748b; }
 .op-date input {
@@ -85,119 +131,109 @@ const styles = `
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
-  height: 44px;
+  min-height: 44px;
   padding: 0 10px;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #fff;
   color: #0f172a;
   font-size: 16px;
-  -webkit-appearance: none;
-  appearance: none;
 }
 
+/* ---------- Count + clear bar ---------- */
+.op-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: 13px;
+  color: #64748b;
+}
 .op-clear {
-  align-self: flex-start;
   padding: 0;
   border: 0;
   background: transparent;
   color: #dc2626;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
 }
 
-.op-error { color: #dc2626; margin: 0 0 12px; }
+.op-error { color: #dc2626; margin: 0; padding: 10px 16px; font-size: 14px; }
 
-/* ---------- Desktop table ---------- */
-.op-table-wrap {
-  display: none;
+/* ---------- Order rows ---------- */
+.op-row { border-bottom: 1px solid #eef2f6; }
+.op-row:last-child { border-bottom: 0; }
+
+.op-row-main {
+  position: relative;
+  display: block;
   width: 100%;
-  overflow-x: auto;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #fff;
-}
-.op-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-.op-table th {
+  padding: 14px 44px 14px 16px;
+  border: 0;
+  background: transparent;
   text-align: left;
-  padding: 12px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-  white-space: nowrap;
+  color: inherit;
+  cursor: pointer;
 }
-.op-table td {
-  padding: 12px;
-  border-bottom: 1px solid #f1f5f9;
-  vertical-align: middle;
+.op-row-title { font-size: 16px; font-weight: 600; color: #0f172a; overflow-wrap: anywhere; }
+.op-row-title span { color: #64748b; font-weight: 500; margin-right: 6px; }
+.op-row-sub { margin-top: 2px; font-size: 14px; color: #64748b; }
+.op-row-tags { margin-top: 8px; }
+.op-chevron {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  margin-top: -9px;
+  color: #94a3b8;
+  transition: transform 0.15s ease;
 }
-.op-table .op-items { min-width: 180px; }
-.op-table .op-nowrap { white-space: nowrap; }
-.op-table .op-empty { text-align: center; color: #64748b; }
-.op-table tfoot td { font-weight: 600; background: #f8fafc; }
+.op-chevron.is-open { transform: rotate(180deg); }
 
-/* ---------- Mobile cards ---------- */
-.op-cards { display: flex; flex-direction: column; gap: 12px; }
-.op-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  background: #fff;
-  padding: 14px;
+.op-detail {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  padding: 0 16px 16px;
 }
-.op-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-.op-card-top strong { min-width: 0; overflow-wrap: anywhere; }
-.op-meta { margin: 0; font-size: 13px; color: #64748b; overflow-wrap: anywhere; }
-.op-meta a { color: #0f766e; font-weight: 500; }
-.op-card-items { margin: 0; font-size: 14px; color: #0f172a; overflow-wrap: anywhere; }
-.op-card-bottom {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #f1f5f9;
-}
-.op-empty-card { text-align: center; color: #64748b; margin: 8px 0; }
+.op-detail p { margin: 0; font-size: 14px; color: #0f172a; overflow-wrap: anywhere; }
+.op-detail a { color: #0f766e; font-weight: 600; }
+.op-detail-row { display: flex; align-items: center; gap: 10px; }
+.op-detail-row span { font-size: 13px; color: #64748b; }
 
-/* ---------- Status ---------- */
+.op-select {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 16px;
+}
+.op-select:disabled { opacity: 0.6; }
+
+.op-empty { padding: 28px 16px; text-align: center; color: #64748b; font-size: 15px; }
+
+/* ---------- Status badge ---------- */
 .op-badge {
   display: inline-block;
-  padding: 3px 10px;
+  padding: 4px 10px;
   border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
   background: #f1f5f9;
   color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 .op-badge-pending { background: #fef3c7; color: #b45309; }
 .op-badge-confirmed { background: #dbeafe; color: #1d4ed8; }
 .op-badge-delivered { background: #dcfce7; color: #15803d; }
 .op-badge-cancelled { background: #fee2e2; color: #b91c1c; }
-
-.op-select {
-  padding: 6px 8px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #fff;
-  font-size: 14px;
-  max-width: 100%;
-}
-.op-select:disabled { opacity: 0.6; }
-
-@media (min-width: 768px) {
-  .op-table-wrap { display: block; }
-  .op-cards { display: none; }
-  .op-dates { max-width: 420px; }
-}
 `;
 
 export default function OrdersPanel({
@@ -213,6 +249,8 @@ export default function OrdersPanel({
   const [statusFilter, setStatusFilter] = useState("all");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [showDates, setShowDates] = useState(false);
+  const [openId, setOpenId] = useState<number | string | null>(null);
   const [error, setError] = useState("");
 
   const t = (en: string, sw: string) => (lang === "en" ? en : sw);
@@ -220,7 +258,12 @@ export default function OrdersPanel({
   // Opened from a link like /dashboard?tab=orders&q=33
   useEffect(() => {
     const q = new URLSearchParams(window.location.search).get("q");
-    if (q) setSearch(q);
+    if (!q) return;
+
+    setSearch(q);
+    const match = orders.find((o) => String(o.id) === q);
+    if (match) setOpenId(match.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function statusLabel(status: string) {
@@ -232,6 +275,17 @@ export default function OrdersPanel({
       cancelled: "Imeghairiwa",
     };
     return labels[status.toLowerCase()] ?? status;
+  }
+
+  function formatDate(value: string) {
+    return new Date(value)
+      .toLocaleString(lang === "sw" ? "sw-TZ" : "en-GB", {
+        day: "numeric",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+      .replace(",", "");
   }
 
   function clearFilters() {
@@ -297,57 +351,53 @@ export default function OrdersPanel({
     return statusMatch && searchMatch && dateMatch;
   });
 
-  const hasFilters = Boolean(search || statusFilter !== "all" || from || to);
-
-  function renderSelect(o: Order) {
-    return (
-      <select
-        className="op-select"
-        value={o.status}
-        disabled={o.status === "cancelled"}
-        onChange={(e) => void handleStatusChange(o.id, e.target.value)}
-        aria-label={t("Change order status", "Badilisha hali ya oda")}
-      >
-        {STATUSES.map((s) => (
-          <option key={s} value={s}>
-            {statusLabel(s)}
-          </option>
-        ))}
-      </select>
-    );
-  }
+  const datesActive = Boolean(from || to);
+  const hasFilters = Boolean(search || statusFilter !== "all" || datesActive);
 
   return (
     <div className="op-root">
       <style>{styles}</style>
 
-      <div className="op-filters">
-        <div className="op-search">
-          <input
-            type="search"
-            placeholder={t(
-              "Search order, customer, phone ...",
-              "Tafuta oda, mteja au namba ya simu ..."
-            )}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+      {/* Status tabs */}
+      <div className="op-tabs">
+        {["all", ...STATUSES].map((s) => (
+          <button
+            key={s}
+            type="button"
+            className={`op-tab${statusFilter === s ? " is-active" : ""}`}
+            onClick={() => setStatusFilter(s)}
+          >
+            {s === "all" ? t("All", "Zote") : statusLabel(s)}
+          </button>
+        ))}
+      </div>
 
-        <div className="op-chips">
-          {["all", ...STATUSES].map((s) => (
-            <button
-              key={s}
-              type="button"
-              className={`op-chip${statusFilter === s ? " is-active" : ""}`}
-              onClick={() => setStatusFilter(s)}
-            >
-              {s === "all" ? t("All", "Zote") : statusLabel(s)}
-            </button>
-          ))}
-        </div>
+      {/* Search + filter icon */}
+      <div className="op-searchbar">
+        <Search size={20} />
+        <input
+          type="search"
+          placeholder={t(
+            "Search by customer, phone, order number",
+            "Tafuta mteja, simu au namba ya oda"
+          )}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <button
+          type="button"
+          className={`op-filter-btn${showDates ? " is-open" : ""}`}
+          onClick={() => setShowDates((v) => !v)}
+          aria-label={t("Filter by date", "Chuja kwa tarehe")}
+        >
+          <SlidersHorizontal size={20} />
+          {datesActive && <span className="op-dot" />}
+        </button>
+      </div>
 
-        <div className="op-dates">
+      {/* Dates: only visible after tapping the filter icon */}
+      {showDates && (
+        <div className="op-datepanel">
           <label className="op-date">
             <span>{t("From", "Kuanzia")}</span>
             <input
@@ -368,7 +418,13 @@ export default function OrdersPanel({
             />
           </label>
         </div>
+      )}
 
+      {/* Count + clear */}
+      <div className="op-bar">
+        <span>
+          {filtered.length} {t("orders", "oda")}
+        </span>
         {hasFilters && (
           <button type="button" className="op-clear" onClick={clearFilters}>
             {t("Clear filters", "Futa vichujio")}
@@ -378,104 +434,82 @@ export default function OrdersPanel({
 
       {error && <p className="op-error">{error}</p>}
 
-      {/* Table: tablets and desktops */}
-      <div className="op-table-wrap">
-        <table className="op-table">
-          <thead>
-            <tr>
-              <th>{t("Id", "Namba")}</th>
-              <th>{t("Date", "Tarehe")}</th>
-              <th>{t("Customer", "Mteja")}</th>
-              <th>{t("Phone", "Simu")}</th>
-              <th>{t("Items", "Bidhaa")}</th>
-              <th>{t("Total", "Jumla")}</th>
-              <th>{t("Status", "Hali")}</th>
-            </tr>
-          </thead>
+      {/* Orders */}
+      {filtered.map((o) => {
+        const open = openId === o.id;
 
-          <tbody>
-            {filtered.map((o) => (
-              <tr key={o.id}>
-                <td>{o.id}</td>
-                <td className="op-nowrap">
-                  {new Date(o.created_at).toLocaleDateString()}
-                </td>
-                <td>{o.customer_name}</td>
-                <td className="op-nowrap">{o.customer_phone}</td>
-                <td className="op-items">{itemsSummary(o.items)}</td>
-                <td className="op-nowrap">
-                  {Number(o.total).toLocaleString()} TZS
-                </td>
-                <td className="op-nowrap">
-                  <span
-                    className={`op-badge op-badge-${o.status.toLowerCase()}`}
+        return (
+          <div key={o.id} className="op-row">
+            <button
+              type="button"
+              className="op-row-main"
+              onClick={() => setOpenId(open ? null : o.id)}
+              aria-expanded={open}
+            >
+              <div className="op-row-title">
+                <span>#{o.id}</span>
+                {o.customer_name}
+              </div>
+              <div className="op-row-sub">
+                {Number(o.total).toLocaleString()} TZS ·{" "}
+                {formatDate(o.created_at)}
+              </div>
+              <div className="op-row-tags">
+                <span className={`op-badge op-badge-${o.status.toLowerCase()}`}>
+                  {statusLabel(o.status)}
+                </span>
+              </div>
+              <ChevronDown
+                size={18}
+                className={`op-chevron${open ? " is-open" : ""}`}
+              />
+            </button>
+
+            {open && (
+              <div className="op-detail">
+                <p>{itemsSummary(o.items) || "—"}</p>
+
+                <p>
+                  <a href={`tel:${o.customer_phone}`}>{o.customer_phone}</a>
+                  {" · "}
+                  <a
+                    href={toWhatsApp(o.customer_phone)}
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
-                    {statusLabel(o.status)}
-                  </span>{" "}
-                  {renderSelect(o)}
-                </td>
-              </tr>
-            ))}
+                    WhatsApp
+                  </a>
+                </p>
 
-            {filtered.length === 0 && (
-              <tr>
-                <td className="op-empty" colSpan={7}>
-                  {t("No order found", "Hakuna oda iliyopatikana")}
-                </td>
-              </tr>
+                <div className="op-detail-row">
+                  <span>{t("Status", "Hali")}</span>
+                  <select
+                    className="op-select"
+                    value={o.status}
+                    disabled={o.status === "cancelled"}
+                    onChange={(e) =>
+                      void handleStatusChange(o.id, e.target.value)
+                    }
+                    aria-label={t("Change order status", "Badilisha hali ya oda")}
+                  >
+                    {STATUSES.map((s) => (
+                      <option key={s} value={s}>
+                        {statusLabel(s)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             )}
-          </tbody>
-
-          <tfoot>
-            <tr>
-              <td colSpan={7}>
-                {t("Total", "Jumla")} {filtered.length.toLocaleString()}
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-
-      {/* Cards: phones */}
-      <div className="op-cards">
-        {filtered.map((o) => (
-          <div key={o.id} className="op-card">
-            <div className="op-card-top">
-              <strong>
-                #{o.id} · {o.customer_name}
-              </strong>
-              <span className={`op-badge op-badge-${o.status.toLowerCase()}`}>
-                {statusLabel(o.status)}
-              </span>
-            </div>
-
-            <p className="op-meta">
-              <a href={`tel:${o.customer_phone}`}>{o.customer_phone}</a> ·{" "}
-              <a
-                href={toWhatsApp(o.customer_phone)}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                WhatsApp
-              </a>{" "}
-              · {new Date(o.created_at).toLocaleDateString()}
-            </p>
-
-            <p className="op-card-items">{itemsSummary(o.items)}</p>
-
-            <div className="op-card-bottom">
-              <strong>{Number(o.total).toLocaleString()} TZS</strong>
-              {renderSelect(o)}
-            </div>
           </div>
-        ))}
+        );
+      })}
 
-        {filtered.length === 0 && (
-          <p className="op-empty-card">
-            {t("No order found", "Hakuna oda iliyopatikana")}
-          </p>
-        )}
-      </div>
+      {filtered.length === 0 && (
+        <p className="op-empty">
+          {t("No order found", "Hakuna oda iliyopatikana")}
+        </p>
+      )}
     </div>
   );
 }
