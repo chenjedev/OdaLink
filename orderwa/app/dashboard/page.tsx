@@ -4,7 +4,7 @@ import ShopSettings from "../components/dashboard/ShopSettings";
 import ProductPage from "./products/page";
 import OrdersPanel, {
   type Order,
-  itemsSummary,
+  niceName,
 } from "../components/dashboard/OrdersPanel";
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
@@ -58,6 +58,9 @@ function formatTzs(amount: number) {
   return `TZS ${new Intl.NumberFormat("en-US").format(amount)}`;
 }
 
+function formatNumber(amount: number) {
+  return new Intl.NumberFormat("en-US").format(amount);
+}
 
 const layoutFix = `
 .oda-dashboard,
@@ -118,8 +121,163 @@ const layoutFix = `
   white-space: nowrap;
 }
 .oda-dashboard .dashboard-storefront-link:hover { opacity: 0.8; }
-`;
 
+/* ---------- Overview ---------- */
+.oda-dashboard .ov-wrap { padding-bottom: 96px; }
+
+.oda-dashboard .ov-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.oda-dashboard .ov-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: none;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+.oda-dashboard button.ov-stat {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.oda-dashboard .ov-stat.is-alert {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+.oda-dashboard .ov-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #e6f4f1;
+  color: #0f766e;
+}
+.oda-dashboard .ov-stat.is-alert .ov-icon {
+  background: #fef3c7;
+  color: #b45309;
+}
+.oda-dashboard .ov-label {
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #64748b;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.oda-dashboard .ov-value {
+  font-size: clamp(22px, 6.6vw, 28px);
+  line-height: 1.15;
+  font-weight: 800;
+  color: #0f172a;
+  white-space: nowrap;
+}
+.oda-dashboard .ov-note {
+  font-size: 13px;
+  color: #64748b;
+  overflow-wrap: anywhere;
+}
+
+.oda-dashboard .ov-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  background: #fff;
+  overflow: hidden;
+}
+.oda-dashboard .ov-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+}
+.oda-dashboard .ov-card-head h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.oda-dashboard .ov-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #0f766e;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.oda-dashboard .ov-row {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 12px 16px 14px;
+  border: 0;
+  border-top: 1px solid #eef2f6;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.oda-dashboard .ov-row-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+  overflow-wrap: anywhere;
+}
+.oda-dashboard .ov-row-title span {
+  margin-right: 6px;
+  color: #64748b;
+  font-weight: 500;
+}
+.oda-dashboard .ov-row-sub {
+  margin-top: 2px;
+  font-size: 14px;
+  color: #64748b;
+}
+.oda-dashboard .ov-badge {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.oda-dashboard .ov-badge-pending { background: #fef3c7; color: #b45309; }
+.oda-dashboard .ov-badge-confirmed { background: #dbeafe; color: #1d4ed8; }
+.oda-dashboard .ov-badge-delivered { background: #dcfce7; color: #15803d; }
+.oda-dashboard .ov-badge-cancelled { background: #fee2e2; color: #b91c1c; }
+.oda-dashboard .ov-empty {
+  margin: 0;
+  padding: 20px 16px;
+  border-top: 1px solid #eef2f6;
+  color: #64748b;
+  font-size: 15px;
+}
+`;
 
 const dashboardTabs: {
   id: DashboardTab;
@@ -132,60 +290,40 @@ const dashboardTabs: {
   { id: "settings", label: "Settings", icon: <SettingsIcon size={16} /> },
 ];
 
-function StatusTag({ status }: { status: string }) {
-  const normalized =
-    status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
-
-  return (
-    <span className={`dashboard-status status-${status.toLowerCase()}`}>
-      {normalized}
-    </span>
-  );
-}
-
-function OrderCard({ order }: { order: OrderRow }) {
-  return (
-    <article className="dashboard-order-card">
-      <div className="dashboard-order-person">
-        <strong>{order.customer_name || "Customer"}</strong>
-        <span>{order.customer_phone || "—"}</span>
-      </div>
-
-      <p className="dashboard-order-items">
-        {itemsSummary(order.items) || "Items"}
-      </p>
-
-      <time className="dashboard-order-time">
-        {new Date(order.created_at).toLocaleString()}
-      </time>
-
-      <div className="dashboard-order-side">
-        <strong>{formatTzs(Number(order.total))}</strong>
-        <StatusTag status={order.status} />
-      </div>
-    </article>
-  );
-}
-
-function MetricCard({
+function StatCard({
   icon,
   label,
   value,
   note,
+  alert = false,
+  onClick,
 }: {
   icon: ReactNode;
   label: string;
   value: string;
   note: string;
+  alert?: boolean;
+  onClick?: () => void;
 }) {
-  return (
-    <article className="dashboard-metric-card">
-      <span className="dashboard-metric-icon">{icon}</span>
-      <span className="dashboard-metric-label">{label}</span>
-      <strong className="dashboard-metric-value">{value}</strong>
-      <span className="dashboard-metric-note">{note}</span>
-    </article>
+  const className = `ov-stat${alert ? " is-alert" : ""}`;
+  const content = (
+    <>
+      <span className="ov-icon">{icon}</span>
+      <span className="ov-label">{label}</span>
+      <strong className="ov-value">{value}</strong>
+      <span className="ov-note">{note}</span>
+    </>
   );
+
+  if (onClick) {
+    return (
+      <button type="button" className={className} onClick={onClick}>
+        {content}
+      </button>
+    );
+  }
+
+  return <div className={className}>{content}</div>;
 }
 
 export default function DashboardPage() {
@@ -197,6 +335,7 @@ export default function DashboardPage() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [lang, setLang] = useState<Lang>("en");
   const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
+  const [ordersFilter, setOrdersFilter] = useState("all");
   const [notice, setNotice] = useState("");
 
   const t = (en: string, sw: string) => (lang === "en" ? en : sw);
@@ -337,6 +476,34 @@ export default function DashboardPage() {
     )
   );
 
+  function openOrders(status = "all") {
+    setOrdersFilter(status);
+    setActiveTab("orders");
+  }
+
+  function statusText(status: string) {
+    if (lang === "en") return status;
+    const labels: Record<string, string> = {
+      pending: "Inasubiri",
+      confirmed: "Imethibitishwa",
+      delivered: "Imefikishwa",
+      cancelled: "Imeghairiwa",
+    };
+    return labels[status.toLowerCase()] ?? status;
+  }
+
+  function shortDate(value: string) {
+    const d = new Date(value);
+    const loc = lang === "sw" ? "sw-TZ" : "en-GB";
+    const day = d.toLocaleDateString(loc, { day: "numeric", month: "short" });
+    const time = d.toLocaleTimeString(loc, {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    return `${day} ${time}`;
+  }
+
   async function copyShopLink() {
     if (!shopUrl) return;
 
@@ -400,10 +567,7 @@ export default function DashboardPage() {
   }
 
   const pageDescription: Record<DashboardTab, string> = {
-    overview: t(
-      "Here is what is happening at your shop today.",
-      "Hapa ndipo unavyoona kinachoendelea dukani leo."
-    ),
+    overview: "",
     orders: t(
       "Review orders and keep customers updated.",
       "Angalia oda na sasisha wateja."
@@ -467,7 +631,10 @@ export default function DashboardPage() {
               className={`dashboard-tab${
                 activeTab === tab.id ? " is-active" : ""
               }`}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                setOrdersFilter("all");
+                setActiveTab(tab.id);
+              }}
             >
               {tab.icon}
               <span>{tab.label}</span>
@@ -477,7 +644,7 @@ export default function DashboardPage() {
       </div>
 
       <main className="dashboard-content">
-        {activeTab !== "products" && (
+        {activeTab !== "products" && activeTab !== "overview" && (
           <div className="dashboard-page-heading">
             <div>
               <p>{pageDescription[activeTab]}</p>
@@ -504,69 +671,87 @@ export default function DashboardPage() {
         )}
 
         {activeTab === "overview" && shop && (
-          <div className="dashboard-panel-stack">
-            <section className="dashboard-metrics">
-              <MetricCard
-                icon={<ShoppingBag size={18} />}
-                label={t("Orders today", "Oda za leo")}
-                value={String(todayOrders.length).padStart(2, "0")}
-                note={formatTzs(sumTotals(todayOrders))}
-              />
-
-              <MetricCard
+          <div className="ov-wrap">
+            <div className="ov-grid">
+              <StatCard
+                alert={pendingOrders.length > 0}
                 icon={<ClipboardList size={18} />}
                 label={t("Pending orders", "Zinazosubiri")}
-                value={String(pendingOrders.length).padStart(2, "0")}
-                note={t("Ready for follow-up", "Zinazohitaji hatua")}
+                value={String(pendingOrders.length)}
+                note={t("Tap to follow up", "Bonyeza kuzifuatilia")}
+                onClick={() => openOrders("pending")}
               />
 
-              <MetricCard
+              <StatCard
+                icon={<ShoppingBag size={18} />}
+                label={t("Orders today", "Oda za leo")}
+                value={String(todayOrders.length)}
+                note={formatTzs(sumTotals(todayOrders))}
+                onClick={() => openOrders("all")}
+              />
+
+              <StatCard
                 icon={<Package size={18} />}
-                label={t("Products listed", "Bidhaa")}
-                value={String(products.length).padStart(2, "0")}
+                label={t("Products", "Bidhaa")}
+                value={String(products.length)}
                 note={`${t("Stock worth", "Thamani ya stoo")} ${formatTzs(
                   stockWorth
                 )}`}
+                onClick={() => setActiveTab("products")}
               />
 
-              <MetricCard
+              <StatCard
                 icon={<CircleDollarSign size={18} />}
-                label={t("Revenue", "Mapato")}
-                value={formatTzs(revenue)}
+                label={t("Revenue (TZS)", "Mapato (TZS)")}
+                value={formatNumber(revenue)}
                 note={t(
-                  "Confirmed + Delivered",
-                  "Zilizothibitishwa + Zilizofikishwa"
+                  "Confirmed + delivered, all time",
+                  "Zilizothibitishwa + zilizofikishwa, zote"
                 )}
               />
-            </section>
+            </div>
 
-            <section className="dashboard-panel">
-              <div className="dashboard-panel-heading">
-                <div>
-                  <p className="dashboard-section-kicker">ORDERS</p>
-                  <h2>{t("Recent orders", "Oda za hivi karibuni")}</h2>
-                </div>
+            <section className="ov-card">
+              <div className="ov-card-head">
+                <h2>{t("Recent orders", "Oda za hivi karibuni")}</h2>
 
                 <button
-                  className="dashboard-text-link"
                   type="button"
-                  onClick={() => setActiveTab("orders")}
+                  className="ov-link"
+                  onClick={() => openOrders("all")}
                 >
                   {t("View all", "Angalia zote")} <ArrowUpRight size={14} />
                 </button>
               </div>
 
-              <div className="dashboard-order-list">
-                {orders.slice(0, 3).map((order) => (
-                  <OrderCard key={order.id} order={order} />
-                ))}
+              {orders.slice(0, 3).map((order) => (
+                <button
+                  key={order.id}
+                  type="button"
+                  className="ov-row"
+                  onClick={() => openOrders("all")}
+                >
+                  <div className="ov-row-title">
+                    <span>#{order.id}</span>
+                    {niceName(order.customer_name) || t("Customer", "Mteja")}
+                  </div>
+                  <div className="ov-row-sub">
+                    {formatNumber(Number(order.total))} TZS ·{" "}
+                    {shortDate(order.created_at)}
+                  </div>
+                  <span
+                    className={`ov-badge ov-badge-${order.status.toLowerCase()}`}
+                  >
+                    {statusText(order.status)}
+                  </span>
+                </button>
+              ))}
 
-                {orders.length === 0 && (
-                  <p className="dashboard-muted-copy">
-                    {t("No orders yet.", "Bado hakuna oda.")}
-                  </p>
-                )}
-              </div>
+              {orders.length === 0 && (
+                <p className="ov-empty">
+                  {t("No orders yet.", "Bado hakuna oda.")}
+                </p>
+              )}
             </section>
           </div>
         )}
@@ -574,8 +759,10 @@ export default function DashboardPage() {
         {activeTab === "orders" && shop && (
           <div style={{ paddingBottom: 96 }}>
             <OrdersPanel
+              key={ordersFilter}
               orders={orders}
               lang={lang}
+              initialStatus={ordersFilter}
               onStatusChanged={(id, status) =>
                 setOrders((prev) =>
                   prev.map((o) => (o.id === id ? { ...o, status } : o))
