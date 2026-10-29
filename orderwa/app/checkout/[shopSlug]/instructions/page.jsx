@@ -13,8 +13,8 @@ const PAYMENT_OPTIONS = [
   { value: "bank", label: "Bank", ussd: "", short: "B", color: "#374151" },
 ];
 
-// One place to change if your storefront lives somewhere else (for example /store/${slug}).
-const storePath = (slug) => `/${slug}`;
+// The public storefront lives at /store/<slug>.
+const storePath = (slug) => `/store/${slug}`;
 
 // Turns 0712345678 into 255712345678, the format wa.me expects.
 function toWhatsAppNumber(phone) {
@@ -193,9 +193,8 @@ export default function InstructionsPage() {
           ).toLocaleString()} TZS`
       );
 
-      // Link that takes the seller straight to this order in the dashboard.
-      // To search by customer phone instead, replace order.id with checkout.phone.trim().
-      const manageUrl = `${window.location.origin}/dashboard/orders?q=${encodeURIComponent(
+      // Link that takes the seller straight to this one order in the dashboard.
+      const manageUrl = `${window.location.origin}/dashboard/orders?order=${encodeURIComponent(
         String(order.id)
       )}`;
 
