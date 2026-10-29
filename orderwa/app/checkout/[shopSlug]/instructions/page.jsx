@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,43 +5,32 @@ import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
 
 const PAYMENT_OPTIONS = [
-  { value: "mpesa", label: "M-Pesa", ussd: "*150*00#" },
-  { value: "airtel_money", label: "Airtel Money", ussd: "*150*60#" },
-  { value: "tigopesa", label: "Tigo Pesa", ussd: "*150*01#" },
-  { value: "halopesa", label: "HaloPesa", ussd: "*150*88#" },
-  { value: "selcom", label: "Selcom", ussd: "" },
-  { value: "bank", label: "Bank / Benki", ussd: "" },
+  { value: "mpesa", label: "M-Pesa", short: "M", color: "#dc2626" },
+  { value: "airtel_money", label: "Airtel Money", short: "A", color: "#e11d48" },
+  { value: "tigopesa", label: "Tigo Pesa", short: "T", color: "#2563eb" },
+  { value: "halopesa", label: "HaloPesa", short: "H", color: "#ea580c" },
+  { value: "selcom", label: "Selcom", short: "S", color: "#0f766e" },
+  { value: "bank", label: "Bank", short: "B", color: "#374151" },
 ];
 
-function toWhatsAppNumber(phone) {
-  let digits = String(phone || "").replace(/\D/g, "");
-
-  if (digits.startsWith("00")) digits = digits.slice(2);
-  if (digits.startsWith("0")) digits = "255" + digits.slice(1);
-  if (digits.length === 9) digits = "255" + digits;
-
-  return digits;
-}
-
-export default function InstructionsPage() {
+export default function PaymentPage() {
   const router = useRouter();
   const params = useParams();
   const shopSlug = params.shopSlug;
 
   const [checkout, setCheckout] = useState(null);
-  const [payment, setPayment] = useState(null);
+  const [paymentMethods, setPaymentMethods] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [confirmation, setConfirmation] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const [whatsappUrl, setWhatsappUrl] = useState("");
+  const [orderId, setOrderId] = useState(null);
 
+  // Load the checkout data saved by CheckoutForm, then the seller's payment methods.
   useEffect(() => {
     let active = true;
 
-    async function loadCheckout() {
+    async function loadPaymentMethods() {
       try {
         const saved = sessionStorage.getItem("odLinkCheckout");
 
@@ -51,112 +39,67 @@ export default function InstructionsPage() {
           return;
         }
 
-        const data = JSON.parse(saved);
+        const checkoutData = JSON.parse(saved);
 
         if (
-          !data.shopId ||
-          !data.cart?.length ||
-          !data.name ||
-          !data.phone
+          !checkoutData.shopId ||
+          !checkoutData.cart?.length ||
+          !checkoutData.name ||
+          !checkoutData.phone
         ) {
           sessionStorage.removeItem("odLinkCheckout");
           router.replace(`/${shopSlug}`);
           return;
         }
 
-        if (!data.selectedPaymentId) {
-          router.replace(`/checkout/${shopSlug}/payment`);
-          return;
-        }
+        if (active) setCheckout(checkoutData);
 
-        if (active) setCheckout(data);
-
-        const { data: method, error: paymentError } = await supabase
+        const { data, error: paymentError } = await supabase
           .from("shop_payment_methods")
-          .select(
-            "id, shop_id, method, account_name, account_number, bank_name"
-          )
-          .eq("shop_id", data.shopId)
-          .eq("id", data.selectedPaymentId)
+          .select("id, shop_id, method, account_name, account_number, bank_name")
+          .eq("shop_id", checkoutData.shopId)
           .eq("is_enabled", true)
-          .maybeSingle();
+          .order("created_at", { ascending: true });
 
         if (paymentError) throw paymentError;
-
         if (!active) return;
 
-        if (!method) {
-          setError("Njia ya malipo haipatikani. Tafadhali chagua nyingine.");
-        } else {
-          setPayment(method);
-        }
+        setPaymentMethods(data || []);
       } catch (err) {
-        console.error("Checkout loading error:", err);
-
+        console.error("Payment methods error:", err);
         if (active) {
-          setError("Imeshindwa kupakia taarifa za malipo. Jaribu tena.");
+          setError("Could not load payment methods. Please try again.");
         }
       } finally {
         if (active) setLoading(false);
       }
     }
 
-    loadCheckout();
+    loadPaymentMethods();
 
     return () => {
       active = false;
     };
   }, [shopSlug, router]);
 
-  const paymentInfo = PAYMENT_OPTIONS.find(
-    (item) => item.value === payment?.method
-  );
+  // Tapping a method saves the choice and opens the instructions screen.
+  function choosePayment(item) {
+    if (!checkout) return;
 
-  const paymentLabel = paymentInfo?.label || payment?.method || "Malipo";
-  const ussd = paymentInfo?.ussd || "";
+    sessionStorage.setItem(
+      "odLinkCheckout",
+      JSON.stringify({ ...checkout, selectedPaymentId: item.id })
+    );
 
-  async function copyNumber() {
-    if (!payment?.account_number) return;
-
-    try {
-      await navigator.clipboard.writeText(payment.account_number);
-      setCopied(true);
-      setError("");
-    } catch {
-      setError("Imeshindikana kunakili namba. Tafadhali iandike mwenyewe.");
-    }
+    router.push(`/checkout/${shopSlug}/instructions`);
   }
 
-  function openUSSD() {
-    if (!ussd) return;
+  // Used only when the seller has no payment methods set up.
+  async function submitOrderWithoutPayment() {
+    if (submitting || !checkout) return;
 
-    // Baadhi ya simu/browser huhitaji mtumiaji kuthibitisha USSD.
-    window.location.href = `tel:${encodeURIComponent(ussd).replace("%2A", "*").replace("%23", "%23")}`;
-  }
-
-  async function handleSendConfirmation() {
-    if (sending || success || !checkout || !payment) return;
-
+    setSubmitting(true);
     setError("");
-
-    if (!confirmation.trim()) {
-      setError("Bandika ujumbe wa uthibitisho wa malipo kwanza.");
-      return;
-    }
-
-    const sellerNumber = toWhatsAppNumber(checkout.shopPhone);
-
-    if (!sellerNumber) {
-      setError(
-        "Namba ya WhatsApp ya duka haipo. Tafadhali wasiliana na muuzaji."
-      );
-      return;
-    }
-
-    setSending(true);
-
-    // Fungua tab wakati wa kubonyeza button ili kupunguza popup blocking.
-    const whatsappWindow = window.open("about:blank", "_blank");
 
     try {
       const items = checkout.cart.map((item) => ({
@@ -166,8 +109,6 @@ export default function InstructionsPage() {
         quantity: Number(item.quantity),
       }));
 
-      // Hifadhi oda kama pending. SMS ya mteja si uthibitisho wa malipo
-      // mpaka muuzaji ahakiki malipo.
       const { data: order, error: insertError } = await supabase
         .from("orders")
         .insert({
@@ -183,71 +124,31 @@ export default function InstructionsPage() {
 
       if (insertError) throw insertError;
 
-      const itemLines = checkout.cart.map(
-        (item) =>
-          `- ${item.name} x${item.quantity}: ${(
-            Number(item.price) * Number(item.quantity)
-          ).toLocaleString()} TZS`
-      );
-
-      const message = [
-        `Habari ${checkout.shopName || ""}, nimelipa kupitia ${paymentLabel}.`,
-        "",
-        `Oda ID: ${order.id}`,
-        `Jina: ${checkout.name.trim()}`,
-        `Simu ya mteja: ${checkout.phone.trim()}`,
-        "",
-        "Bidhaa:",
-        ...itemLines,
-        "",
-        `Jumla: ${Number(checkout.cartTotal).toLocaleString()} TZS`,
-        `Njia ya malipo: ${paymentLabel}`,
-        `Jina la akaunti: ${payment.account_name || "-"}`,
-        `Namba ya malipo: ${payment.account_number || "-"}`,
-        ...(payment.bank_name ? [`Benki: ${payment.bank_name}`] : []),
-        "",
-        "UJUMBE WA UTHIBITISHO WA MALIPO:",
-        confirmation.trim(),
-        "",
-        "Tafadhali hakiki malipo yangu na uthibitishe oda. Oda yangu inasubiri uthibitisho.",
-      ].join("\n");
-
-      const url =
-        `https://wa.me/${sellerNumber}?text=${encodeURIComponent(message)}`;
-
-      setWhatsappUrl(url);
-      setSuccess(true);
-
+      setOrderId(order.id);
       localStorage.removeItem(`cart:${shopSlug}`);
       sessionStorage.removeItem("odLinkCheckout");
-
-      if (whatsappWindow) {
-        whatsappWindow.location.href = url;
-      } else {
-        // Ikiwa browser imezuia tab mpya, mteja anaweza kutumia link iliyoonyeshwa.
-        setWhatsappUrl(url);
-      }
+      setSuccess(true);
     } catch (err) {
-      console.error("Order submission failed:", err);
-
-      if (whatsappWindow) whatsappWindow.close();
+      console.error("Submit order failed:", err);
 
       setError(
         err?.message?.includes("Not enough stock") ||
           err?.message?.includes("Product not available") ||
           err?.message?.includes("Invalid quantity")
           ? err.message
-          : "Oda haikuhifadhiwa. Tafadhali jaribu tena."
+          : "Your order could not be submitted. Please try again."
       );
     } finally {
-      setSending(false);
+      setSubmitting(false);
     }
   }
 
   if (loading) {
     return (
       <main style={styles.page}>
-        <div style={styles.card}>Inapakia taarifa za malipo...</div>
+        <div style={styles.card}>
+          <p style={styles.muted}>Loading checkout...</p>
+        </div>
       </main>
     );
   }
@@ -258,55 +159,46 @@ export default function InstructionsPage() {
         <div style={styles.card}>
           <div style={styles.successIcon}>✓</div>
 
-          <h1 style={styles.heading}>Oda yako imepokelewa!</h1>
+          <h1 style={styles.heading}>Thank you for your order!</h1>
 
           <p style={styles.bodyText}>
-            Oda imehifadhiwa. Tuma ujumbe wa WhatsApp ulioandaliwa ili
-            muuzaji akague malipo yako.
+            Your order #{orderId} has been received. The seller will contact
+            you to arrange payment and delivery.
           </p>
 
-          <p style={styles.note}>
-            Hali ya oda: <strong>Pending — inasubiri uthibitisho.</strong>
-            {" "}Kubonyeza Send ndani ya WhatsApp kunahitajika ili ujumbe ufike.
-          </p>
-
-          {whatsappUrl && (
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noreferrer"
-              style={styles.primaryButton}
-            >
-              Tuma ujumbe WhatsApp
-            </a>
-          )}
+          <div style={styles.pending}>
+            <strong>Status: Pending</strong>
+            <p style={styles.detail}>
+              Payment has not been confirmed yet.
+            </p>
+          </div>
 
           <button
             type="button"
             onClick={() => router.push(`/${shopSlug}`)}
-            style={styles.secondaryButton}
+            style={styles.primaryButton}
           >
-            Rudi dukani
+            Back to shop
           </button>
         </div>
       </main>
     );
   }
 
-  if (!checkout || !payment) {
+  if (!checkout) {
     return (
       <main style={styles.page}>
         <div style={styles.card}>
           <p role="alert" style={styles.error}>
-            {error || "Taarifa za malipo hazipatikani."}
+            {error || "Checkout not found."}
           </p>
 
           <button
             type="button"
-            onClick={() => router.push(`/checkout/${shopSlug}/payment`)}
+            onClick={() => router.push(`/${shopSlug}`)}
             style={styles.primaryButton}
           >
-            Chagua njia nyingine ya malipo
+            Back to shop
           </button>
         </div>
       </main>
@@ -321,119 +213,95 @@ export default function InstructionsPage() {
           onClick={() => router.back()}
           style={styles.back}
         >
-          ← Rudi nyuma
+          ← Back
         </button>
 
-        <div style={styles.header}>
-          <div style={styles.paymentIcon}>TSh</div>
-          <div style={{ minWidth: 0 }}>
-            <h1 style={styles.heading}>{paymentLabel}</h1>
-            <p style={styles.muted}>Please follow instructions to pay</p>
-          </div>
-        </div>
+        <p style={styles.shopName}>{checkout.shopName || shopSlug}</p>
 
-        <div style={styles.totalBox}>
-          <span>Jumla ya kulipa</span>
-          <strong>
+        <div style={styles.amountBox}>
+          <span style={styles.amountLabel}>Amount to pay</span>
+          <strong style={styles.amount}>
             TSh {Number(checkout.cartTotal || 0).toLocaleString()}
           </strong>
         </div>
 
-        {ussd && (
-          <button
-            type="button"
-            onClick={openUSSD}
-            style={styles.callButton}
-          >
-            ☎ Call {ussd}
-          </button>
-        )}
-
-        <div style={styles.detailsBox}>
-          {payment.bank_name && (
-            <div style={styles.detail}>
-              <span style={styles.detailLabel}>Benki</span>
-              <strong style={styles.detailValue}>{payment.bank_name}</strong>
+        {paymentMethods.length === 0 ? (
+          <>
+            <div style={styles.infoBox}>
+              <h2 style={styles.infoTitle}>No payment methods available</h2>
+              <p style={styles.detail}>
+                You can still submit your order. The seller will contact you
+                to arrange payment and delivery.
+              </p>
             </div>
-          )}
 
-          <div style={styles.detail}>
-            <span style={styles.detailLabel}>Phone number / Namba ya malipo</span>
-            <strong style={styles.detailValue}>
-              {payment.account_number || "—"}
-            </strong>
-          </div>
+            {error && (
+              <p role="alert" style={styles.error}>
+                {error}
+              </p>
+            )}
 
-          <div style={styles.detail}>
-            <span style={styles.detailLabel}>Payee name / Jina la mpokeaji</span>
-            <strong style={styles.detailValue}>
-              {payment.account_name || "—"}
-            </strong>
-          </div>
+            <button
+              type="button"
+              onClick={submitOrderWithoutPayment}
+              disabled={submitting}
+              style={{
+                ...styles.primaryButton,
+                opacity: submitting ? 0.65 : 1,
+              }}
+            >
+              {submitting ? "Submitting order..." : "Submit order"}
+            </button>
+          </>
+        ) : (
+          <>
+            <h1 style={styles.heading}>Choose payment method</h1>
 
-          <button
-            type="button"
-            onClick={copyNumber}
-            style={styles.copyButton}
-          >
-            {copied ? "Namba imenakiliwa ✓" : "Nakili namba"}
-          </button>
-        </div>
+            <div style={styles.methods}>
+              {paymentMethods.map((item) => {
+                const option = PAYMENT_OPTIONS.find(
+                  (o) => o.value === item.method
+                );
+                const label = option?.label || item.method;
 
-        <h2 style={styles.sectionTitle}>Payment instructions</h2>
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => choosePayment(item)}
+                    style={styles.method}
+                  >
+                    <span
+                      style={{
+                        ...styles.methodIcon,
+                        background: option?.color || "#374151",
+                      }}
+                    >
+                      {option?.short || label.charAt(0)}
+                    </span>
 
-        <ol style={styles.instructions}>
-          <li>
-            Dial <strong>{ussd || "namba ya huduma ya malipo"}</strong>.
-          </li>
-          <li>
-            Choose <strong>Send Money</strong> or{" "}
-            <strong>Merchant Payment</strong>.
-          </li>
-          <li>
-            Enter the phone number or merchant code, then enter the amount.
-          </li>
-          <li>Confirm payment.</li>
-        </ol>
+                    <span style={styles.methodText}>
+                      <strong style={styles.methodTitle}>{label}</strong>
+                      {item.account_name && (
+                        <span style={styles.methodSub}>
+                          {item.account_name}
+                        </span>
+                      )}
+                    </span>
 
-        <div style={styles.confirmationBox}>
-          <h2 style={styles.sectionTitle}>Payment confirmation</h2>
+                    <span style={styles.chevron}>›</span>
+                  </button>
+                );
+              })}
+            </div>
 
-          <p style={styles.muted}>
-            Baada ya kulipa, bandika SMS ya uthibitisho hapa chini.
-          </p>
-
-          <textarea
-            value={confirmation}
-            onChange={(event) => setConfirmation(event.target.value)}
-            placeholder="Paste your payment confirmation SMS here..."
-            rows={4}
-            style={styles.textarea}
-          />
-        </div>
-
-        {error && (
-          <p role="alert" style={styles.error}>
-            {error}
-          </p>
+            {error && (
+              <p role="alert" style={styles.error}>
+                {error}
+              </p>
+            )}
+          </>
         )}
-
-        <button
-          type="button"
-          onClick={handleSendConfirmation}
-          disabled={sending}
-          style={{
-            ...styles.primaryButton,
-            opacity: sending ? 0.65 : 1,
-          }}
-        >
-          {sending ? "Inahifadhi oda..." : "Send confirmation"}
-        </button>
-
-        <p style={styles.note}>
-          Oda itakuwa Pending hadi muuzaji athibitishe malipo. Ujumbe
-          utafunguka WhatsApp; bonyeza Send ndani ya WhatsApp ili uutume.
-        </p>
       </div>
     </main>
   );
@@ -443,13 +311,12 @@ const styles = {
   page: {
     width: "100%",
     minHeight: "100vh",
-    padding: "20px 12px",
     background: "#f8fafc",
+    padding: "20px 14px",
     color: "#111827",
     boxSizing: "border-box",
     fontFamily: "Arial, Helvetica, sans-serif",
   },
-
   card: {
     display: "block",
     width: "100%",
@@ -462,221 +329,149 @@ const styles = {
     borderRadius: 14,
     boxSizing: "border-box",
     textAlign: "left",
-    writingMode: "horizontal-tb",
   },
-
   back: {
     display: "inline-block",
-    padding: "6px 0",
-    marginBottom: 14,
-    color: "#0f766e",
-    background: "transparent",
     border: 0,
-    fontSize: 15,
+    background: "transparent",
+    padding: "6px 0",
     cursor: "pointer",
+    fontSize: 15,
+    color: "#0f766e",
   },
-
-  header: {
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    width: "100%",
-    minWidth: 0,
-    marginBottom: 18,
-  },
-
-  paymentIcon: {
-    display: "flex",
-    flex: "0 0 48px",
-    alignItems: "center",
-    justifyContent: "center",
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    background: "#e6f7ed",
-    color: "#16834a",
-    fontSize: 13,
-    fontWeight: 700,
-  },
-
-  heading: {
-    display: "block",
-    margin: "0 0 4px",
-    fontSize: 22,
-    lineHeight: 1.35,
+  shopName: {
+    margin: "10px 0 0",
+    textAlign: "center",
+    fontSize: 14,
+    color: "#6b7280",
     overflowWrap: "anywhere",
   },
-
-  muted: {
+  amountBox: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 6,
+    padding: "18px 0 22px",
+  },
+  amountLabel: {
+    fontSize: 14,
+    color: "#6b7280",
+  },
+  amount: {
+    fontSize: 32,
+    lineHeight: 1.2,
+    fontWeight: 700,
+    overflowWrap: "anywhere",
+  },
+  heading: {
     display: "block",
-    margin: "4px 0 0",
+    margin: "0 0 12px",
+    fontSize: 18,
+    lineHeight: 1.4,
+    fontWeight: 700,
+  },
+  muted: {
     color: "#6b7280",
     fontSize: 14,
     lineHeight: 1.6,
-    overflowWrap: "anywhere",
+    margin: 0,
   },
-
-  totalBox: {
-    display: "flex",
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 10,
-    width: "100%",
-    padding: 14,
-    marginBottom: 14,
-    background: "#f3f4f6",
-    borderRadius: 10,
-    boxSizing: "border-box",
-  },
-
-  callButton: {
-    display: "block",
-    width: "100%",
-    padding: 14,
-    marginBottom: 16,
-    background: "#16834a",
-    color: "#ffffff",
-    border: 0,
-    borderRadius: 10,
-    fontSize: 16,
-    fontWeight: 700,
-    cursor: "pointer",
-    boxSizing: "border-box",
-  },
-
-  detailsBox: {
-    display: "block",
-    width: "100%",
-    padding: 14,
-    border: "1px solid #e5e7eb",
-    borderRadius: 10,
-    boxSizing: "border-box",
-  },
-
-  detail: {
+  methods: {
     display: "flex",
     flexDirection: "column",
-    alignItems: "flex-start",
-    gap: 5,
+    gap: 10,
     width: "100%",
-    minWidth: 0,
-    marginBottom: 14,
-    fontSize: 14,
-    lineHeight: 1.5,
   },
-
-  detailLabel: {
-    display: "block",
+  method: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
     width: "100%",
+    padding: "14px 14px",
+    background: "#ffffff",
+    border: "1px solid #e5e7eb",
+    borderRadius: 14,
+    cursor: "pointer",
+    textAlign: "left",
+    boxSizing: "border-box",
+    color: "#111827",
+    font: "inherit",
+  },
+  methodIcon: {
+    display: "flex",
+    flex: "0 0 40px",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 40,
+    height: 40,
+    borderRadius: "50%",
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: 700,
+  },
+  methodText: {
+    display: "flex",
+    flex: "1 1 0%",
+    flexDirection: "column",
+    gap: 2,
+    minWidth: 0,
+  },
+  methodTitle: {
+    fontSize: 16,
+    lineHeight: 1.4,
+    overflowWrap: "anywhere",
+  },
+  methodSub: {
+    fontSize: 13,
     color: "#6b7280",
     overflowWrap: "anywhere",
   },
-
-  detailValue: {
-    display: "block",
-    width: "100%",
-    color: "#111827",
-    fontSize: 15,
-    overflowWrap: "anywhere",
-    wordBreak: "normal",
+  chevron: {
+    flex: "0 0 auto",
+    fontSize: 24,
+    lineHeight: 1,
+    color: "#9ca3af",
   },
-
-  copyButton: {
-    display: "block",
-    width: "100%",
-    padding: 11,
-    color: "#0f766e",
-    background: "#ffffff",
-    border: "1px solid #0f766e",
-    borderRadius: 8,
-    fontWeight: 700,
-    cursor: "pointer",
-    boxSizing: "border-box",
+  infoBox: {
+    padding: 15,
+    border: "1px solid #fed7aa",
+    background: "#fff7ed",
+    borderRadius: 10,
+    marginBottom: 14,
   },
-
-  sectionTitle: {
-    display: "block",
-    margin: "20px 0 8px",
+  infoTitle: {
     fontSize: 17,
-    lineHeight: 1.4,
+    lineHeight: 1.5,
+    margin: "0 0 8px",
   },
-
-  instructions: {
-    display: "block",
-    paddingLeft: 22,
-    margin: "10px 0 18px",
+  detail: {
     fontSize: 14,
-    lineHeight: 1.8,
+    lineHeight: 1.6,
+    color: "#4b5563",
+    margin: "7px 0 0",
     overflowWrap: "anywhere",
   },
-
-  confirmationBox: {
-    display: "block",
-    width: "100%",
-    marginTop: 12,
-  },
-
-  textarea: {
-    display: "block",
-    width: "100%",
-    minHeight: 100,
-    marginTop: 10,
-    padding: 12,
-    border: "1px solid #d1d5db",
-    borderRadius: 9,
-    boxSizing: "border-box",
-    background: "#ffffff",
-    color: "#111827",
+  bodyText: {
     fontSize: 15,
-    lineHeight: 1.5,
-    resize: "vertical",
+    lineHeight: 1.7,
+    overflowWrap: "anywhere",
   },
-
   primaryButton: {
     display: "block",
     width: "100%",
-    marginTop: 16,
+    boxSizing: "border-box",
+    marginTop: 18,
     padding: 14,
-    color: "#ffffff",
     background: "#0f766e",
+    color: "#ffffff",
     border: 0,
     borderRadius: 9,
     fontSize: 16,
+    lineHeight: 1.5,
     fontWeight: 700,
-    textAlign: "center",
-    textDecoration: "none",
     cursor: "pointer",
-    boxSizing: "border-box",
   },
-
-  secondaryButton: {
-    display: "block",
-    width: "100%",
-    marginTop: 10,
-    padding: 12,
-    color: "#111827",
-    background: "#ffffff",
-    border: "1px solid #d1d5db",
-    borderRadius: 9,
-    cursor: "pointer",
-    boxSizing: "border-box",
-  },
-
-  note: {
-    display: "block",
-    marginTop: 14,
-    padding: 12,
-    color: "#92400e",
-    background: "#fffbeb",
-    borderRadius: 8,
-    fontSize: 13,
-    lineHeight: 1.6,
-    overflowWrap: "anywhere",
-  },
-
   successIcon: {
     display: "flex",
     alignItems: "center",
@@ -689,19 +484,17 @@ const styles = {
     fontSize: 30,
     fontWeight: 700,
   },
-
-  bodyText: {
-    fontSize: 15,
-    lineHeight: 1.7,
-    overflowWrap: "anywhere",
+  pending: {
+    padding: 14,
+    background: "#fef3c7",
+    borderRadius: 10,
+    marginTop: 16,
   },
-
   error: {
-    display: "block",
-    marginTop: 12,
     color: "#dc2626",
     fontSize: 14,
     lineHeight: 1.6,
+    marginTop: 14,
     overflowWrap: "anywhere",
   },
 };
