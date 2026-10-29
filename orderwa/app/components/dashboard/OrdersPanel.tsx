@@ -47,7 +47,6 @@ const styles = `
   box-sizing: border-box;
   padding: 10px 14px;
   margin-bottom: 14px;
-  border: 1px solid #e2e8f0;
   border-radius: 12px;
   background: #fff;
 }
