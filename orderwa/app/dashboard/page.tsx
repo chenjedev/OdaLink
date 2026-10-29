@@ -213,7 +213,7 @@ export default function DashboardPage() {
 
   // Shop URL: domain + slug
   const shopUrl = shop
-    ? `https://odalink.vercel.app/${shop.slug}`
+    ? `https://odalink.vercel.app/store/${shop.slug}`
     : "";
 
   useEffect(() => {
