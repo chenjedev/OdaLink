@@ -1,6 +1,5 @@
 "use client";
 
-import StoreLink from "../components/dashboard/StoreLink";
 import ShopSettings from "../components/dashboard/ShopSettings";
 import ProductPage from "./products/page";
 import OrdersPanel, {
@@ -17,7 +16,6 @@ import {
   LayoutDashboard,
   Package,
   ShoppingBag,
-  Store,
   Settings as SettingsIcon,
   Share2,
   Copy,
@@ -47,7 +45,6 @@ type DashboardTab =
   | "overview"
   | "orders"
   | "products"
-  | "store"
   | "settings";
 
 function sumTotals(list: OrderRow[]) {
@@ -79,7 +76,7 @@ const layoutFix = `
   max-width: 100%;
 }
 
-/* Tabs: one row, swipe sideways so Store and Settings are always reachable */
+/* Tabs: one row, swipe sideways so every tab is always reachable */
 .oda-dashboard .dashboard-tabs {
   display: flex;
   flex-wrap: nowrap;
@@ -132,7 +129,6 @@ const dashboardTabs: {
   { id: "overview", label: "Overview", icon: <LayoutDashboard size={16} /> },
   { id: "orders", label: "Orders", icon: <ClipboardList size={16} /> },
   { id: "products", label: "Products", icon: <Package size={16} /> },
-  { id: "store", label: "Store", icon: <Store size={16} /> },
   { id: "settings", label: "Settings", icon: <SettingsIcon size={16} /> },
 ];
 
@@ -196,7 +192,6 @@ export default function DashboardPage() {
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
-  const [displayName, setDisplayName] = useState("");
   const [shop, setShop] = useState<Shop | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<OrderRow[]>([]);
@@ -256,13 +251,6 @@ export default function DashboardPage() {
         }
 
         if (!mounted) return;
-
-        setDisplayName(
-          user.user_metadata?.name ||
-            user.user_metadata?.full_name ||
-            user.email ||
-            "User"
-        );
 
         const { data: shopData, error: shopError } = await supabase
           .from("shops")
@@ -411,14 +399,6 @@ export default function DashboardPage() {
     );
   }
 
-  const pageTitle: Record<DashboardTab, string> = {
-    overview: t(`Good morning, ${displayName}`, `Habari, ${displayName}`),
-    orders: t("All orders", "Oda zote"),
-    products: t("Products", "Bidhaa"),
-    store: t("Store", "Duka"),
-    settings: t("Settings", "Mipangilio"),
-  };
-
   const pageDescription: Record<DashboardTab, string> = {
     overview: t(
       "Here is what is happening at your shop today.",
@@ -431,10 +411,6 @@ export default function DashboardPage() {
     products: t(
       "Manage products, photos and stock.",
       "Dhibiti bidhaa, picha na stoo."
-    ),
-    store: t(
-      "Share your storefront and review your shop details.",
-      "Shiriki link ya duka lako na angalia maelezo."
     ),
     settings: t(
       "Manage shop details and payment methods.",
@@ -504,7 +480,6 @@ export default function DashboardPage() {
         {activeTab !== "products" && (
           <div className="dashboard-page-heading">
             <div>
-              
               <p>{pageDescription[activeTab]}</p>
             </div>
           </div>
@@ -627,7 +602,6 @@ export default function DashboardPage() {
           </section>
         )}
 
-        
         {activeTab === "settings" && shop && (
           <div className="dashboard-panel-stack">
             <section className="dashboard-panel mb-5">
