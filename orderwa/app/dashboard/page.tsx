@@ -217,7 +217,7 @@ export default function DashboardPage() {
   }, []);
 
   // select("*") so a missing column can never break the query.
-  // is_active: show rows where it is true OR null (null rows were hidden before).
+  // is_active: show rows where it is true OR null.
   async function reloadProducts(shopId: string) {
     const { data, error } = await supabase
       .from("products")
@@ -227,7 +227,13 @@ export default function DashboardPage() {
       .order("id");
 
     if (error) {
-      setNotice("Products: " + error.message);
+      console.error(error.message);
+      setNotice(
+        t(
+          "Could not reload products.",
+          "Bidhaa hazikuweza kupakiwa."
+        )
+      );
       return;
     }
 
@@ -266,10 +272,7 @@ export default function DashboardPage() {
           .eq("owner_id", user.id)
           .maybeSingle();
 
-        if (shopError) {
-          setNotice("Shop: " + shopError.message);
-          throw shopError;
-        }
+        if (shopError) throw shopError;
         if (!mounted) return;
 
         setShop(shopData as Shop | null);
@@ -294,14 +297,12 @@ export default function DashboardPage() {
 
           if (productsResult.error) {
             console.error(productsResult.error.message);
-            setNotice("Products: " + productsResult.error.message);
           } else {
             setProducts((productsResult.data as Product[]) ?? []);
           }
 
           if (ordersResult.error) {
             console.error(ordersResult.error.message);
-            setNotice("Orders: " + ordersResult.error.message);
           } else {
             setOrders((ordersResult.data as OrderRow[]) ?? []);
           }
@@ -310,8 +311,8 @@ export default function DashboardPage() {
         console.error("Dashboard loading failed:", error);
 
         if (mounted) {
-          setNotice((prev) =>
-            prev || "Could not load all dashboard data. Please refresh."
+          setNotice(
+            "Could not load all dashboard data. Please refresh."
           );
         }
       } finally {
@@ -362,10 +363,11 @@ export default function DashboardPage() {
       .eq("shop_id", shop.id);
 
     if (error) {
+      console.error(error.message);
       setNotice(
         t(
-          "Failed to confirm order: " + error.message,
-          "Imeshindikana kuthibitisha oda: " + error.message
+          "Failed to confirm order.",
+          "Imeshindikana kuthibitisha oda."
         )
       );
       return;
@@ -530,12 +532,6 @@ export default function DashboardPage() {
       </div>
 
       <main className="dashboard-content">
-        {/* DEBUG: futa mstari huu ukimaliza kujaribu */}
-        <p style={{ fontSize: 12, padding: "4px 0" }}>
-          shop: {shop ? "ok" : "null"} | products: {products.length} | orders:{" "}
-          {orders.length}
-        </p>
-
         <div className="dashboard-page-heading">
           <div>
             <p className="dashboard-page-kicker">ODA LINK · SELLER</p>
