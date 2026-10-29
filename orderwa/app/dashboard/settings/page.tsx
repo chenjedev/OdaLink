@@ -530,7 +530,7 @@ export default function SettingsPage() {
           <input
             style={inputStyle}
             type="text"
-            value={shop.slug}
+            value={`https://odalink.vercel.app/${shop?.slug ?? ""}`}
             readOnly
             disabled
           />
