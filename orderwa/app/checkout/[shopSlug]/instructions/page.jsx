@@ -13,6 +13,9 @@ const PAYMENT_OPTIONS = [
   { value: "bank", label: "Bank", ussd: "", short: "B", color: "#374151" },
 ];
 
+// One place to change if your storefront lives somewhere else (for example /store/${slug}).
+const storePath = (slug) => `/${slug}`;
+
 // Turns 0712345678 into 255712345678, the format wa.me expects.
 function toWhatsAppNumber(phone) {
   let digits = String(phone || "").replace(/\D/g, "");
@@ -37,7 +40,6 @@ export default function InstructionsPage() {
   const [confirmation, setConfirmation] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const [whatsappUrl, setWhatsappUrl] = useState("");
   const [orderId, setOrderId] = useState(null);
 
   // Load checkout data and the payment method the customer chose.
@@ -49,15 +51,31 @@ export default function InstructionsPage() {
         const saved = sessionStorage.getItem("odLinkCheckout");
 
         if (!saved) {
-          router.replace(`/${shopSlug}`);
+          // No checkout in progress. If an order was just placed, show the
+          // thank-you screen again (for example after coming back from WhatsApp).
+          const result = JSON.parse(
+            sessionStorage.getItem("odLinkOrderResult") || "null"
+          );
+
+          if (result?.orderId && result?.shopSlug === shopSlug) {
+            if (active) {
+              setOrderId(result.orderId);
+              setSuccess(true);
+            }
+          } else {
+            router.replace(storePath(shopSlug));
+          }
           return;
         }
+
+        // A new checkout is in progress, so forget any older order result.
+        sessionStorage.removeItem("odLinkOrderResult");
 
         const data = JSON.parse(saved);
 
         if (!data.shopId || !data.cart?.length || !data.name || !data.phone) {
           sessionStorage.removeItem("odLinkCheckout");
-          router.replace(`/${shopSlug}`);
+          router.replace(storePath(shopSlug));
           return;
         }
 
@@ -124,7 +142,12 @@ export default function InstructionsPage() {
     window.location.href = `tel:${ussd.replace("#", "%23")}`;
   }
 
-  // "I have paid": save the order, open WhatsApp with a prefilled message, show thank-you.
+  function backToStore() {
+    sessionStorage.removeItem("odLinkOrderResult");
+    router.push(storePath(shopSlug));
+  }
+
+  // "I have paid": save the order, show the thank-you screen, then open WhatsApp.
   async function handleIHavePaid() {
     if (sending || success || !checkout || !payment) return;
 
@@ -138,9 +161,6 @@ export default function InstructionsPage() {
     }
 
     setSending(true);
-
-    // Open the tab inside the click so the browser does not block it as a popup.
-    const whatsappWindow = window.open("about:blank", "_blank");
 
     try {
       const items = checkout.cart.map((item) => ({
@@ -173,8 +193,16 @@ export default function InstructionsPage() {
           ).toLocaleString()} TZS`
       );
 
+      // Link that takes the seller straight to this order in the dashboard.
+      // To search by customer phone instead, replace order.id with checkout.phone.trim().
+      const manageUrl = `${window.location.origin}/dashboard/orders?q=${encodeURIComponent(
+        String(order.id)
+      )}`;
+
       const message = [
-        `Hello ${checkout.shopName || ""}, I have paid via ${paymentLabel}.`,
+        `Hello ${checkout.shopName || ""}, I just placed an order on OdaLink:`,
+        "",
+        `Manage this order (seller): ${manageUrl}`,
         "",
         `Order: #${order.id}`,
         `Name: ${checkout.name.trim()}`,
@@ -197,21 +225,25 @@ export default function InstructionsPage() {
 
       const url = `https://wa.me/${sellerNumber}?text=${encodeURIComponent(message)}`;
 
-      setOrderId(order.id);
-      setWhatsappUrl(url);
-      setSuccess(true);
+      // Remember the result so the thank-you screen survives a reload or coming back.
+      sessionStorage.setItem(
+        "odLinkOrderResult",
+        JSON.stringify({ orderId: order.id, shopSlug })
+      );
 
       localStorage.removeItem(`cart:${shopSlug}`);
       sessionStorage.removeItem("odLinkCheckout");
 
-      // If the tab was blocked, the thank-you screen shows a WhatsApp button instead.
-      if (whatsappWindow) {
-        whatsappWindow.location.href = url;
-      }
+      setOrderId(order.id);
+      setSuccess(true);
+
+      // Same tab, so no blank tab is left behind. The short delay lets the
+      // thank-you screen render first, so that is what the customer sees on return.
+      setTimeout(() => {
+        window.location.href = url;
+      }, 400);
     } catch (err) {
       console.error("Order submission failed:", err);
-
-      if (whatsappWindow) whatsappWindow.close();
 
       setError(
         err?.message?.includes("Not enough stock") ||
@@ -237,42 +269,25 @@ export default function InstructionsPage() {
 
   if (success) {
     return (
-      <main style={styles.page}>
-        <div style={styles.card}>
-          <div style={styles.successIcon}>✓</div>
+      <main style={styles.centerPage}>
+        <div style={styles.centerCard}>
+          <div style={styles.pendingIcon}>•••</div>
 
           <h1 style={styles.successHeading}>Thank you for your order!</h1>
 
-          <p style={styles.bodyText}>
+          <p style={styles.successText}>
             Your order #{orderId} has been received. Please wait for the
             seller to confirm your payment.
           </p>
 
-          <div style={styles.pending}>
-            <strong>Status: Pending</strong>
-            <p style={styles.pendingText}>
-              In WhatsApp, tap Send so the seller gets your message. If
-              WhatsApp did not open, use the button below.
-            </p>
-          </div>
-
-          {whatsappUrl && (
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noreferrer"
-              style={styles.primaryButton}
-            >
-              Open WhatsApp
-            </a>
-          )}
+          <span style={styles.statusPill}>Payment pending</span>
 
           <button
             type="button"
-            onClick={() => router.push(`/${shopSlug}`)}
-            style={styles.secondaryButton}
+            onClick={backToStore}
+            style={styles.darkButton}
           >
-            Back to shop
+            Back to store
           </button>
         </div>
       </main>
@@ -646,54 +661,6 @@ const styles = {
     cursor: "pointer",
     boxSizing: "border-box",
   },
-  secondaryButton: {
-    display: "block",
-    width: "100%",
-    marginTop: 10,
-    padding: 12,
-    color: "#111827",
-    background: "#ffffff",
-    border: "1px solid #d1d5db",
-    borderRadius: 9,
-    fontSize: 15,
-    cursor: "pointer",
-    boxSizing: "border-box",
-  },
-  successIcon: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: 54,
-    height: 54,
-    borderRadius: "50%",
-    background: "#d1fae5",
-    color: "#047857",
-    fontSize: 30,
-    fontWeight: 700,
-  },
-  successHeading: {
-    margin: "16px 0 8px",
-    fontSize: 22,
-    lineHeight: 1.35,
-  },
-  bodyText: {
-    margin: 0,
-    fontSize: 15,
-    lineHeight: 1.7,
-    overflowWrap: "anywhere",
-  },
-  pending: {
-    marginTop: 16,
-    padding: 14,
-    background: "#fef3c7",
-    borderRadius: 10,
-  },
-  pendingText: {
-    margin: "6px 0 0",
-    fontSize: 14,
-    lineHeight: 1.6,
-    color: "#92400e",
-  },
   error: {
     display: "block",
     marginTop: 12,
@@ -701,5 +668,77 @@ const styles = {
     fontSize: 14,
     lineHeight: 1.6,
     overflowWrap: "anywhere",
+  },
+
+  // Thank-you screen (centered, like take.app)
+  centerPage: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    minHeight: "100vh",
+    padding: "24px 20px",
+    background: "#ffffff",
+    color: "#111827",
+    boxSizing: "border-box",
+    fontFamily: "Arial, Helvetica, sans-serif",
+  },
+  centerCard: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    width: "100%",
+    maxWidth: 420,
+    textAlign: "center",
+  },
+  pendingIcon: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 84,
+    height: 84,
+    marginBottom: 24,
+    borderRadius: "50%",
+    background: "#8b929c",
+    color: "#ffffff",
+    fontSize: 26,
+    letterSpacing: 3,
+    lineHeight: 1,
+  },
+  successHeading: {
+    margin: "0 0 10px",
+    fontSize: 24,
+    lineHeight: 1.3,
+    fontWeight: 700,
+  },
+  successText: {
+    margin: "0 0 18px",
+    fontSize: 16,
+    lineHeight: 1.6,
+    color: "#374151",
+    overflowWrap: "anywhere",
+  },
+  statusPill: {
+    display: "inline-block",
+    padding: "6px 14px",
+    marginBottom: 32,
+    background: "#fef3c7",
+    color: "#92400e",
+    borderRadius: 999,
+    fontSize: 14,
+    fontWeight: 700,
+  },
+  darkButton: {
+    display: "block",
+    width: "100%",
+    padding: 16,
+    background: "#111827",
+    color: "#ffffff",
+    border: 0,
+    borderRadius: 14,
+    fontSize: 16,
+    fontWeight: 700,
+    cursor: "pointer",
+    boxSizing: "border-box",
   },
 };
