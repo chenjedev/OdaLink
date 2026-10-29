@@ -642,13 +642,6 @@ export default function DashboardPage() {
             </section>
 
             <section className="dashboard-panel">
-              <div className="dashboard-panel-heading">
-                <div>
-                  <p className="dashboard-section-kicker">SHOP SETTINGS</p>
-                  <h2>{t("Settings", "Mipangilio")}</h2>
-                </div>
-              </div>
-
               <ShopSettings />
             </section>
           </div>
