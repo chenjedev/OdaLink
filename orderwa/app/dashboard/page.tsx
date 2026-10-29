@@ -145,7 +145,7 @@ export default function DashboardPage() {
 
   const t = (en: string, sw: string) => (lang === "en" ? en : sw);
 
-  // Shop URL: domain + slug
+  // Shop URL: domain + /store/ + slug
   const shopUrl = shop
     ? `https://odalink.vercel.app/store/${shop.slug}`
     : "";
@@ -490,43 +490,6 @@ export default function DashboardPage() {
 
         {activeTab === "overview" && shop && (
           <div className="dashboard-panel-stack">
-            <section className="dashboard-panel mb-5">
-              <p className="dashboard-section-kicker">
-                {t("YOUR SHOP LINK", "LINK YA DUKA LAKO")}
-              </p>
-
-              <div className="flex flex-col gap-3">
-                <a
-                  href={shopUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="break-all font-semibold text-teal-700 underline"
-                >
-                  {shopUrl}
-                </a>
-
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    className="dashboard-primary-button"
-                    onClick={() => void copyShopLink()}
-                  >
-                    <Copy size={16} />
-                    {t("Copy Link", "Nakili Link")}
-                  </button>
-
-                  <button
-                    type="button"
-                    className="dashboard-primary-button"
-                    onClick={() => void shareShopLink()}
-                  >
-                    <Share2 size={16} />
-                    {t("Share Link", "Shiriki Link")}
-                  </button>
-                </div>
-              </div>
-            </section>
-
             <section className="dashboard-metrics">
               <MetricCard
                 icon={<ShoppingBag size={18} />}
@@ -725,16 +688,55 @@ export default function DashboardPage() {
         )}
 
         {activeTab === "settings" && shop && (
-          <section className="dashboard-panel">
-            <div className="dashboard-panel-heading">
-              <div>
-                <p className="dashboard-section-kicker">SHOP SETTINGS</p>
-                <h2>{t("Settings", "Mipangilio")}</h2>
-              </div>
-            </div>
+          <div className="dashboard-panel-stack">
+            <section className="dashboard-panel mb-5">
+              <p className="dashboard-section-kicker">
+                {t("YOUR SHOP LINK", "LINK YA DUKA LAKO")}
+              </p>
 
-            <ShopSettings />
-          </section>
+              <div className="flex flex-col gap-3">
+                <a
+                  href={shopUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="break-all font-semibold text-teal-700 underline"
+                >
+                  {shopUrl}
+                </a>
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    className="dashboard-primary-button"
+                    onClick={() => void copyShopLink()}
+                  >
+                    <Copy size={16} />
+                    {t("Copy Link", "Nakili Link")}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="dashboard-primary-button"
+                    onClick={() => void shareShopLink()}
+                  >
+                    <Share2 size={16} />
+                    {t("Share Link", "Shiriki Link")}
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <section className="dashboard-panel">
+              <div className="dashboard-panel-heading">
+                <div>
+                  <p className="dashboard-section-kicker">SHOP SETTINGS</p>
+                  <h2>{t("Settings", "Mipangilio")}</h2>
+                </div>
+              </div>
+
+              <ShopSettings />
+            </section>
+          </div>
         )}
       </main>
     </div>
