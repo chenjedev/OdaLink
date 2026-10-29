@@ -1,6 +1,6 @@
 "use client";
-
 import StoreLink from "../components/dashboard/StoreLink";
+import AddProduct from "../components/dashboard/AddProduct";
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -14,22 +14,22 @@ import {
   Search,
   ShoppingBag,
   Store,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-
 type Shop = {
   id: string;
   name: string;
   slug: string;
 };
-
 type Product = {
   id: number | string;
   name: string;
   price: number;
   stock: number | null;
+  category?: string | null;
+  image_url?: string | null;
 };
-
 type OrderRow = {
   id?: string;
   total: number;
@@ -39,26 +39,26 @@ type OrderRow = {
   customer_phone?: string;
   items_summary?: string;
 };
-
 type Lang = "en" | "sw";
-type DashboardTab = "overview" | "orders" | "products" | "store";
+type DashboardTab = "overview" | "orders" | "products" | "store" | "settings";
 type OrderFilter = "All" | "Pending" | "Confirmed" | "Delivered" | "Cancelled";
-
 function sumTotals(list: OrderRow[]) {
-  return list.reduce((sum, o) => sum + Number(o.total || 0), 0);
+  return list.reduce((sum, order) => sum + Number(order.total || 0), 0);
 }
-
 function formatTzs(amount: number) {
   return `TZS ${new Intl.NumberFormat("en-US").format(amount)}`;
 }
-
-const dashboardTabs: { id: DashboardTab; label: string; icon: ReactNode }[] = [
+const dashboardTabs: {
+  id: DashboardTab;
+  label: string;
+  icon: ReactNode;
+}[] = [
   { id: "overview", label: "Overview", icon: <LayoutDashboard size={16} /> },
   { id: "orders", label: "Orders", icon: <ClipboardList size={16} /> },
   { id: "products", label: "Products", icon: <Package size={16} /> },
   { id: "store", label: "Store", icon: <Store size={16} /> },
+  { id: "settings", label: "Settings", icon: <SettingsIcon size={16} /> },
 ];
-
 const filterOptions: OrderFilter[] = [
   "All",
   "Pending",
@@ -66,7 +66,6 @@ const filterOptions: OrderFilter[] = [
   "Delivered",
   "Cancelled",
 ];
-
 function StatusTag({ status }: { status: string }) {
   const normalized =
     status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
@@ -76,7 +75,6 @@ function StatusTag({ status }: { status: string }) {
     </span>
   );
 }
-
 function OrderCard({
   order,
   onConfirm,
@@ -112,7 +110,6 @@ function OrderCard({
     </article>
   );
 }
-
 function MetricCard({
   icon,
   label,
@@ -133,10 +130,8 @@ function MetricCard({
     </article>
   );
 }
-
 export default function DashboardPage() {
   const router = useRouter();
-
   const [loading, setLoading] = useState(true);
   const [displayName, setDisplayName] = useState("");
   const [shop, setShop] = useState<Shop | null>(null);
@@ -147,131 +142,151 @@ export default function DashboardPage() {
   const [filter, setFilter] = useState<OrderFilter>("All");
   const [search, setSearch] = useState("");
   const [notice, setNotice] = useState("");
-
+  const [showProductForm, setShowProductForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const t = (en: string, sw: string) => (lang === "en" ? en : sw);
-
   useEffect(() => {
     function syncLanguage(event?: Event) {
       const customEvent = event as CustomEvent<Lang> | undefined;
       const eventLang = customEvent?.detail;
       const storedLang = localStorage.getItem("odLinkLanguage");
-
       const nextLang =
         eventLang === "en" || eventLang === "sw"
           ? eventLang
           : storedLang === "en" || storedLang === "sw"
             ? storedLang
             : "en";
-
       setLang(nextLang);
     }
-
     syncLanguage();
     window.addEventListener("odLinkLanguageChange", syncLanguage);
     window.addEventListener("storage", syncLanguage);
-
     return () => {
       window.removeEventListener("odLinkLanguageChange", syncLanguage);
       window.removeEventListener("storage", syncLanguage);
     };
   }, []);
-
-  useEffect(() => {
-    async function load() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        router.replace("/login");
-        return;
-      }
-
-      setDisplayName(
-        user.user_metadata?.name ||
-          user.user_metadata?.full_name ||
-          user.email ||
-          "User"
-      );
-
-      const { data: shopData } = await supabase
-        .from("shops")
-        .select("id, name, slug")
-        .eq("owner_id", user.id)
-        .maybeSingle();
-
-      setShop(shopData as Shop | null);
-
-      if (shopData) {
-        const { data: productsData } = await supabase
-          .from("products")
-          .select("id, name, price, stock")
-          .eq("shop_id", shopData.id)
-          .eq("is_active", true)
-          .order("id");
-
-        setProducts((productsData as Product[]) ?? []);
-
-        const { data: ordersData } = await supabase
-          .from("orders")
-          .select(
-            "id, total, status, created_at, customer_name, customer_phone, items_summary"
-          )
-          .eq("shop_id", shopData.id)
-          .order("created_at", { ascending: false });
-
-        setOrders((ordersData as OrderRow[]) ?? []);
-      }
-
-      setLoading(false);
+  async function reloadProducts(shopId: string) {
+    const { data, error } = await supabase
+      .from("products")
+      .select("id, name, price, stock, category, image_url")
+      .eq("shop_id", shopId)
+      .eq("is_active", true)
+      .order("id");
+    if (error) {
+      setNotice(t("Could not reload products.", "Bidhaa hazikuweza kupakiwa."));
+      return;
     }
-
+    setProducts((data as Product[]) ?? []);
+  }
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      try {
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser();
+        if (authError) throw authError;
+        if (!user) {
+          router.replace("/login");
+          return;
+        }
+        if (!mounted) return;
+        setDisplayName(
+          user.user_metadata?.name ||
+            user.user_metadata?.full_name ||
+            user.email ||
+            "User"
+        );
+        const { data: shopData, error: shopError } = await supabase
+          .from("shops")
+          .select("id, name, slug")
+          .eq("owner_id", user.id)
+          .maybeSingle();
+        if (shopError) throw shopError;
+        if (!mounted) return;
+        setShop(shopData as Shop | null);
+        if (shopData) {
+          const [productsResult, ordersResult] = await Promise.all([
+            supabase
+              .from("products")
+              .select("id, name, price, stock, category, image_url")
+              .eq("shop_id", shopData.id)
+              .eq("is_active", true)
+              .order("id"),
+            supabase
+              .from("orders")
+              .select(
+                "id, total, status, created_at, customer_name, customer_phone, items_summary"
+              )
+              .eq("shop_id", shopData.id)
+              .order("created_at", { ascending: false }),
+          ]);
+          if (!mounted) return;
+          if (productsResult.error) {
+            console.error(productsResult.error.message);
+          } else {
+            setProducts((productsResult.data as Product[]) ?? []);
+          }
+          if (ordersResult.error) {
+            console.error(ordersResult.error.message);
+          } else {
+            setOrders((ordersResult.data as OrderRow[]) ?? []);
+          }
+        }
+      } catch (error) {
+        console.error("Dashboard loading failed:", error);
+        if (mounted) {
+          setNotice("Could not load all dashboard data. Please refresh.");
+        }
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
     load();
+    return () => {
+      mounted = false;
+    };
   }, [router]);
-
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
-
   const stockWorth = products.reduce(
-    (sum, p) => sum + Number(p.price) * (p.stock ?? 0),
+    (sum, product) =>
+      sum + Number(product.price) * (product.stock ?? 0),
     0
   );
-
   const todayOrders = orders.filter(
-    (o) =>
-      new Date(o.created_at) >= startOfToday &&
-      o.status.toLowerCase() !== "cancelled"
+    (order) =>
+      new Date(order.created_at) >= startOfToday &&
+      order.status.toLowerCase() !== "cancelled"
   );
-
   const pendingOrders = orders.filter(
-    (o) => o.status.toLowerCase() === "pending"
+    (order) => order.status.toLowerCase() === "pending"
   );
-
   const revenue = sumTotals(
-    orders.filter(
-      (o) =>
-        o.status.toLowerCase() === "confirmed" ||
-        o.status.toLowerCase() === "delivered"
+    orders.filter((order) =>
+      ["confirmed", "delivered"].includes(order.status.toLowerCase())
     )
   );
-
   async function confirmOrder(orderId: string) {
+    setNotice("");
     const { error } = await supabase
       .from("orders")
       .update({ status: "confirmed" })
-      .eq("id", orderId);
-
+      .eq("id", orderId)
+      .eq("shop_id", shop?.id);
     if (error) {
-      setNotice("Failed to confirm order");
+      setNotice(t("Failed to confirm order.", "Imeshindikana kuthibitisha oda."));
       return;
     }
-
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: "confirmed" } : o))
+    setOrders((previous) =>
+      previous.map((order) =>
+        order.id === orderId ? { ...order, status: "confirmed" } : order
+      )
     );
-    setNotice(t("Order confirmed", "Oda imethibitishwa"));
+    setNotice(t("Order confirmed.", "Oda imethibitishwa."));
   }
-
   if (loading) {
     return (
       <div className="oda-dashboard">
@@ -281,15 +296,14 @@ export default function DashboardPage() {
       </div>
     );
   }
-
-  const pageTitle = {
+  const pageTitle: Record<DashboardTab, string> = {
     overview: t(`Good morning, ${displayName}`, `Habari, ${displayName}`),
     orders: t("All orders", "Oda zote"),
     products: t("Products", "Bidhaa"),
-    store: t("Store settings", "Mipangilio ya duka"),
-  }[activeTab];
-
-  const pageDescription = {
+    store: t("Store", "Duka"),
+    settings: t("Settings", "Mipangilio"),
+  };
+  const pageDescription: Record<DashboardTab, string> = {
     overview: t(
       "Here is what is happening at your shop today.",
       "Hapa ndipo unavyoona kinachoendelea dukani leo."
@@ -299,18 +313,20 @@ export default function DashboardPage() {
       "Angalia oda na sasisha wateja."
     ),
     products: t(
-      "Manage the products and stock in your store.",
-      "Dhibiti bidhaa na stoo yako."
+      "Manage products, photos and stock.",
+      "Dhibiti bidhaa, picha na stoo."
     ),
     store: t(
       "Share your storefront and review your shop details.",
       "Shiriki link ya duka lako na angalia maelezo."
     ),
-  }[activeTab];
-
+    settings: t(
+      "Manage shop details and payment methods.",
+      "Dhibiti taarifa za duka na njia za malipo."
+    ),
+  };
   return (
     <div className="oda-dashboard">
-      {/* TOP BAR */}
       <header className="dashboard-topbar">
         <div className="dashboard-topbar-inner">
           <Link href="/" className="dashboard-brand">
@@ -332,7 +348,6 @@ export default function DashboardPage() {
             </div>
             <span>odalink</span>
           </Link>
-
           {shop && (
             <Link
               className="dashboard-topbar-store"
@@ -343,8 +358,6 @@ export default function DashboardPage() {
           )}
         </div>
       </header>
-
-      {/* TABS */}
       <div className="dashboard-tabs-wrapper">
         <div className="dashboard-tabs">
           {dashboardTabs.map((tab) => (
@@ -362,16 +375,13 @@ export default function DashboardPage() {
           ))}
         </div>
       </div>
-
-      {/* CONTENT */}
       <main className="dashboard-content">
         <div className="dashboard-page-heading">
           <div>
             <p className="dashboard-page-kicker">ODA LINK · SELLER</p>
-            <h1>{pageTitle}</h1>
-            <p>{pageDescription}</p>
+            <h1>{pageTitle[activeTab]}</h1>
+            <p>{pageDescription[activeTab]}</p>
           </div>
-
           {shop && (
             <Link
               className="dashboard-primary-button"
@@ -381,15 +391,23 @@ export default function DashboardPage() {
             </Link>
           )}
         </div>
-
         {notice && (
           <p className="dashboard-live-message" role="status">
             {notice}
           </p>
         )}
-
-        {/* OVERVIEW */}
-        {activeTab === "overview" && (
+        {!shop && (
+          <section className="dashboard-panel">
+            <h2>{t("No shop found", "Duka halijapatikana")}</h2>
+            <p className="dashboard-muted-copy">
+              {t(
+                "We couldn't find a shop connected to your account.",
+                "Hatukuweza kupata duka lililounganishwa na akaunti yako."
+              )}
+            </p>
+          </section>
+        )}
+        {activeTab === "overview" && shop && (
           <div className="dashboard-panel-stack">
             <section className="dashboard-metrics">
               <MetricCard
@@ -422,13 +440,9 @@ export default function DashboardPage() {
                 )}
               />
             </section>
-
-            {shop && (
-              <div className="mb-5">
-                <StoreLink slug={shop.slug} shopName={shop.name} />
-              </div>
-            )}
-
+            <div className="mb-5">
+              <StoreLink slug={shop.slug} shopName={shop.name} />
+            </div>
             <section className="dashboard-panel">
               <div className="dashboard-panel-heading">
                 <div>
@@ -443,7 +457,6 @@ export default function DashboardPage() {
                   {t("View all", "Angalia zote")} <ArrowUpRight size={14} />
                 </button>
               </div>
-
               <div className="dashboard-order-list">
                 {orders.slice(0, 3).map((order) => (
                   <OrderCard
@@ -460,9 +473,7 @@ export default function DashboardPage() {
             </section>
           </div>
         )}
-
-        {/* ORDERS */}
-        {activeTab === "orders" && (
+        {activeTab === "orders" && shop && (
           <section className="dashboard-panel">
             <div className="dashboard-panel-heading">
               <div>
@@ -473,7 +484,6 @@ export default function DashboardPage() {
                 {orders.length} {t("orders", "oda")}
               </span>
             </div>
-
             <div className="dashboard-order-tools">
               <div className="dashboard-filter-row">
                 {filterOptions.map((option) => (
@@ -494,24 +504,25 @@ export default function DashboardPage() {
                 <input
                   type="search"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(event) => setSearch(event.target.value)}
                   placeholder={t("Search orders", "Tafuta oda")}
                 />
               </label>
             </div>
-
             <div className="dashboard-order-list">
               {orders
-                .filter((o) => {
+                .filter((order) => {
                   const statusMatch =
                     filter === "All" ||
-                    o.status.toLowerCase() === filter.toLowerCase();
-                  const q = search.toLowerCase();
+                    order.status.toLowerCase() === filter.toLowerCase();
+                  const query = search.toLowerCase();
                   const searchMatch =
-                    !q ||
-                    `${o.customer_name} ${o.items_summary} ${o.id}`
+                    !query ||
+                    `${order.customer_name ?? ""} ${
+                      order.customer_phone ?? ""
+                    } ${order.items_summary ?? ""} ${order.id ?? ""}`
                       .toLowerCase()
-                      .includes(q);
+                      .includes(query);
                   return statusMatch && searchMatch;
                 })
                 .map((order) => (
@@ -528,28 +539,61 @@ export default function DashboardPage() {
             </div>
           </section>
         )}
-
-        {/* PRODUCTS */}
-        {activeTab === "products" && (
+        {activeTab === "products" && shop && (
           <section className="dashboard-panel">
             <div className="dashboard-panel-heading">
               <div>
                 <p className="dashboard-section-kicker">YOUR CATALOG</p>
                 <h2>{t("Products", "Bidhaa")}</h2>
               </div>
+              <button
+                type="button"
+                className="dashboard-primary-button"
+                onClick={() => {
+                  setEditingProduct(null);
+                  setShowProductForm(true);
+                }}
+              >
+                + {t("Add product", "Ongeza bidhaa")}
+              </button>
             </div>
-
             <div className="dashboard-products-grid">
               {products.map((product) => (
-                <article key={product.id} className="dashboard-product-card">
+                <button
+                  key={product.id}
+                  type="button"
+                  className="dashboard-product-card"
+                  onClick={() => {
+                    setEditingProduct(product);
+                    setShowProductForm(true);
+                  }}
+                  style={{
+                    textAlign: "left",
+                    cursor: "pointer",
+                    color: "inherit",
+                  }}
+                >
                   <div className="dashboard-product-image">
-                    <span>
-                      {String(product.name).charAt(0).toUpperCase()}
-                    </span>
+                    {product.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          borderRadius: 8,
+                        }}
+                      />
+                    ) : (
+                      <span>{product.name.charAt(0).toUpperCase()}</span>
+                    )}
                   </div>
                   <div className="dashboard-product-copy">
                     <h3>{product.name}</h3>
                     <strong>{formatTzs(Number(product.price))}</strong>
+                    {product.category && <p>{product.category}</p>}
                   </div>
                   <span
                     className={`dashboard-stock-count${
@@ -558,7 +602,7 @@ export default function DashboardPage() {
                   >
                     {product.stock ?? 0} {t("in stock", "stoo")}
                   </span>
-                </article>
+                </button>
               ))}
               {products.length === 0 && (
                 <p className="dashboard-muted-copy">
@@ -566,10 +610,21 @@ export default function DashboardPage() {
                 </p>
               )}
             </div>
+            {showProductForm && (
+              <AddProduct
+                shopId={shop.id}
+                product={editingProduct}
+                onClose={() => {
+                  setShowProductForm(false);
+                  setEditingProduct(null);
+                }}
+                onAdded={() => {
+                  void reloadProducts(shop.id);
+                }}
+              />
+            )}
           </section>
         )}
-
-        {/* STORE */}
         {activeTab === "store" && shop && (
           <section className="dashboard-panel">
             <div className="dashboard-panel-heading">
@@ -581,6 +636,30 @@ export default function DashboardPage() {
             <StoreLink slug={shop.slug} shopName={shop.name} />
           </section>
         )}
+        {activeTab === "settings" && (
+          <section className="dashboard-panel">
+            <div className="dashboard-panel-heading">
+              <div>
+                <p className="dashboard-section-kicker">SHOP SETTINGS</p>
+                <h2>{t("Settings", "Mipangilio")}</h2>
+              </div>
+            </div>
+            <p className="dashboard-muted-copy">
+              {t(
+                "Open the full settings page to edit shop details and payment methods.",
+                "Fungua ukurasa wa mipangilio kuhariri taarifa za duka na njia za malipo."
+              )}
+            </p>
+            <Link
+              href="/dashboard/settings"
+              className="dashboard-primary-button"
+            >
+              <SettingsIcon size={16} />
+              {t("Manage settings", "Simamia mipangilio")}
+            </Link>
+          </section>
+        )}
       </main>
     </div>
   );
+}
