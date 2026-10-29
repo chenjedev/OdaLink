@@ -36,6 +36,16 @@ export function itemsSummary(items: OrderItem[]) {
   return items.map((i) => `${i.name} x${i.quantity}`).join(", ");
 }
 
+// "AGNES MICHAEL" / "halima" -> "Agnes Michael" / "Halima"
+function niceName(name: string) {
+  return (name ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/(^|[\s'-])(\p{L})/gu, (_m, sep: string, ch: string) => {
+      return sep + ch.toUpperCase();
+    });
+}
+
 // Assumes Tanzanian numbers: 0712... becomes 255712...
 function toWhatsApp(phone: string, text?: string) {
   const digits = (phone ?? "").replace(/\D/g, "");
@@ -55,7 +65,7 @@ const styles = `
   width: 100%;
   min-width: 0;
   border: 1px solid #e2e8f0;
-  border-radius: 16px;
+  border-radius: 20px;
   background: #fff;
   overflow: hidden;
 }
@@ -201,7 +211,7 @@ const styles = `
   outline: none;
 }
 .op-row-title { font-size: 16px; font-weight: 600; color: #0f172a; overflow-wrap: anywhere; }
-.op-row-title span { color: #64748b; font-weight: 500; margin-right: 6px; }
+.op-row-title .op-id { color: #64748b; font-weight: 500; margin-right: 6px; }
 .op-row-sub { margin-top: 2px; font-size: 14px; color: #64748b; }
 .op-row-tags { margin-top: 8px; }
 .op-chevron {
@@ -480,9 +490,10 @@ export default function OrdersPanel({
       {/* Orders */}
       {filtered.map((o) => {
         const open = openId === o.id;
+        const customer = niceName(o.customer_name);
         const greeting = t(
-          `Hello ${o.customer_name}, this is about your order #${o.id}.`,
-          `Habari ${o.customer_name}, kuhusu oda yako #${o.id}.`
+          `Hello ${customer}, this is about your order #${o.id}.`,
+          `Habari ${customer}, kuhusu oda yako #${o.id}.`
         );
 
         return (
@@ -494,8 +505,8 @@ export default function OrdersPanel({
               aria-expanded={open}
             >
               <div className="op-row-title">
-                <span>#{o.id}</span>
-                {o.customer_name}
+                <span className="op-id">#{o.id}</span>
+                {customer}
               </div>
               <div className="op-row-sub">
                 {Number(o.total).toLocaleString()} TZS ·{" "}
