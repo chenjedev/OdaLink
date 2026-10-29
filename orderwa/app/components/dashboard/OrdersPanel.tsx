@@ -29,11 +29,128 @@ export function itemsSummary(items: OrderItem[]) {
   return items.map((i) => `${i.name} x${i.quantity}`).join(", ");
 }
 
+// Assumes Tanzanian numbers: 0712... becomes 255712...
 function toWhatsApp(phone: string) {
   const digits = phone.replace(/\D/g, "");
   const intl = digits.startsWith("0") ? "255" + digits.slice(1) : digits;
   return `https://wa.me/${intl}`;
 }
+
+const styles = `
+.op-root { width: 100%; min-width: 0; }
+
+.op-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+}
+.op-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 15px;
+}
+
+.op-error { color: #dc2626; margin: 0 0 12px; }
+
+/* ---------- Desktop table ---------- */
+.op-table-wrap {
+  display: none;
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+}
+.op-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.op-table th {
+  text-align: left;
+  padding: 12px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+.op-table td {
+  padding: 12px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+.op-table .op-items { min-width: 180px; }
+.op-table .op-nowrap { white-space: nowrap; }
+.op-table .op-empty { text-align: center; color: #64748b; }
+.op-table tfoot td { font-weight: 600; background: #f8fafc; }
+
+/* ---------- Mobile cards ---------- */
+.op-cards { display: flex; flex-direction: column; gap: 12px; }
+.op-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #fff;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.op-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.op-card-top strong { min-width: 0; overflow-wrap: anywhere; }
+.op-meta { margin: 0; font-size: 13px; color: #64748b; overflow-wrap: anywhere; }
+.op-meta a { color: #0f766e; font-weight: 500; }
+.op-card-items { margin: 0; font-size: 14px; color: #0f172a; overflow-wrap: anywhere; }
+.op-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+}
+.op-empty-card { text-align: center; color: #64748b; margin: 8px 0; }
+
+/* ---------- Status ---------- */
+.op-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #475569;
+  white-space: nowrap;
+}
+.op-badge-pending { background: #fef3c7; color: #b45309; }
+.op-badge-confirmed { background: #dbeafe; color: #1d4ed8; }
+.op-badge-delivered { background: #dcfce7; color: #15803d; }
+.op-badge-cancelled { background: #fee2e2; color: #b91c1c; }
+
+.op-select {
+  padding: 6px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+  max-width: 100%;
+}
+.op-select:disabled { opacity: 0.6; }
+
+@media (min-width: 768px) {
+  .op-table-wrap { display: block; }
+  .op-cards { display: none; }
+}
+`;
 
 export default function OrdersPanel({
   orders,
@@ -60,9 +177,13 @@ export default function OrdersPanel({
     return labels[status.toLowerCase()] ?? status;
   }
 
-  async function handleStatusChange(orderId: number | string, newStatus: string) {
+  async function handleStatusChange(
+    orderId: number | string,
+    newStatus: string
+  ) {
     setError("");
 
+    // Cancelling is permanent (stock goes back), so ask first.
     if (newStatus === "cancelled") {
       const ok = window.confirm(
         t(
@@ -81,7 +202,9 @@ export default function OrdersPanel({
 
     if (updateErr || !data || data.length === 0) {
       console.error("Update status failed:", updateErr?.message);
-      setError(t("Could not update the status", "Imeshindwa kubadilisha hali ya oda"));
+      setError(
+        t("Could not update the status", "Imeshindwa kubadilisha hali ya oda")
+      );
       return;
     }
 
@@ -97,25 +220,29 @@ export default function OrdersPanel({
       o.id.toString().includes(q)
   );
 
-  const StatusSelect = ({ o }: { o: Order }) => (
-    <select
-      value={o.status}
-      disabled={o.status === "cancelled"}
-      onChange={(e) => handleStatusChange(o.id, e.target.value)}
-      aria-label={t("Change order status", "Badilisha hali ya oda")}
-    >
-      {STATUSES.map((s) => (
-        <option key={s} value={s}>
-          {statusLabel(s)}
-        </option>
-      ))}
-    </select>
-  );
+  function renderSelect(o: Order) {
+    return (
+      <select
+        className="op-select"
+        value={o.status}
+        disabled={o.status === "cancelled"}
+        onChange={(e) => void handleStatusChange(o.id, e.target.value)}
+        aria-label={t("Change order status", "Badilisha hali ya oda")}
+      >
+        {STATUSES.map((s) => (
+          <option key={s} value={s}>
+            {statusLabel(s)}
+          </option>
+        ))}
+      </select>
+    );
+  }
 
   return (
-    <div className="products-page">
-      <div className="search-wrapper">
-        <i className="fa-solid fa-magnifying-glass search-icon"></i>
+    <div className="op-root">
+      <style>{styles}</style>
+
+      <div className="op-search">
         <input
           type="text"
           placeholder={t(
@@ -124,14 +251,14 @@ export default function OrdersPanel({
           )}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="search-input"
         />
       </div>
 
-      {error && <p style={{ color: "#dc2626" }}>{error}</p>}
+      {error && <p className="op-error">{error}</p>}
 
-      <div className="table-wrapper orders-table">
-        <table className="products-table">
+      {/* Table: tablets and desktops */}
+      <div className="op-table-wrap">
+        <table className="op-table">
           <thead>
             <tr>
               <th>{t("Id", "Namba")}</th>
@@ -143,65 +270,89 @@ export default function OrdersPanel({
               <th>{t("Status", "Hali")}</th>
             </tr>
           </thead>
+
           <tbody>
             {filtered.map((o) => (
               <tr key={o.id}>
                 <td>{o.id}</td>
-                <td>{new Date(o.created_at).toLocaleDateString()}</td>
+                <td className="op-nowrap">
+                  {new Date(o.created_at).toLocaleDateString()}
+                </td>
                 <td>{o.customer_name}</td>
-                <td>{o.customer_phone}</td>
-                <td>{itemsSummary(o.items)}</td>
-                <td>{Number(o.total).toLocaleString()} TZS</td>
-                <td>
-                  <span className={`badge badge-${o.status.toLowerCase()}`}>
+                <td className="op-nowrap">{o.customer_phone}</td>
+                <td className="op-items">{itemsSummary(o.items)}</td>
+                <td className="op-nowrap">
+                  {Number(o.total).toLocaleString()} TZS
+                </td>
+                <td className="op-nowrap">
+                  <span
+                    className={`op-badge op-badge-${o.status.toLowerCase()}`}
+                  >
                     {statusLabel(o.status)}
                   </span>{" "}
-                  <StatusSelect o={o} />
+                  {renderSelect(o)}
                 </td>
               </tr>
             ))}
+
             {filtered.length === 0 && (
               <tr>
-                <td className="no-prod" colSpan={7}>
+                <td className="op-empty" colSpan={7}>
                   {t("No order found", "Hakuna oda iliyopatikana")}
                 </td>
               </tr>
             )}
+          </tbody>
+
+          <tfoot>
             <tr>
               <td colSpan={7}>
                 {t("Total", "Jumla")} {filtered.length.toLocaleString()}
               </td>
             </tr>
-          </tbody>
+          </tfoot>
         </table>
       </div>
 
-      <div className="orders-cards">
+      {/* Cards: phones */}
+      <div className="op-cards">
         {filtered.map((o) => (
-          <div key={o.id} className="order-card">
-            <div className="order-card-top">
+          <div key={o.id} className="op-card">
+            <div className="op-card-top">
               <strong>
                 #{o.id} · {o.customer_name}
               </strong>
-              <span className={`badge badge-${o.status.toLowerCase()}`}>
+              <span className={`op-badge op-badge-${o.status.toLowerCase()}`}>
                 {statusLabel(o.status)}
               </span>
             </div>
-            <p className="order-meta">
+
+            <p className="op-meta">
               <a href={`tel:${o.customer_phone}`}>{o.customer_phone}</a> ·{" "}
-              <a href={toWhatsApp(o.customer_phone)} target="_blank" rel="noopener noreferrer">
+              <a
+                href={toWhatsApp(o.customer_phone)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 WhatsApp
               </a>{" "}
               · {new Date(o.created_at).toLocaleDateString()}
             </p>
-            <p className="order-items">{itemsSummary(o.items)}</p>
-            <div className="order-card-bottom">
+
+            <p className="op-card-items">{itemsSummary(o.items)}</p>
+
+            <div className="op-card-bottom">
               <strong>{Number(o.total).toLocaleString()} TZS</strong>
-              <StatusSelect o={o} />
+              {renderSelect(o)}
             </div>
           </div>
         ))}
-        {filtered.length === 0 && <p>{t("No order found", "Hakuna oda iliyopatikana")}</p>}
+
+        {filtered.length === 0 && (
+          <p className="op-empty-card">
+            {t("No order found", "Hakuna oda iliyopatikana")}
+          </p>
+        )}
       </div>
     </div>
   );
