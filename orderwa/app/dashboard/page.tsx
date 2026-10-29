@@ -567,7 +567,17 @@ export default function DashboardPage() {
               </svg>
             </div>
             <span>odalink</span>
-          </Link>
+{shop && (
+  <a
+    href={shopUrl}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="dashboard-primary-button"
+  >
+    {t("View Storefront", "Angalia Duka")}
+    <ArrowUpRight size={16} />
+  </a>
+)}  </Link>
         </div>
       </header>
 
