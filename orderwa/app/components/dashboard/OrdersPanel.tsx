@@ -47,8 +47,8 @@ const styles = `
   box-sizing: border-box;
   padding: 10px 14px;
   margin-bottom: 14px;
-  border-radius: 12px;
   border: 1px solid #e2e8fø;
+  border-radius: 12px;
   background: #fff;
 }
 .op-search input {
