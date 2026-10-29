@@ -507,7 +507,10 @@ export default function DashboardPage() {
 
       <main className="dashboard-content">
         <div className="dashboard-page-heading">
-        
+          <div>
+            
+            <p>{pageDescription[activeTab]}</p>
+          </div>
         </div>
 
         {notice && (
