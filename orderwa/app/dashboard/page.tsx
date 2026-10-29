@@ -1,7 +1,8 @@
 "use client";
 
-import AddProduct from "../components/dashboard/AddProduct";
+import StoreLink from "../components/dashboard/StoreLink";
 import ShopSettings from "../components/dashboard/ShopSettings";
+import ProductPage from "./products/page";
 import OrdersPanel, {
   type Order,
   itemsSummary,
@@ -16,6 +17,7 @@ import {
   LayoutDashboard,
   Package,
   ShoppingBag,
+  Store,
   Settings as SettingsIcon,
   Share2,
   Copy,
@@ -41,7 +43,12 @@ type OrderRow = Order;
 
 type Lang = "en" | "sw";
 
-type DashboardTab = "overview" | "orders" | "products" | "settings";
+type DashboardTab =
+  | "overview"
+  | "orders"
+  | "products"
+  | "store"
+  | "settings";
 
 function sumTotals(list: OrderRow[]) {
   return list.reduce(
@@ -54,6 +61,52 @@ function formatTzs(amount: number) {
   return `TZS ${new Intl.NumberFormat("en-US").format(amount)}`;
 }
 
+
+const layoutFix = `
+.oda-dashboard,
+.oda-dashboard * { box-sizing: border-box; }
+
+.oda-dashboard {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.oda-dashboard .dashboard-content,
+.oda-dashboard .dashboard-panel,
+.oda-dashboard .dashboard-panel-stack {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Tabs: one row, swipe sideways so Store and Settings are always reachable */
+.oda-dashboard .dashboard-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.oda-dashboard .dashboard-tabs::-webkit-scrollbar { display: none; }
+.oda-dashboard .dashboard-tab { flex: none; white-space: nowrap; }
+
+/* Products page brings its own margins and a padded table (products.css).
+   Inside the dashboard panel, remove them so nothing is squeezed. */
+.oda-dashboard .products-page {
+  margin: 0 !important;
+  padding: 0 !important;
+  max-width: 100% !important;
+}
+.oda-dashboard .products-table {
+  padding: 0 !important;
+  border-radius: 16px;
+  box-shadow: none;
+}
+.oda-dashboard .product-header { gap: 12px; }
+.oda-dashboard img { max-width: 100%; }
+`;
+
 const dashboardTabs: {
   id: DashboardTab;
   label: string;
@@ -62,6 +115,7 @@ const dashboardTabs: {
   { id: "overview", label: "Overview", icon: <LayoutDashboard size={16} /> },
   { id: "orders", label: "Orders", icon: <ClipboardList size={16} /> },
   { id: "products", label: "Products", icon: <Package size={16} /> },
+  { id: "store", label: "Store", icon: <Store size={16} /> },
   { id: "settings", label: "Settings", icon: <SettingsIcon size={16} /> },
 ];
 
@@ -132,8 +186,6 @@ export default function DashboardPage() {
   const [lang, setLang] = useState<Lang>("en");
   const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
   const [notice, setNotice] = useState("");
-  const [showProductForm, setShowProductForm] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   const t = (en: string, sw: string) => (lang === "en" ? en : sw);
 
@@ -168,44 +220,6 @@ export default function DashboardPage() {
       window.removeEventListener("storage", syncLanguage);
     };
   }, []);
-
-  // Open the right tab from the link: /dashboard?tab=orders
-  useEffect(() => {
-    const tab = new URLSearchParams(window.location.search).get("tab");
-
-    if (
-      tab === "overview" ||
-      tab === "orders" ||
-      tab === "products" ||
-      tab === "settings"
-    ) {
-      setActiveTab(tab);
-    }
-  }, []);
-
-  // select("*") so a missing column can never break the query.
-  // is_active: show rows where it is true OR null.
-  async function reloadProducts(shopId: string) {
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .eq("shop_id", shopId)
-      .or("is_active.is.null,is_active.eq.true")
-      .order("id");
-
-    if (error) {
-      console.error(error.message);
-      setNotice(
-        t(
-          "Could not reload products.",
-          "Bidhaa hazikuweza kupakiwa."
-        )
-      );
-      return;
-    }
-
-    setProducts((data as Product[]) ?? []);
-  }
 
   useEffect(() => {
     let mounted = true;
@@ -384,6 +398,7 @@ export default function DashboardPage() {
     overview: t(`Good morning, ${displayName}`, `Habari, ${displayName}`),
     orders: t("All orders", "Oda zote"),
     products: t("Products", "Bidhaa"),
+    store: t("Store", "Duka"),
     settings: t("Settings", "Mipangilio"),
   };
 
@@ -400,6 +415,10 @@ export default function DashboardPage() {
       "Manage products, photos and stock.",
       "Dhibiti bidhaa, picha na stoo."
     ),
+    store: t(
+      "Share your storefront and review your shop details.",
+      "Shiriki link ya duka lako na angalia maelezo."
+    ),
     settings: t(
       "Manage shop details and payment methods.",
       "Dhibiti taarifa za duka na njia za malipo."
@@ -408,6 +427,8 @@ export default function DashboardPage() {
 
   return (
     <div className="oda-dashboard">
+      <style>{layoutFix}</style>
+
       <header className="dashboard-topbar">
         <div className="dashboard-topbar-inner">
           <Link href="/" className="dashboard-brand">
@@ -435,7 +456,7 @@ export default function DashboardPage() {
               href={shopUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 font-semibold text-teal-700 hover:underline"
+              className="dashboard-primary-button"
             >
               {t("View Storefront", "Angalia Duka")}
               <ArrowUpRight size={16} />
@@ -463,17 +484,15 @@ export default function DashboardPage() {
       </div>
 
       <main className="dashboard-content">
-        <div className="dashboard-page-heading">
-          <div>
-            {activeTab !== "orders" && (
-              <>
-                <p className="dashboard-page-kicker">ODA LINK · SELLER</p>
-                <h1>{pageTitle[activeTab]}</h1>
-              </>
-            )}
-            <p>{pageDescription[activeTab]}</p>
+        {activeTab !== "products" && (
+          <div className="dashboard-page-heading">
+            <div>
+              <p className="dashboard-page-kicker">ODA LINK · SELLER</p>
+              <h1>{pageTitle[activeTab]}</h1>
+              <p>{pageDescription[activeTab]}</p>
+            </div>
           </div>
-        </div>
+        )}
 
         {notice && (
           <p className="dashboard-live-message" role="status">
@@ -562,107 +581,46 @@ export default function DashboardPage() {
         )}
 
         {activeTab === "orders" && shop && (
-          <OrdersPanel
-            orders={orders}
-            lang={lang}
-            onStatusChanged={(id, status) =>
-              setOrders((prev) =>
-                prev.map((o) => (o.id === id ? { ...o, status } : o))
-              )
-            }
-          />
+          <section className="dashboard-panel">
+            <div className="dashboard-panel-heading">
+              <div>
+                <p className="dashboard-section-kicker">ORDER MANAGEMENT</p>
+                <h2>{t("All orders", "Oda zote")}</h2>
+              </div>
+
+              <span className="dashboard-soft-badge">
+                {orders.length} {t("orders", "oda")}
+              </span>
+            </div>
+
+            <OrdersPanel
+              orders={orders}
+              lang={lang}
+              onStatusChanged={(id, status) =>
+                setOrders((prev) =>
+                  prev.map((o) => (o.id === id ? { ...o, status } : o))
+                )
+              }
+            />
+          </section>
         )}
 
         {activeTab === "products" && shop && (
           <section className="dashboard-panel">
+            <ProductPage />
+          </section>
+        )}
+
+        {activeTab === "store" && shop && (
+          <section className="dashboard-panel">
             <div className="dashboard-panel-heading">
               <div>
-                <p className="dashboard-section-kicker">YOUR CATALOG</p>
-                <h2>{t("Products", "Bidhaa")}</h2>
+                <p className="dashboard-section-kicker">PUBLIC STOREFRONT</p>
+                <h2>{t("Your store link", "Link ya duka lako")}</h2>
               </div>
-
-              <button
-                type="button"
-                className="dashboard-primary-button"
-                onClick={() => {
-                  setEditingProduct(null);
-                  setShowProductForm(true);
-                }}
-              >
-                + {t("Add product", "Ongeza bidhaa")}
-              </button>
             </div>
 
-            <div className="dashboard-products-grid">
-              {products.map((product) => (
-                <button
-                  key={product.id}
-                  type="button"
-                  className="dashboard-product-card"
-                  onClick={() => {
-                    setEditingProduct(product);
-                    setShowProductForm(true);
-                  }}
-                  style={{
-                    textAlign: "left",
-                    cursor: "pointer",
-                    color: "inherit",
-                  }}
-                >
-                  <div className="dashboard-product-image">
-                    {product.image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={product.image_url}
-                        alt={product.name}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                          borderRadius: 8,
-                        }}
-                      />
-                    ) : (
-                      <span>{product.name.charAt(0).toUpperCase()}</span>
-                    )}
-                  </div>
-
-                  <div className="dashboard-product-copy">
-                    <h3>{product.name}</h3>
-                    <strong>{formatTzs(Number(product.price))}</strong>
-                    {product.category && <p>{product.category}</p>}
-                  </div>
-
-                  <span
-                    className={`dashboard-stock-count${
-                      (product.stock ?? 0) <= 4 ? " is-low" : ""
-                    }`}
-                  >
-                    {product.stock ?? 0} {t("in stock", "stoo")}
-                  </span>
-                </button>
-              ))}
-
-              {products.length === 0 && (
-                <p className="dashboard-muted-copy">
-                  {t("No products yet.", "Bado hakuna bidhaa.")}
-                </p>
-              )}
-            </div>
-
-            {showProductForm && (
-              <AddProduct
-                shopId={shop.id}
-                product={editingProduct}
-                onClose={() => {
-                  setShowProductForm(false);
-                  setEditingProduct(null);
-                }}
-                onAdded={() => {
-                  void reloadProducts(shop.id);
-                }}
-              />
-            )}
+            <StoreLink slug={shop.slug} shopName={shop.name} />
           </section>
         )}
 
