@@ -138,12 +138,13 @@ const styles = `
   height: 36px;
   border: 0;
   border-radius: 10px;
-  background: #f1f5f9;
+  background: transparent;
   color: #334155;
-  font-size: 20px;
+  font-size: 22px;
   line-height: 1;
   cursor: pointer;
 }
+.sp-dots:active { background: #f1f5f9; }
 .sp-backdrop { position: fixed; inset: 0; z-index: 40; background: transparent; }
 .sp-menu {
   position: absolute;
@@ -773,23 +774,6 @@ export default function ShopSettings() {
           </p>
         </div>
 
-        <div className="form-group">
-          <label>{t("Shop link name", "Jina la kiungo cha duka")}</label>
-          <input
-            style={inputStyle}
-            type="text"
-            value={`https://odalink.vercel.app/store/${shop.slug}`}
-            readOnly
-            disabled
-          />
-          <p style={{ fontSize: 13, color: "#6b7280", marginTop: 6 }}>
-            {t(
-              "This link name cannot be changed here.",
-              "Jina hili la kiungo haliwezi kubadilishwa hapa."
-            )}
-          </p>
-        </div>
-
         <button
           type="submit"
           className="save-btn"
@@ -940,18 +924,6 @@ export default function ShopSettings() {
                     )}
                   </div>
                 </div>
-
-                <p
-                  style={{
-                    margin: "10px 0 0",
-                    fontSize: 14,
-                    color: "#475569",
-                    overflowWrap: "anywhere",
-                  }}
-                >
-                  {t("Account name", "Jina la akaunti")}: {item.account_name}
-                </p>
-
               </div>
             );
           })}
