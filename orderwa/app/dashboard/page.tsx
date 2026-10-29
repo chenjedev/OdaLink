@@ -537,49 +537,51 @@ export default function DashboardPage() {
 
   return (
     <div className="oda-dashboard">
-      <header className="dashboard-topbar">
-        <div className="dashboard-topbar-inner">
-          <Link href="/" className="dashboard-brand">
-            <div className="dashboard-brand-icon">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <path
-                  d="M12 2C6.48 2 2 6.48 2 12c0 1.54.36 3 .97 4.29L2 22l5.71-.97C9 21.64 10.46 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"
-                  fill="#0d9488"
-                  fillOpacity="0.15"
-                />
-                <path
-                  d="M12 2C6.48 2 2 6.48 2 12c0 1.54.36 3 .97 4.29L2 22l5.71-.97C9 21.64 10.46 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"
-                  stroke="#0d9488"
-                  strokeWidth="1.6"
-                  fill="none"
-                />
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="1.6"
-                  fill="#0d9488"
-                />
-              </svg>
-            </div>
-            <span>odalink</span>
-{shop && (
-  <a
-    href={shopUrl}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="dashboard-primary-button"
-  >
-    {t("View Storefront", "Angalia Duka")}
-    <ArrowUpRight size={16} />
-  </a>
-)}  </Link>
-        </div>
-      </header>
+     <header className="dashboard-topbar">
+  <div className="dashboard-topbar-inner">
+    <Link href="/" className="dashboard-brand">
+      <div className="dashboard-brand-icon">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+        >
+          <path
+            d="M12 2C6.48 2 2 6.48 2 12c0 1.54.36 3 .97 4.29L2 22l5.71-.97C9 21.64 10.46 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"
+            fill="#0d9488"
+            fillOpacity="0.15"
+          />
+          <path
+            d="M12 2C6.48 2 2 6.48 2 12c0 1.54.36 3 .97 4.29L2 22l5.71-.97C9 21.64 10.46 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"
+            stroke="#0d9488"
+            strokeWidth="1.6"
+            fill="none"
+          />
+          <circle
+            cx="12"
+            cy="12"
+            r="1.6"
+            fill="#0d9488"
+          />
+        </svg>
+      </div>
+      <span>odalink</span>
+    </Link>
+
+    {shop && (
+      <a
+        href={shopUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="dashboard-primary-button"
+      >
+        {t("View Storefront", "Angalia Duka")}
+        <ArrowUpRight size={16} />
+      </a>
+    )}
+  </div>
+</header>
 
       <div className="dashboard-tabs-wrapper">
         <div className="dashboard-tabs">
