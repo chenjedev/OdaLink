@@ -514,22 +514,8 @@ export default function ShopSettings() {
           </p>
         </div>
 
-        <div className="form-group">
-          <label>{t("Shop link name", "Jina la kiungo cha duka")}</label>
-          <input
-            style={inputStyle}
-            type="text"
-            value={`https://odalink.vercel.app/store/${shop.slug}`}
-            readOnly
-            disabled
-          />
-          <p style={{ fontSize: 13, color: "#6b7280", marginTop: 6 }}>
-            {t(
-              "This link name cannot be changed here.",
-              "Jina hili la kiungo haliwezi kubadilishwa hapa."
-            )}
-          </p>
-        </div>
+        
+
 
         <button
           type="submit"
