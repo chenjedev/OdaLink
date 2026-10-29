@@ -2,6 +2,7 @@
 
 import { useEffect, useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 type Shop = {
@@ -281,6 +282,24 @@ const styles = `
 .sp-check { display: flex; align-items: center; gap: 10px; margin: 6px 0 18px; }
 .sp-error { margin: 0 0 12px; color: #dc2626; font-size: 14px; }
 .sp-save-full { width: 100%; }
+
+.sp-logout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 28px;
+  padding: 12px 16px;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  background: #fff;
+  color: #dc2626;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sp-logout:active { background: #fef2f2; }
 `;
 
 export default function ShopSettings() {
@@ -702,6 +721,28 @@ export default function ShopSettings() {
     setMethods((current) => current.filter((m) => m.id !== item.id));
   }
 
+  async function handleLogout() {
+    const ok = window.confirm(
+      t("Do you want to log out?", "Unataka kutoka kwenye akaunti?")
+    );
+    if (!ok) return;
+
+    const { error: signOutError } = await supabase.auth.signOut();
+
+    if (signOutError) {
+      console.error("Logout failed:", signOutError.message);
+      setError(
+        t(
+          "Could not log out. Please try again.",
+          "Imeshindwa kutoka. Tafadhali jaribu tena."
+        )
+      );
+      return;
+    }
+
+    router.replace("/login");
+  }
+
   if (loading) {
     return (
       <div style={{ padding: 12 }}>
@@ -937,6 +978,16 @@ export default function ShopSettings() {
           })}
         </div>
       )}
+
+      {/* ---------- Log out ---------- */}
+      <button
+        type="button"
+        className="sp-logout"
+        onClick={() => void handleLogout()}
+      >
+        <LogOut size={16} />
+        {t("Log out", "Toka")}
+      </button>
 
       {/* ---------- Step 1: choose a provider ---------- */}
       {sheet === "picker" && (
