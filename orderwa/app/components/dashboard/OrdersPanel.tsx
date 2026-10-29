@@ -44,6 +44,12 @@ function toWhatsApp(phone: string, text?: string) {
   return `https://wa.me/${intl}${query}`;
 }
 
+// International format for the dialer: 0712... becomes +255712...
+function toIntl(phone: string) {
+  const digits = (phone ?? "").replace(/\D/g, "");
+  return digits.startsWith("0") ? "+255" + digits.slice(1) : "+" + digits;
+}
+
 const styles = `
 .op-root {
   width: 100%;
@@ -125,7 +131,7 @@ const styles = `
 /* ---------- Date panel (hidden until the filter icon is tapped) ---------- */
 .op-datepanel {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: 1fr;
   gap: 12px;
   padding: 12px 16px;
   border-bottom: 1px solid #e2e8f0;
@@ -208,16 +214,10 @@ const styles = `
 }
 .op-chevron.is-open { transform: rotate(180deg); }
 
-.op-detail {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 0 16px 16px;
-}
-.op-detail p { margin: 0; font-size: 14px; color: #0f172a; overflow-wrap: anywhere; }
-.op-phone { color: #64748b; }
+/* ---------- Order details ---------- */
+.op-detail { display: flex; flex-direction: column; gap: 10px; padding: 0 16px 16px; }
+.op-items { margin: 0; font-size: 15px; font-weight: 500; color: #0f172a; overflow-wrap: anywhere; }
 
-/* Call + WhatsApp buttons */
 .op-contact {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -239,13 +239,10 @@ const styles = `
 }
 .op-btn-wa { background: #0f766e; border-color: #0f766e; color: #fff; }
 
-.op-detail-row { display: flex; align-items: center; gap: 10px; }
-.op-detail-row span { font-size: 13px; color: #64748b; }
-
 .op-select {
-  flex: 1;
-  min-width: 0;
-  height: 40px;
+  flex: none;
+  width: 100%;
+  height: 44px;
   padding: 0 10px;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
@@ -504,11 +501,17 @@ export default function OrdersPanel({
                 {Number(o.total).toLocaleString()} TZS ·{" "}
                 {formatDate(o.created_at)}
               </div>
-              <div className="op-row-tags">
-                <span className={`op-badge op-badge-${o.status.toLowerCase()}`}>
-                  {statusLabel(o.status)}
-                </span>
-              </div>
+
+              {!open && (
+                <div className="op-row-tags">
+                  <span
+                    className={`op-badge op-badge-${o.status.toLowerCase()}`}
+                  >
+                    {statusLabel(o.status)}
+                  </span>
+                </div>
+              )}
+
               <ChevronDown
                 size={18}
                 className={`op-chevron${open ? " is-open" : ""}`}
@@ -517,13 +520,12 @@ export default function OrdersPanel({
 
             {open && (
               <div className="op-detail">
-                <p>{itemsSummary(o.items) || "—"}</p>
-                <p className="op-phone">{o.customer_phone}</p>
+                <p className="op-items">{itemsSummary(o.items) || "—"}</p>
 
                 <div className="op-contact">
-                  <a className="op-btn" href={`tel:${o.customer_phone}`}>
+                  <a className="op-btn" href={`tel:${toIntl(o.customer_phone)}`}>
                     <Phone size={16} />
-                    {t("Call", "Piga simu")}
+                    {o.customer_phone}
                   </a>
 
                   <a
@@ -537,24 +539,21 @@ export default function OrdersPanel({
                   </a>
                 </div>
 
-                <div className="op-detail-row">
-                  <span>{t("Status", "Hali")}</span>
-                  <select
-                    className="op-select"
-                    value={o.status}
-                    disabled={o.status === "cancelled"}
-                    onChange={(e) =>
-                      void handleStatusChange(o.id, e.target.value)
-                    }
-                    aria-label={t("Change order status", "Badilisha hali ya oda")}
-                  >
-                    {STATUSES.map((s) => (
-                      <option key={s} value={s}>
-                        {statusLabel(s)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <select
+                  className="op-select"
+                  value={o.status}
+                  disabled={o.status === "cancelled"}
+                  onChange={(e) =>
+                    void handleStatusChange(o.id, e.target.value)
+                  }
+                  aria-label={t("Change order status", "Badilisha hali ya oda")}
+                >
+                  {STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {statusLabel(s)}
+                    </option>
+                  ))}
+                </select>
               </div>
             )}
           </div>
