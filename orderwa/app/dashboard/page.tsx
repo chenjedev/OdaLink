@@ -666,34 +666,39 @@ export default function DashboardPage() {
             </section>
 
             {/* Shop statistics */}
-          <section className="dashboard-metrics">
-  <StatCard
-    title={t("Orders today", "Oda za leo")}
-    value={todayOrders.length}
-    change={formatTzs(sumTotals(todayOrders))}
+       <section className="dashboard-metrics">
+  <MetricCard
+    icon={<ShoppingBag size={18} />}
+    label={t("Orders today", "Oda za leo")}
+    value={String(todayOrders.length).padStart(2, "0")}
+    note={formatTzs(sumTotals(todayOrders))}
   />
 
-  <StatCard
-    title={t("Pending orders", "Oda zinazosubiri")}
-    value={pendingOrders.length}
-    change={t("Awaiting confirmation", "Zinasubiri uthibitisho")}
+  <MetricCard
+    icon={<ClipboardList size={18} />}
+    label={t("Pending orders", "Zinazosubiri")}
+    value={String(pendingOrders.length).padStart(2, "0")}
+    note={t("Ready for follow-up", "Zinazohitaji hatua")}
   />
 
-  <StatCard
-    title={t("Products listed", "Bidhaa zilizowekwa")}
-    value={products.length}
-    change={`${t("Stock worth", "Thamani ya stoo")}: ${formatTzs(stockWorth)}`}
+  <MetricCard
+    icon={<Package size={18} />}
+    label={t("Products listed", "Bidhaa")}
+    value={String(products.length).padStart(2, "0")}
+    note={`${t("Stock worth", "Thamani ya stoo")} ${formatTzs(stockWorth)}`}
   />
 
-  <StatCard
-    title={t("Revenue (TZS)", "Mapato (TZS)")}
-    value={revenue}
-    change={t(
-      "Confirmed + delivered orders",
-      "Oda zilizothibitishwa na zilizofikishwa"
+  <MetricCard
+    icon={<CircleDollarSign size={18} />}
+    label={t("Revenue", "Mapato")}
+    value={formatTzs(revenue)}
+    note={t(
+      "Confirmed + Delivered",
+      "Zilizothibitishwa + Zilizofikishwa"
     )}
   />
 </section>
+
             <section className="dashboard-panel">
               <div className="dashboard-panel-heading">
                 <div>
