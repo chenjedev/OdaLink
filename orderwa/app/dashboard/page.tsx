@@ -10,13 +10,10 @@ import {
   ClipboardList,
   CircleDollarSign,
   LayoutDashboard,
-  MessageCircle,
   Package,
   Search,
   ShoppingBag,
   Store,
-  Menu,
-  X,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -56,40 +53,23 @@ function formatTzs(amount: number) {
 }
 
 const dashboardTabs: { id: DashboardTab; label: string; icon: ReactNode }[] = [
-  { id: "overview", label: "Overview", icon: <LayoutDashboard aria-hidden="true" /> },
-  { id: "orders", label: "Orders", icon: <ClipboardList aria-hidden="true" /> },
-  { id: "products", label: "Products", icon: <Package aria-hidden="true" /> },
-  { id: "store", label: "Store", icon: <Store aria-hidden="true" /> },
+  { id: "overview", label: "Overview", icon: <LayoutDashboard size={16} /> },
+  { id: "orders", label: "Orders", icon: <ClipboardList size={16} /> },
+  { id: "products", label: "Products", icon: <Package size={16} /> },
+  { id: "store", label: "Store", icon: <Store size={16} /> },
 ];
 
-const filterOptions: OrderFilter[] = ["All", "Pending", "Confirmed", "Delivered", "Cancelled"];
-
-function DashboardNavigation({
-  activeTab,
-  onChange,
-}: {
-  activeTab: DashboardTab;
-  onChange: (tab: DashboardTab) => void;
-}) {
-  return (
-    <div className="dashboard-nav-links">
-      {dashboardTabs.map((tab) => (
-        <button
-          key={tab.id}
-          type="button"
-          className={`dashboard-nav-button${activeTab === tab.id ? " is-active" : ""}`}
-          onClick={() => onChange(tab.id)}
-        >
-          {tab.icon}
-          <span>{tab.label}</span>
-        </button>
-      ))}
-    </div>
-  );
-}
+const filterOptions: OrderFilter[] = [
+  "All",
+  "Pending",
+  "Confirmed",
+  "Delivered",
+  "Cancelled",
+];
 
 function StatusTag({ status }: { status: string }) {
-  const normalized = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+  const normalized =
+    status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
   return (
     <span className={`dashboard-status status-${status.toLowerCase()}`}>
       {normalized}
@@ -110,7 +90,9 @@ function OrderCard({
         <strong>{order.customer_name || "Customer"}</strong>
         <span>{order.customer_phone || "—"}</span>
       </div>
-      <p className="dashboard-order-items">{order.items_summary || "Items"}</p>
+      <p className="dashboard-order-items">
+        {order.items_summary || "Items"}
+      </p>
       <time className="dashboard-order-time">
         {new Date(order.created_at).toLocaleString()}
       </time>
@@ -119,8 +101,12 @@ function OrderCard({
         <StatusTag status={order.status} />
       </div>
       {onConfirm && order.status.toLowerCase() === "pending" && (
-        <button className="dashboard-order-action" type="button" onClick={onConfirm}>
-          <Check aria-hidden="true" /> Confirm
+        <button
+          className="dashboard-order-action"
+          type="button"
+          onClick={onConfirm}
+        >
+          <Check size={14} /> Confirm
         </button>
       )}
     </article>
@@ -161,7 +147,6 @@ export default function DashboardPage() {
   const [filter, setFilter] = useState<OrderFilter>("All");
   const [search, setSearch] = useState("");
   const [notice, setNotice] = useState("");
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const t = (en: string, sw: string) => (lang === "en" ? en : sw);
 
@@ -287,21 +272,6 @@ export default function DashboardPage() {
     setNotice(t("Order confirmed", "Oda imethibitishwa"));
   }
 
-  async function handleLogout() {
-    setMobileMenuOpen(false);
-    await supabase.auth.signOut();
-    router.replace("/login");
-  }
-
-  function changeLanguage() {
-    const next = lang === "en" ? "sw" : "en";
-    setLang(next);
-    localStorage.setItem("odLinkLanguage", next);
-    window.dispatchEvent(
-      new CustomEvent("odLinkLanguageChange", { detail: next })
-    );
-  }
-
   if (loading) {
     return (
       <div className="oda-dashboard">
@@ -343,360 +313,275 @@ export default function DashboardPage() {
       {/* TOP BAR */}
       <header className="dashboard-topbar">
         <div className="dashboard-topbar-inner">
-          <div className="dashboard-topbar-brand">
-            <button
-              type="button"
-              className="dashboard-menu-btn"
-              onClick={() => setMobileMenuOpen(true)}
-              aria-label="Open menu"
-            >
-              <Menu size={20} />
-            </button>
-
-            <Link href="/" className="font-bold text-teal-800 text-lg">
-              odalink
-            </Link>
-            <span className="dashboard-preview-pill">SELLER</span>
-          </div>
+          <Link href="/" className="dashboard-brand">
+            <div className="dashboard-brand-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M12 2C6.48 2 2 6.48 2 12c0 1.54.36 3 .97 4.29L2 22l5.71-.97C9 21.64 10.46 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"
+                  fill="#0d9488"
+                  fillOpacity="0.15"
+                />
+                <path
+                  d="M12 2C6.48 2 2 6.48 2 12c0 1.54.36 3 .97 4.29L2 22l5.71-.97C9 21.64 10.46 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"
+                  stroke="#0d9488"
+                  strokeWidth="1.6"
+                  fill="none"
+                />
+                <circle cx="12" cy="12" r="1.6" fill="#0d9488" />
+              </svg>
+            </div>
+            <span>odalink</span>
+          </Link>
 
           {shop && (
             <Link
               className="dashboard-topbar-store"
               href={`/store/${shop.slug}`}
             >
-              View storefront <ArrowUpRight size={16} />
+              View storefront <ArrowUpRight size={15} />
             </Link>
           )}
         </div>
       </header>
 
-      {/* MOBILE MENU */}
-      {mobileMenuOpen && (
-        <>
-          <div
-            className="dashboard-mobile-overlay"
-            onClick={() => setMobileMenuOpen(false)}
-          />
-          <div className="dashboard-mobile-menu">
-            <div className="dashboard-mobile-menu-header">
-              <span className="font-bold text-lg text-teal-800">odalink</span>
-              <button type="button" onClick={() => setMobileMenuOpen(false)}>
-                <X size={22} />
-              </button>
-            </div>
-
-            <nav className="dashboard-mobile-menu-links">
-              {dashboardTabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  className={activeTab === tab.id ? "is-active" : ""}
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                    setMobileMenuOpen(false);
-                  }}
-                >
-                  {tab.icon}
-                  <span>{tab.label}</span>
-                </button>
-              ))}
-            </nav>
-
-            <div className="dashboard-mobile-menu-footer">
-              <button
-                type="button"
-                className="dashboard-lang-btn"
-                onClick={changeLanguage}
-              >
-                {lang === "en" ? "English / Kiswahili" : "Kiswahili / English"}
-              </button>
-
-              <button
-                type="button"
-                className="dashboard-logout-btn"
-                onClick={handleLogout}
-              >
-                {t("Logout", "Toka")}
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* MAIN LAYOUT */}
-      <div className="dashboard-layout">
-        {/* Desktop Sidebar */}
-        <aside className="dashboard-sidebar">
-          <p className="dashboard-sidebar-label">WORKSPACE</p>
-          <nav>
-            <DashboardNavigation
-              activeTab={activeTab}
-              onChange={setActiveTab}
-            />
-          </nav>
-
-          <div className="dashboard-sidebar-note">
-            <span className="dashboard-sidebar-note-icon">
-              <MessageCircle size={18} />
-            </span>
-            <strong>
-              {t("Orders, a little clearer.", "Oda, kwa uhakika zaidi.")}
-            </strong>
-            <span>
-              {t(
-                "Made for the way you already sell.",
-                "Imetengenezwa kwa jinsi unavyouza."
-              )}
-            </span>
-          </div>
-
-          <button
-            type="button"
-            className="dashboard-lang-btn mt-4"
-            onClick={changeLanguage}
-          >
-            {lang === "en" ? "English / Kiswahili" : "Kiswahili / English"}
-          </button>
-
-          <button
-            type="button"
-            className="dashboard-logout-btn mt-2"
-            onClick={handleLogout}
-          >
-            {t("Logout", "Toka")}
-          </button>
-
-          <Link className="dashboard-back-link" href="/">
-            {t("Back to OdaLink", "Rudi OdaLink")}
-          </Link>
-        </aside>
-
-        {/* Main Content */}
-        <div className="dashboard-main-column">
-          <main className="dashboard-content">
-            <div className="dashboard-page-heading">
-              <div>
-                <p className="dashboard-page-kicker">ODA LINK · SELLER</p>
-                <h1>{pageTitle}</h1>
-                <p>{pageDescription}</p>
-              </div>
-              {shop && (
-                <Link
-                  className="dashboard-primary-button dashboard-heading-action"
-                  href={`/store/${shop.slug}`}
-                >
-                  <Store size={16} /> {t("View store", "Angalia duka")}
-                </Link>
-              )}
-            </div>
-
-            {notice && (
-              <p className="dashboard-live-message" role="status">
-                {notice}
-              </p>
-            )}
-
-            {/* OVERVIEW */}
-            {activeTab === "overview" && (
-              <div className="dashboard-panel-stack">
-                <section className="dashboard-metrics">
-                  <MetricCard
-                    icon={<ShoppingBag size={18} />}
-                    label={t("Orders today", "Oda za leo")}
-                    value={String(todayOrders.length).padStart(2, "0")}
-                    note={formatTzs(sumTotals(todayOrders))}
-                  />
-                  <MetricCard
-                    icon={<ClipboardList size={18} />}
-                    label={t("Pending orders", "Zinazosubiri")}
-                    value={String(pendingOrders.length).padStart(2, "0")}
-                    note={t("Ready for follow-up", "Zinazohitaji hatua")}
-                  />
-                  <MetricCard
-                    icon={<Package size={18} />}
-                    label={t("Products listed", "Bidhaa")}
-                    value={String(products.length).padStart(2, "0")}
-                    note={`${t("Stock worth", "Thamani ya stoo")} ${formatTzs(
-                      stockWorth
-                    )}`}
-                  />
-                  <MetricCard
-                    icon={<CircleDollarSign size={18} />}
-                    label={t("Revenue", "Mapato")}
-                    value={formatTzs(revenue)}
-                    note={t(
-                      "Confirmed + Delivered",
-                      "Zilizothibitishwa + Zilizofikishwa"
-                    )}
-                  />
-                </section>
-
-                {shop && (
-                  <div className="mb-6">
-                    <StoreLink slug={shop.slug} shopName={shop.name} />
-                  </div>
-                )}
-
-                <section className="dashboard-panel">
-                  <div className="dashboard-panel-heading">
-                    <div>
-                      <p className="dashboard-section-kicker">ORDERS</p>
-                      <h2>{t("Recent orders", "Oda za hivi karibuni")}</h2>
-                    </div>
-                    <button
-                      className="dashboard-text-link"
-                      type="button"
-                      onClick={() => setActiveTab("orders")}
-                    >
-                      {t("View all", "Angalia zote")}{" "}
-                      <ArrowUpRight size={14} />
-                    </button>
-                  </div>
-                  <div className="dashboard-order-list">
-                    {orders.slice(0, 3).map((order) => (
-                      <OrderCard
-                        key={order.id || order.created_at}
-                        order={order}
-                      />
-                    ))}
-                    {orders.length === 0 && (
-                      <p className="dashboard-muted-copy">
-                        {t("No orders yet.", "Bado hakuna oda.")}
-                      </p>
-                    )}
-                  </div>
-                </section>
-              </div>
-            )}
-
-            {/* ORDERS TAB */}
-            {activeTab === "orders" && (
-              <section className="dashboard-panel">
-                <div className="dashboard-panel-heading">
-                  <div>
-                    <p className="dashboard-section-kicker">ORDER MANAGEMENT</p>
-                    <h2>{t("All orders", "Oda zote")}</h2>
-                  </div>
-                  <span className="dashboard-soft-badge">
-                    {orders.length} {t("orders", "oda")}
-                  </span>
-                </div>
-
-                <div className="dashboard-order-tools">
-                  <div className="dashboard-filter-row">
-                    {filterOptions.map((option) => (
-                      <button
-                        key={option}
-                        type="button"
-                        className={`dashboard-filter-button${
-                          filter === option ? " is-active" : ""
-                        }`}
-                        onClick={() => setFilter(option)}
-                      >
-                        {option}
-                      </button>
-                    ))}
-                  </div>
-                  <label className="dashboard-search">
-                    <Search size={16} />
-                    <input
-                      type="search"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder={t("Search orders", "Tafuta oda")}
-                    />
-                  </label>
-                </div>
-
-                <div className="dashboard-order-list">
-                  {orders
-                    .filter((o) => {
-                      const statusMatch =
-                        filter === "All" ||
-                        o.status.toLowerCase() === filter.toLowerCase();
-                      const q = search.toLowerCase();
-                      const searchMatch =
-                        !q ||
-                        `${o.customer_name} ${o.items_summary} ${o.id}`
-                          .toLowerCase()
-                          .includes(q);
-                      return statusMatch && searchMatch;
-                    })
-                    .map((order) => (
-                      <OrderCard
-                        key={order.id || order.created_at}
-                        order={order}
-                        onConfirm={
-                          order.status.toLowerCase() === "pending" && order.id
-                            ? () => confirmOrder(order.id!)
-                            : undefined
-                        }
-                      />
-                    ))}
-                </div>
-              </section>
-            )}
-
-            {/* PRODUCTS TAB */}
-            {activeTab === "products" && (
-              <section className="dashboard-panel">
-                <div className="dashboard-panel-heading">
-                  <div>
-                    <p className="dashboard-section-kicker">YOUR CATALOG</p>
-                    <h2>{t("Products", "Bidhaa")}</h2>
-                  </div>
-                </div>
-
-                <div className="dashboard-products-grid">
-                  {products.map((product) => (
-                    <article
-                      key={product.id}
-                      className="dashboard-product-card"
-                    >
-                      <div className="dashboard-product-image">
-                        <span>
-                          {String(product.name).charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="dashboard-product-copy">
-                        <h3>{product.name}</h3>
-                        <strong>{formatTzs(Number(product.price))}</strong>
-                      </div>
-                      <span
-                        className={`dashboard-stock-count${
-                          (product.stock ?? 0) <= 4 ? " is-low" : ""
-                        }`}
-                      >
-                        {product.stock ?? 0} {t("in stock", "stoo")}
-                      </span>
-                    </article>
-                  ))}
-                  {products.length === 0 && (
-                    <p className="dashboard-muted-copy">
-                      {t("No products yet.", "Bado hakuna bidhaa.")}
-                    </p>
-                  )}
-                </div>
-              </section>
-            )}
-
-            {/* STORE TAB */}
-            {activeTab === "store" && shop && (
-              <section className="dashboard-panel">
-                <div className="dashboard-panel-heading">
-                  <div>
-                    <p className="dashboard-section-kicker">
-                      PUBLIC STOREFRONT
-                    </p>
-                    <h2>{t("Your store link", "Link ya duka lako")}</h2>
-                  </div>
-                </div>
-                <StoreLink slug={shop.slug} shopName={shop.name} />
-              </section>
-            )}
-          </main>
+      {/* TABS */}
+      <div className="dashboard-tabs-wrapper">
+        <div className="dashboard-tabs">
+          {dashboardTabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              className={`dashboard-tab${
+                activeTab === tab.id ? " is-active" : ""
+              }`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {tab.icon}
+              <span>{tab.label}</span>
+            </button>
+          ))}
         </div>
       </div>
+
+      {/* CONTENT */}
+      <main className="dashboard-content">
+        <div className="dashboard-page-heading">
+          <div>
+            <p className="dashboard-page-kicker">ODA LINK · SELLER</p>
+            <h1>{pageTitle}</h1>
+            <p>{pageDescription}</p>
+          </div>
+
+          {shop && (
+            <Link
+              className="dashboard-primary-button"
+              href={`/store/${shop.slug}`}
+            >
+              <Store size={16} /> {t("View store", "Angalia duka")}
+            </Link>
+          )}
+        </div>
+
+        {notice && (
+          <p className="dashboard-live-message" role="status">
+            {notice}
+          </p>
+        )}
+
+        {/* OVERVIEW */}
+        {activeTab === "overview" && (
+          <div className="dashboard-panel-stack">
+            <section className="dashboard-metrics">
+              <MetricCard
+                icon={<ShoppingBag size={18} />}
+                label={t("Orders today", "Oda za leo")}
+                value={String(todayOrders.length).padStart(2, "0")}
+                note={formatTzs(sumTotals(todayOrders))}
+              />
+              <MetricCard
+                icon={<ClipboardList size={18} />}
+                label={t("Pending orders", "Zinazosubiri")}
+                value={String(pendingOrders.length).padStart(2, "0")}
+                note={t("Ready for follow-up", "Zinazohitaji hatua")}
+              />
+              <MetricCard
+                icon={<Package size={18} />}
+                label={t("Products listed", "Bidhaa")}
+                value={String(products.length).padStart(2, "0")}
+                note={`${t("Stock worth", "Thamani ya stoo")} ${formatTzs(
+                  stockWorth
+                )}`}
+              />
+              <MetricCard
+                icon={<CircleDollarSign size={18} />}
+                label={t("Revenue", "Mapato")}
+                value={formatTzs(revenue)}
+                note={t(
+                  "Confirmed + Delivered",
+                  "Zilizothibitishwa + Zilizofikishwa"
+                )}
+              />
+            </section>
+
+            {shop && (
+              <div className="mb-5">
+                <StoreLink slug={shop.slug} shopName={shop.name} />
+              </div>
+            )}
+
+            <section className="dashboard-panel">
+              <div className="dashboard-panel-heading">
+                <div>
+                  <p className="dashboard-section-kicker">ORDERS</p>
+                  <h2>{t("Recent orders", "Oda za hivi karibuni")}</h2>
+                </div>
+                <button
+                  className="dashboard-text-link"
+                  type="button"
+                  onClick={() => setActiveTab("orders")}
+                >
+                  {t("View all", "Angalia zote")} <ArrowUpRight size={14} />
+                </button>
+              </div>
+
+              <div className="dashboard-order-list">
+                {orders.slice(0, 3).map((order) => (
+                  <OrderCard
+                    key={order.id || order.created_at}
+                    order={order}
+                  />
+                ))}
+                {orders.length === 0 && (
+                  <p className="dashboard-muted-copy">
+                    {t("No orders yet.", "Bado hakuna oda.")}
+                  </p>
+                )}
+              </div>
+            </section>
+          </div>
+        )}
+
+        {/* ORDERS */}
+        {activeTab === "orders" && (
+          <section className="dashboard-panel">
+            <div className="dashboard-panel-heading">
+              <div>
+                <p className="dashboard-section-kicker">ORDER MANAGEMENT</p>
+                <h2>{t("All orders", "Oda zote")}</h2>
+              </div>
+              <span className="dashboard-soft-badge">
+                {orders.length} {t("orders", "oda")}
+              </span>
+            </div>
+
+            <div className="dashboard-order-tools">
+              <div className="dashboard-filter-row">
+                {filterOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={`dashboard-filter-button${
+                      filter === option ? " is-active" : ""
+                    }`}
+                    onClick={() => setFilter(option)}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+              <label className="dashboard-search">
+                <Search size={16} />
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={t("Search orders", "Tafuta oda")}
+                />
+              </label>
+            </div>
+
+            <div className="dashboard-order-list">
+              {orders
+                .filter((o) => {
+                  const statusMatch =
+                    filter === "All" ||
+                    o.status.toLowerCase() === filter.toLowerCase();
+                  const q = search.toLowerCase();
+                  const searchMatch =
+                    !q ||
+                    `${o.customer_name} ${o.items_summary} ${o.id}`
+                      .toLowerCase()
+                      .includes(q);
+                  return statusMatch && searchMatch;
+                })
+                .map((order) => (
+                  <OrderCard
+                    key={order.id || order.created_at}
+                    order={order}
+                    onConfirm={
+                      order.status.toLowerCase() === "pending" && order.id
+                        ? () => confirmOrder(order.id!)
+                        : undefined
+                    }
+                  />
+                ))}
+            </div>
+          </section>
+        )}
+
+        {/* PRODUCTS */}
+        {activeTab === "products" && (
+          <section className="dashboard-panel">
+            <div className="dashboard-panel-heading">
+              <div>
+                <p className="dashboard-section-kicker">YOUR CATALOG</p>
+                <h2>{t("Products", "Bidhaa")}</h2>
+              </div>
+            </div>
+
+            <div className="dashboard-products-grid">
+              {products.map((product) => (
+                <article key={product.id} className="dashboard-product-card">
+                  <div className="dashboard-product-image">
+                    <span>
+                      {String(product.name).charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="dashboard-product-copy">
+                    <h3>{product.name}</h3>
+                    <strong>{formatTzs(Number(product.price))}</strong>
+                  </div>
+                  <span
+                    className={`dashboard-stock-count${
+                      (product.stock ?? 0) <= 4 ? " is-low" : ""
+                    }`}
+                  >
+                    {product.stock ?? 0} {t("in stock", "stoo")}
+                  </span>
+                </article>
+              ))}
+              {products.length === 0 && (
+                <p className="dashboard-muted-copy">
+                  {t("No products yet.", "Bado hakuna bidhaa.")}
+                </p>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* STORE */}
+        {activeTab === "store" && shop && (
+          <section className="dashboard-panel">
+            <div className="dashboard-panel-heading">
+              <div>
+                <p className="dashboard-section-kicker">PUBLIC STOREFRONT</p>
+                <h2>{t("Your store link", "Link ya duka lako")}</h2>
+              </div>
+            </div>
+            <StoreLink slug={shop.slug} shopName={shop.name} />
+          </section>
+        )}
+      </main>
     </div>
   );
 }
