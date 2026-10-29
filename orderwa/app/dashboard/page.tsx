@@ -1,6 +1,5 @@
 "use client";
 
-import StoreLink from "../components/dashboard/StoreLink";
 import AddProduct from "../components/dashboard/AddProduct";
 import ShopSettings from "../components/dashboard/ShopSettings";
 import OrdersPanel, {
@@ -17,7 +16,6 @@ import {
   LayoutDashboard,
   Package,
   ShoppingBag,
-  Store,
   Settings as SettingsIcon,
   Share2,
   Copy,
@@ -43,12 +41,7 @@ type OrderRow = Order;
 
 type Lang = "en" | "sw";
 
-type DashboardTab =
-  | "overview"
-  | "orders"
-  | "products"
-  | "store"
-  | "settings";
+type DashboardTab = "overview" | "orders" | "products" | "settings";
 
 function sumTotals(list: OrderRow[]) {
   return list.reduce(
@@ -69,7 +62,6 @@ const dashboardTabs: {
   { id: "overview", label: "Overview", icon: <LayoutDashboard size={16} /> },
   { id: "orders", label: "Orders", icon: <ClipboardList size={16} /> },
   { id: "products", label: "Products", icon: <Package size={16} /> },
-  { id: "store", label: "Store", icon: <Store size={16} /> },
   { id: "settings", label: "Settings", icon: <SettingsIcon size={16} /> },
 ];
 
@@ -378,7 +370,6 @@ export default function DashboardPage() {
     overview: t(`Good morning, ${displayName}`, `Habari, ${displayName}`),
     orders: t("All orders", "Oda zote"),
     products: t("Products", "Bidhaa"),
-    store: t("Store", "Duka"),
     settings: t("Settings", "Mipangilio"),
   };
 
@@ -394,10 +385,6 @@ export default function DashboardPage() {
     products: t(
       "Manage products, photos and stock.",
       "Dhibiti bidhaa, picha na stoo."
-    ),
-    store: t(
-      "Share your storefront and review your shop details.",
-      "Shiriki link ya duka lako na angalia maelezo."
     ),
     settings: t(
       "Manage shop details and payment methods.",
@@ -671,19 +658,6 @@ export default function DashboardPage() {
                 }}
               />
             )}
-          </section>
-        )}
-
-        {activeTab === "store" && shop && (
-          <section className="dashboard-panel">
-            <div className="dashboard-panel-heading">
-              <div>
-                <p className="dashboard-section-kicker">PUBLIC STOREFRONT</p>
-                <h2>{t("Your store link", "Link ya duka lako")}</h2>
-              </div>
-            </div>
-
-            <StoreLink slug={shop.slug} shopName={shop.name} />
           </section>
         )}
 
