@@ -25,12 +25,12 @@ type PaymentMethod = {
 type Lang = "en" | "sw";
 
 const PAYMENT_OPTIONS = [
-  { value: "mpesa", label: "M-Pesa" },
-  { value: "airtel_money", label: "Airtel Money" },
-  { value: "tigopesa", label: "Tigo Pesa" },
-  { value: "halopesa", label: "HaloPesa" },
-  { value: "selcom", label: "Selcom" },
-  { value: "bank", label: "Bank / Benki" },
+  { value: "mpesa", label: "M-Pesa (Vodacom)", color: "#e60000", mark: "M" },
+  { value: "airtel_money", label: "Airtel Money", color: "#ed1c24", mark: "A" },
+  { value: "tigopesa", label: "Tigo Pesa", color: "#0b3a8f", mark: "T" },
+  { value: "halopesa", label: "HaloPesa", color: "#f58220", mark: "H" },
+  { value: "selcom", label: "Selcom", color: "#00a651", mark: "S" },
+  { value: "bank", label: "Bank transfer", color: "#1f2937", mark: "B" },
 ];
 
 const inputStyle = {
@@ -51,6 +51,198 @@ const buttonStyle = {
   fontWeight: 600 as const,
 };
 
+const styles = `
+.sp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.sp-head h3 { margin: 0; }
+.sp-round {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 22px;
+  line-height: 1;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.sp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 32px 16px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  background: #f8fafc;
+  color: #64748b;
+  text-align: center;
+}
+.sp-empty-icon {
+  width: 56px;
+  height: 38px;
+  border: 4px solid #cbd5e1;
+  border-radius: 8px;
+  position: relative;
+}
+.sp-empty-icon::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 8px;
+  height: 4px;
+  background: #cbd5e1;
+}
+.sp-primary {
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 12px;
+  background: #0f766e;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.sp-primary:disabled { background: #94c8c1; cursor: not-allowed; }
+
+.sp-logo {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.sp-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 14px;
+  background: #fff;
+}
+.sp-card-top { display: flex; align-items: center; gap: 12px; }
+.sp-card-top strong { display: block; }
+.sp-card-top small { color: #64748b; }
+.sp-badge {
+  margin-left: auto;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sp-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.55);
+}
+.sp-sheet {
+  width: 100%;
+  max-width: 480px;
+  max-height: 92vh;
+  max-height: 92dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  padding: 18px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  color: #0f172a;
+}
+@media (min-width: 640px) {
+  .sp-overlay { align-items: center; padding: 16px; }
+  .sp-sheet { border-radius: 18px; }
+}
+.sp-sheet-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.sp-sheet-head h4 { flex: 1; margin: 0; font-size: 18px; }
+.sp-icon-btn {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.sp-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #fff;
+  color: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.sp-option:active { background: #f8fafc; }
+.sp-option span.sp-name { flex: 1; }
+.sp-plus {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  background: #f8fafc;
+}
+
+.sp-field { margin-bottom: 14px; }
+.sp-field label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+.sp-field input[type="text"] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 16px;
+  outline: none;
+}
+.sp-field input:focus {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+.sp-check { display: flex; align-items: center; gap: 10px; margin: 6px 0 18px; }
+.sp-error { margin: 0 0 12px; color: #dc2626; font-size: 14px; }
+.sp-save-full { width: 100%; }
+`;
+
 export default function ShopSettings() {
   const router = useRouter();
 
@@ -60,6 +252,7 @@ export default function ShopSettings() {
 
   const [methods, setMethods] = useState<PaymentMethod[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [sheet, setSheet] = useState<"picker" | "form" | null>(null);
 
   const [method, setMethod] = useState("mpesa");
   const [accountName, setAccountName] = useState("");
@@ -101,6 +294,16 @@ export default function ShopSettings() {
       window.removeEventListener("storage", syncLanguage);
     };
   }, []);
+
+  // Stop the page behind the sheet from scrolling
+  useEffect(() => {
+    if (!sheet) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [sheet]);
 
   async function loadPaymentMethods(shopId: string) {
     const { data, error: methodsError } = await supabase
@@ -201,15 +404,43 @@ export default function ShopSettings() {
     name.trim() === shop.name &&
     phone.trim() === (shop.phone ?? "");
 
-  function resetPaymentForm() {
+  function optionFor(value: string) {
+    return (
+      PAYMENT_OPTIONS.find((option) => option.value === value) ?? {
+        value,
+        label: value,
+        color: "#64748b",
+        mark: value.charAt(0).toUpperCase(),
+      }
+    );
+  }
+
+  function clearPaymentForm() {
     setEditingId(null);
     setMethod("mpesa");
     setAccountName("");
     setAccountNumber("");
     setBankName("");
     setIsEnabled(true);
+  }
+
+  function closeSheet() {
+    clearPaymentForm();
+    setSheet(null);
+    setError("");
+  }
+
+  function openPicker() {
+    clearPaymentForm();
     setError("");
     setSaved(false);
+    setSheet("picker");
+  }
+
+  function chooseProvider(value: string) {
+    setMethod(value);
+    setError("");
+    setSheet("form");
   }
 
   function editPaymentMethod(item: PaymentMethod) {
@@ -221,8 +452,7 @@ export default function ShopSettings() {
     setIsEnabled(item.is_enabled);
     setError("");
     setSaved(false);
-
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setSheet("form");
   }
 
   async function handleShopSubmit(e: FormEvent) {
@@ -358,7 +588,7 @@ export default function ShopSettings() {
     }
 
     await loadPaymentMethods(shop.id);
-    resetPaymentForm();
+    closeSheet();
     setSaved(true);
   }
 
@@ -429,15 +659,6 @@ export default function ShopSettings() {
     }
 
     setMethods((current) => current.filter((m) => m.id !== item.id));
-
-    if (editingId === item.id) resetPaymentForm();
-  }
-
-  function methodLabel(value: string) {
-    return (
-      PAYMENT_OPTIONS.find((option) => option.value === value)?.label ??
-      value
-    );
   }
 
   if (loading) {
@@ -462,6 +683,8 @@ export default function ShopSettings() {
     );
   }
 
+  const current = optionFor(method);
+
   return (
     <div
       style={{
@@ -470,7 +693,9 @@ export default function ShopSettings() {
         boxSizing: "border-box",
       }}
     >
-      {error && (
+      <style>{styles}</style>
+
+      {error && !sheet && (
         <p className="form-error" role="alert">
           {error}
         </p>
@@ -514,8 +739,22 @@ export default function ShopSettings() {
           </p>
         </div>
 
-        
-
+        <div className="form-group">
+          <label>{t("Shop link name", "Jina la kiungo cha duka")}</label>
+          <input
+            style={inputStyle}
+            type="text"
+            value={`https://odalink.vercel.app/store/${shop.slug}`}
+            readOnly
+            disabled
+          />
+          <p style={{ fontSize: 13, color: "#6b7280", marginTop: 6 }}>
+            {t(
+              "This link name cannot be changed here.",
+              "Jina hili la kiungo haliwezi kubadilishwa hapa."
+            )}
+          </p>
+        </div>
 
         <button
           type="submit"
@@ -528,7 +767,7 @@ export default function ShopSettings() {
           }
           style={{ marginTop: 8 }}
         >
-          {saving
+          {saving && !sheet
             ? t("Saving...", "Inahifadhi...")
             : t("Save shop settings", "Hifadhi mipangilio ya duka")}
         </button>
@@ -536,151 +775,21 @@ export default function ShopSettings() {
 
       <hr style={{ margin: "28px 0", borderColor: "#e5e7eb" }} />
 
-      <h3 style={{ marginBottom: 12 }}>
-        {t("Payment methods", "Njia za malipo")}
-      </h3>
+      {/* ---------- Payment methods ---------- */}
+      <div className="sp-head">
+        <h3>{t("Payment methods", "Njia za malipo")}</h3>
 
-      <p style={{ color: "#6b7280", fontSize: 14, marginBottom: 20 }}>
-        {t(
-          "Add as many payment methods as your shop needs. Each method keeps its own account details.",
-          "Ongeza njia za malipo unazohitaji. Kila njia ina taarifa zake tofauti za akaunti."
-        )}
-      </p>
-
-      <form
-        onSubmit={handlePaymentSubmit}
-        style={{
-          border: "1px solid #e5e7eb",
-          borderRadius: 12,
-          padding: 14,
-          marginBottom: 24,
-        }}
-      >
-        <h4 style={{ marginTop: 0, marginBottom: 16 }}>
-          {editingId
-            ? t("Edit payment method", "Hariri njia ya malipo")
-            : t("Add payment method", "Ongeza njia ya malipo")}
-        </h4>
-
-        <div className="form-group">
-          <label>{t("Payment provider", "Mtoa huduma wa malipo")}</label>
-          <select
-            style={inputStyle}
-            value={method}
-            onChange={(e) => setMethod(e.target.value)}
-            required
-          >
-            {PAYMENT_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {method === "bank" && (
-          <div className="form-group">
-            <label>{t("Bank name", "Jina la benki")}</label>
-            <input
-              style={inputStyle}
-              type="text"
-              value={bankName}
-              onChange={(e) => setBankName(e.target.value)}
-              placeholder={t("Enter bank name", "Weka jina la benki")}
-              required
-            />
-          </div>
-        )}
-
-        <div className="form-group">
-          <label>
-            {t("Account / recipient name", "Jina la akaunti / mpokeaji")}
-          </label>
-          <input
-            style={inputStyle}
-            type="text"
-            value={accountName}
-            onChange={(e) => setAccountName(e.target.value)}
-            placeholder={t(
-              "Name registered to the account",
-              "Jina lililosajiliwa kwenye akaunti"
-            )}
-            maxLength={100}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label>
-            {method === "bank"
-              ? t("Account number", "Namba ya akaunti")
-              : method === "selcom"
-                ? t("Selcom number / Till", "Namba ya Selcom / Till")
-                : t("Lipa Namba / Phone number", "Lipa Namba / Namba ya simu")}
-          </label>
-          <input
-            style={inputStyle}
-            type="text"
-            value={accountNumber}
-            onChange={(e) => setAccountNumber(e.target.value)}
-            placeholder={t(
-              "Enter account or payment number",
-              "Weka namba ya akaunti au malipo"
-            )}
-            maxLength={50}
-            required
-          />
-        </div>
-
-        <label
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            margin: "16px 0",
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={isEnabled}
-            onChange={(e) => setIsEnabled(e.target.checked)}
-          />
-          <span>{t("Available to customers", "Ionekane kwa wateja")}</span>
-        </label>
-
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {methods.length > 0 && (
           <button
-            type="submit"
-            disabled={saving || !paymentFormValid}
-            style={{
-              ...buttonStyle,
-              background: "#111827",
-              color: "#fff",
-              opacity: saving || !paymentFormValid ? 0.6 : 1,
-            }}
+            type="button"
+            className="sp-round"
+            onClick={openPicker}
+            aria-label={t("Add payment method", "Ongeza njia ya malipo")}
           >
-            {saving
-              ? t("Saving...", "Inahifadhi...")
-              : editingId
-                ? t("Update method", "Sasisha njia")
-                : t("Add method", "Ongeza njia")}
+            +
           </button>
-
-          {editingId && (
-            <button
-              type="button"
-              onClick={resetPaymentForm}
-              style={{
-                ...buttonStyle,
-                background: "#e5e7eb",
-                color: "#111827",
-              }}
-            >
-              {t("Cancel", "Ghairi")}
-            </button>
-          )}
-        </div>
-      </form>
+        )}
+      </div>
 
       {saved && (
         <p style={{ color: "#16a34a", fontWeight: 600 }}>
@@ -691,115 +800,277 @@ export default function ShopSettings() {
         </p>
       )}
 
-      <h4 style={{ marginBottom: 12 }}>
-        {t("Your payment methods", "Njia zako za malipo")}
-      </h4>
-
       {methods.length === 0 ? (
-        <p style={{ color: "#6b7280", fontSize: 14 }}>
-          {t(
-            "No payment methods added yet.",
-            "Bado hujaongeza njia za malipo."
-          )}
-        </p>
+        <div className="sp-empty">
+          <div className="sp-empty-icon" />
+          <span>
+            {t(
+              "No payment methods available",
+              "Bado hujaongeza njia za malipo"
+            )}
+          </span>
+          <button type="button" className="sp-primary" onClick={openPicker}>
+            {t("Add payment method", "Ongeza njia ya malipo")}
+          </button>
+        </div>
       ) : (
         <div style={{ display: "grid", gap: 12 }}>
-          {methods.map((item) => (
-            <div
-              key={item.id}
-              style={{
-                border: "1px solid #e5e7eb",
-                borderRadius: 12,
-                padding: 14,
-                background: "#fff",
-              }}
-            >
-              <div style={{ minWidth: 0 }}>
-                <strong>{methodLabel(item.method)}</strong>
+          {methods.map((item) => {
+            const opt = optionFor(item.method);
 
-                <p style={{ margin: "8px 0 4px", overflowWrap: "anywhere" }}>
+            return (
+              <div key={item.id} className="sp-card">
+                <div className="sp-card-top">
+                  <span className="sp-logo" style={{ background: opt.color }}>
+                    {opt.mark}
+                  </span>
+
+                  <div style={{ minWidth: 0 }}>
+                    <strong>{opt.label}</strong>
+                    <small>
+                      {item.method === "bank" && item.bank_name
+                        ? `${item.bank_name} · `
+                        : ""}
+                      {item.account_number}
+                    </small>
+                  </div>
+
+                  <span
+                    className="sp-badge"
+                    style={{
+                      background: item.is_enabled ? "#dcfce7" : "#f3f4f6",
+                      color: item.is_enabled ? "#166534" : "#4b5563",
+                    }}
+                  >
+                    {item.is_enabled
+                      ? t("Enabled", "Imewashwa")
+                      : t("Disabled", "Imezimwa")}
+                  </span>
+                </div>
+
+                <p
+                  style={{
+                    margin: "10px 0 0",
+                    fontSize: 14,
+                    color: "#475569",
+                    overflowWrap: "anywhere",
+                  }}
+                >
                   {t("Account name", "Jina la akaunti")}: {item.account_name}
                 </p>
 
-                <p style={{ margin: "4px 0", overflowWrap: "anywhere" }}>
-                  {t("Number", "Namba")}: {item.account_number}
-                </p>
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 8,
+                    marginTop: 12,
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => editPaymentMethod(item)}
+                    style={{
+                      ...buttonStyle,
+                      background: "#e5e7eb",
+                      color: "#111827",
+                    }}
+                  >
+                    {t("Edit", "Hariri")}
+                  </button>
 
-                {item.method === "bank" && item.bank_name && (
-                  <p style={{ margin: "4px 0" }}>
-                    {t("Bank", "Benki")}: {item.bank_name}
-                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void togglePaymentMethod(item)}
+                    style={{
+                      ...buttonStyle,
+                      background: item.is_enabled ? "#fef3c7" : "#dcfce7",
+                      color: "#111827",
+                    }}
+                  >
+                    {item.is_enabled
+                      ? t("Disable", "Zima")
+                      : t("Enable", "Washa")}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => void deletePaymentMethod(item)}
+                    disabled={deletingId === item.id}
+                    style={{
+                      ...buttonStyle,
+                      background: "#fee2e2",
+                      color: "#991b1b",
+                      opacity: deletingId === item.id ? 0.6 : 1,
+                    }}
+                  >
+                    {deletingId === item.id
+                      ? t("Deleting...", "Inafuta...")
+                      : t("Delete", "Futa")}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ---------- Step 1: choose a provider ---------- */}
+      {sheet === "picker" && (
+        <div className="sp-overlay" onClick={closeSheet}>
+          <div
+            className="sp-sheet"
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sp-sheet-head">
+              <h4>{t("Add payment method", "Ongeza njia ya malipo")}</h4>
+              <button
+                type="button"
+                className="sp-icon-btn"
+                onClick={closeSheet}
+                aria-label={t("Close", "Funga")}
+              >
+                ✕
+              </button>
+            </div>
+
+            {PAYMENT_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className="sp-option"
+                onClick={() => chooseProvider(option.value)}
+              >
+                <span className="sp-logo" style={{ background: option.color }}>
+                  {option.mark}
+                </span>
+                <span className="sp-name">{option.label}</span>
+                <span className="sp-plus">+</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ---------- Step 2: fill in the details ---------- */}
+      {sheet === "form" && (
+        <div className="sp-overlay" onClick={closeSheet}>
+          <div
+            className="sp-sheet"
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <form onSubmit={handlePaymentSubmit}>
+              <div className="sp-sheet-head">
+                {!editingId && (
+                  <button
+                    type="button"
+                    className="sp-icon-btn"
+                    onClick={() => setSheet("picker")}
+                    aria-label={t("Back", "Rudi")}
+                  >
+                    ‹
+                  </button>
                 )}
 
-                <span
-                  style={{
-                    display: "inline-block",
-                    marginTop: 8,
-                    padding: "4px 8px",
-                    borderRadius: 6,
-                    fontSize: 12,
-                    background: item.is_enabled ? "#dcfce7" : "#f3f4f6",
-                    color: item.is_enabled ? "#166534" : "#4b5563",
-                  }}
-                >
-                  {item.is_enabled
-                    ? t("Enabled", "Imewashwa")
-                    : t("Disabled", "Imezimwa")}
+                <span className="sp-logo" style={{ background: current.color }}>
+                  {current.mark}
                 </span>
+
+                <h4>{current.label}</h4>
+
+                <button
+                  type="button"
+                  className="sp-icon-btn"
+                  onClick={closeSheet}
+                  aria-label={t("Close", "Funga")}
+                >
+                  ✕
+                </button>
               </div>
 
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 8,
-                  marginTop: 14,
-                }}
+              {method === "bank" && (
+                <div className="sp-field">
+                  <label>{t("Bank name", "Jina la benki")}</label>
+                  <input
+                    type="text"
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    placeholder={t("Enter bank name", "Weka jina la benki")}
+                    required
+                  />
+                </div>
+              )}
+
+              <div className="sp-field">
+                <label>
+                  {t("Account / recipient name", "Jina la akaunti / mpokeaji")}
+                </label>
+                <input
+                  type="text"
+                  value={accountName}
+                  onChange={(e) => setAccountName(e.target.value)}
+                  placeholder={t(
+                    "Name registered to the account",
+                    "Jina lililosajiliwa kwenye akaunti"
+                  )}
+                  maxLength={100}
+                  required
+                />
+              </div>
+
+              <div className="sp-field">
+                <label>
+                  {method === "bank"
+                    ? t("Account number", "Namba ya akaunti")
+                    : method === "selcom"
+                      ? t("Selcom number / Till", "Namba ya Selcom / Till")
+                      : t(
+                          "Lipa Namba / Phone number",
+                          "Lipa Namba / Namba ya simu"
+                        )}
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={accountNumber}
+                  onChange={(e) => setAccountNumber(e.target.value)}
+                  placeholder={t(
+                    "Enter account or payment number",
+                    "Weka namba ya akaunti au malipo"
+                  )}
+                  maxLength={50}
+                  required
+                />
+              </div>
+
+              <label className="sp-check">
+                <input
+                  type="checkbox"
+                  checked={isEnabled}
+                  onChange={(e) => setIsEnabled(e.target.checked)}
+                />
+                <span>{t("Available to customers", "Ionekane kwa wateja")}</span>
+              </label>
+
+              {error && <p className="sp-error">{error}</p>}
+
+              <button
+                type="submit"
+                className="sp-primary sp-save-full"
+                disabled={saving || !paymentFormValid}
               >
-                <button
-                  type="button"
-                  onClick={() => editPaymentMethod(item)}
-                  style={{
-                    ...buttonStyle,
-                    background: "#e5e7eb",
-                    color: "#111827",
-                  }}
-                >
-                  {t("Edit", "Hariri")}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => void togglePaymentMethod(item)}
-                  style={{
-                    ...buttonStyle,
-                    background: item.is_enabled ? "#fef3c7" : "#dcfce7",
-                    color: "#111827",
-                  }}
-                >
-                  {item.is_enabled
-                    ? t("Disable", "Zima")
-                    : t("Enable", "Washa")}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => void deletePaymentMethod(item)}
-                  disabled={deletingId === item.id}
-                  style={{
-                    ...buttonStyle,
-                    background: "#fee2e2",
-                    color: "#991b1b",
-                    opacity: deletingId === item.id ? 0.6 : 1,
-                  }}
-                >
-                  {deletingId === item.id
-                    ? t("Deleting...", "Inafuta...")
-                    : t("Delete", "Futa")}
-                </button>
-              </div>
-            </div>
-          ))}
+                {saving
+                  ? t("Saving...", "Inahifadhi...")
+                  : editingId
+                    ? t("Update method", "Sasisha njia")
+                    : t("Save", "Hifadhi")}
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </div>
