@@ -229,7 +229,9 @@ export default function DashboardPage() {
 
         const { data: ordersData } = await supabase
           .from("orders")
-          .select("id, total, status, created_at, customer_name, customer_phone, items_summary")
+          .select(
+            "id, total, status, created_at, customer_name, customer_phone, items_summary"
+          )
           .eq("shop_id", shopData.id)
           .order("created_at", { ascending: false });
 
@@ -251,10 +253,14 @@ export default function DashboardPage() {
   );
 
   const todayOrders = orders.filter(
-    (o) => new Date(o.created_at) >= startOfToday && o.status.toLowerCase() !== "cancelled"
+    (o) =>
+      new Date(o.created_at) >= startOfToday &&
+      o.status.toLowerCase() !== "cancelled"
   );
 
-  const pendingOrders = orders.filter((o) => o.status.toLowerCase() === "pending");
+  const pendingOrders = orders.filter(
+    (o) => o.status.toLowerCase() === "pending"
+  );
 
   const revenue = sumTotals(
     orders.filter(
@@ -291,7 +297,9 @@ export default function DashboardPage() {
     const next = lang === "en" ? "sw" : "en";
     setLang(next);
     localStorage.setItem("odLinkLanguage", next);
-    window.dispatchEvent(new CustomEvent("odLinkLanguageChange", { detail: next }));
+    window.dispatchEvent(
+      new CustomEvent("odLinkLanguageChange", { detail: next })
+    );
   }
 
   if (loading) {
@@ -316,8 +324,14 @@ export default function DashboardPage() {
       "Here is what is happening at your shop today.",
       "Hapa ndipo unavyoona kinachoendelea dukani leo."
     ),
-    orders: t("Review orders and keep customers updated.", "Angalia oda na sasisha wateja."),
-    products: t("Manage the products and stock in your store.", "Dhibiti bidhaa na stoo yako."),
+    orders: t(
+      "Review orders and keep customers updated.",
+      "Angalia oda na sasisha wateja."
+    ),
+    products: t(
+      "Manage the products and stock in your store.",
+      "Dhibiti bidhaa na stoo yako."
+    ),
     store: t(
       "Share your storefront and review your shop details.",
       "Shiriki link ya duka lako na angalia maelezo."
@@ -326,11 +340,10 @@ export default function DashboardPage() {
 
   return (
     <div className="oda-dashboard">
-      {/* ========== TOP BAR ========== */}
+      {/* TOP BAR */}
       <header className="dashboard-topbar">
         <div className="dashboard-topbar-inner">
           <div className="dashboard-topbar-brand">
-            {/* Hamburger */}
             <button
               type="button"
               className="dashboard-menu-btn"
@@ -347,14 +360,17 @@ export default function DashboardPage() {
           </div>
 
           {shop && (
-            <Link className="dashboard-topbar-store" href={`/store/${shop.slug}`}>
+            <Link
+              className="dashboard-topbar-store"
+              href={`/store/${shop.slug}`}
+            >
               View storefront <ArrowUpRight size={16} />
             </Link>
           )}
         </div>
       </header>
 
-      {/* ========== MOBILE MENU ========== */}
+      {/* MOBILE MENU */}
       {mobileMenuOpen && (
         <>
           <div
@@ -387,11 +403,19 @@ export default function DashboardPage() {
             </nav>
 
             <div className="dashboard-mobile-menu-footer">
-              <button type="button" className="dashboard-lang-btn" onClick={changeLanguage}>
+              <button
+                type="button"
+                className="dashboard-lang-btn"
+                onClick={changeLanguage}
+              >
                 {lang === "en" ? "English / Kiswahili" : "Kiswahili / English"}
               </button>
 
-              <button type="button" className="dashboard-logout-btn" onClick={handleLogout}>
+              <button
+                type="button"
+                className="dashboard-logout-btn"
+                onClick={handleLogout}
+              >
                 {t("Logout", "Toka")}
               </button>
             </div>
@@ -399,28 +423,46 @@ export default function DashboardPage() {
         </>
       )}
 
-      {/* ========== MAIN LAYOUT ========== */}
+      {/* MAIN LAYOUT */}
       <div className="dashboard-layout">
         {/* Desktop Sidebar */}
         <aside className="dashboard-sidebar">
           <p className="dashboard-sidebar-label">WORKSPACE</p>
           <nav>
-            <DashboardNavigation activeTab={activeTab} onChange={setActiveTab} />
+            <DashboardNavigation
+              activeTab={activeTab}
+              onChange={setActiveTab}
+            />
           </nav>
 
           <div className="dashboard-sidebar-note">
             <span className="dashboard-sidebar-note-icon">
               <MessageCircle size={18} />
             </span>
-            <strong>{t("Orders, a little clearer.", "Oda, kwa uhakika zaidi.")}</strong>
-            <span>{t("Made for the way you already sell.", "Imetengenezwa kwa jinsi unavyouza.")}</span>
+            <strong>
+              {t("Orders, a little clearer.", "Oda, kwa uhakika zaidi.")}
+            </strong>
+            <span>
+              {t(
+                "Made for the way you already sell.",
+                "Imetengenezwa kwa jinsi unavyouza."
+              )}
+            </span>
           </div>
 
-          <button type="button" className="dashboard-lang-btn mt-4" onClick={changeLanguage}>
+          <button
+            type="button"
+            className="dashboard-lang-btn mt-4"
+            onClick={changeLanguage}
+          >
             {lang === "en" ? "English / Kiswahili" : "Kiswahili / English"}
           </button>
 
-          <button type="button" className="dashboard-logout-btn mt-2" onClick={handleLogout}>
+          <button
+            type="button"
+            className="dashboard-logout-btn mt-2"
+            onClick={handleLogout}
+          >
             {t("Logout", "Toka")}
           </button>
 
@@ -474,13 +516,18 @@ export default function DashboardPage() {
                     icon={<Package size={18} />}
                     label={t("Products listed", "Bidhaa")}
                     value={String(products.length).padStart(2, "0")}
-                    note={`${t("Stock worth", "Thamani ya stoo")} ${formatTzs(stockWorth)}`}
+                    note={`${t("Stock worth", "Thamani ya stoo")} ${formatTzs(
+                      stockWorth
+                    )}`}
                   />
                   <MetricCard
                     icon={<CircleDollarSign size={18} />}
                     label={t("Revenue", "Mapato")}
                     value={formatTzs(revenue)}
-                    note={t("Confirmed + Delivered", "Zilizothibitishwa + Zilizofikishwa")}
+                    note={t(
+                      "Confirmed + Delivered",
+                      "Zilizothibitishwa + Zilizofikishwa"
+                    )}
                   />
                 </section>
 
@@ -501,12 +548,16 @@ export default function DashboardPage() {
                       type="button"
                       onClick={() => setActiveTab("orders")}
                     >
-                      {t("View all", "Angalia zote")} <ArrowUpRight size={14} />
+                      {t("View all", "Angalia zote")}{" "}
+                      <ArrowUpRight size={14} />
                     </button>
                   </div>
                   <div className="dashboard-order-list">
                     {orders.slice(0, 3).map((order) => (
-                      <OrderCard key={order.id || order.created_at} order={order} />
+                      <OrderCard
+                        key={order.id || order.created_at}
+                        order={order}
+                      />
                     ))}
                     {orders.length === 0 && (
                       <p className="dashboard-muted-copy">
@@ -537,7 +588,9 @@ export default function DashboardPage() {
                       <button
                         key={option}
                         type="button"
-                        className={`dashboard-filter-button${filter === option ? " is-active" : ""}`}
+                        className={`dashboard-filter-button${
+                          filter === option ? " is-active" : ""
+                        }`}
                         onClick={() => setFilter(option)}
                       >
                         {option}
@@ -559,7 +612,8 @@ export default function DashboardPage() {
                   {orders
                     .filter((o) => {
                       const statusMatch =
-                        filter === "All" || o.status.toLowerCase() === filter.toLowerCase();
+                        filter === "All" ||
+                        o.status.toLowerCase() === filter.toLowerCase();
                       const q = search.toLowerCase();
                       const searchMatch =
                         !q ||
@@ -595,9 +649,14 @@ export default function DashboardPage() {
 
                 <div className="dashboard-products-grid">
                   {products.map((product) => (
-                    <article key={product.id} className="dashboard-product-card">
+                    <article
+                      key={product.id}
+                      className="dashboard-product-card"
+                    >
                       <div className="dashboard-product-image">
-                        <span>{String(product.name).charAt(0).toUpperCase()}</span>
+                        <span>
+                          {String(product.name).charAt(0).toUpperCase()}
+                        </span>
                       </div>
                       <div className="dashboard-product-copy">
                         <h3>{product.name}</h3>
@@ -626,4 +685,18 @@ export default function DashboardPage() {
               <section className="dashboard-panel">
                 <div className="dashboard-panel-heading">
                   <div>
-                    <p className="dashboard-section-kicker">PUBLIC STOREFRONT</p>
+                    <p className="dashboard-section-kicker">
+                      PUBLIC STOREFRONT
+                    </p>
+                    <h2>{t("Your store link", "Link ya duka lako")}</h2>
+                  </div>
+                </div>
+                <StoreLink slug={shop.slug} shopName={shop.name} />
+              </section>
+            )}
+          </main>
+        </div>
+      </div>
+    </div>
+  );
+}
