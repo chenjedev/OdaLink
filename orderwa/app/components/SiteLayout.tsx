@@ -99,9 +99,6 @@ export function SiteFooter({ compact = false }: { compact?: boolean }) {
           </p>
 
           <nav className="mt-4 flex flex-wrap gap-x-6 gap-y-1">
-            <a href="/store/demo" className={linkClass}>
-              Demo store
-            </a>
 
             <a href="/login" className={linkClass}>
               Log in
@@ -128,7 +125,7 @@ export function SiteFooter({ compact = false }: { compact?: boolean }) {
         <div className="border-t border-slate-200 mb-4"></div>
 
         {/* Bottom */}
-        <div className="flex flex-col gap-1 text-slate-400 text-sm">
+        <div className="flex flex-col gap-1 items-center text-slate-400 text-sm">
           <span>© {year} OdaLink</span>
           <span>Made for small businesses that sell through conversation.</span>
         </div>
