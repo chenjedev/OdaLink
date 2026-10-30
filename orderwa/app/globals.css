@@ -618,3 +618,64 @@ body {
   color: #0f766e;
   font-weight: 800;
 }
+/* =========================
+   CHECKOUT FORM (inside cart)
+   ========================= */
+
+.cart-footer .checkout-box,
+.cart-drawer .checkout-box {
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.cart-drawer .checkout-box input[type="text"],
+.cart-drawer .checkout-box input[type="tel"],
+.cart-drawer .checkout-box input[type="number"] {
+  width: 100%;
+  padding: 13px 14px;
+  margin-bottom: 12px;
+  font-size: 15px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cart-drawer .checkout-box input:focus {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+}
+
+.cart-drawer .checkout-box input::placeholder {
+  color: #94a3b8;
+}
+
+/* Proceed button */
+.cart-drawer .checkout-box button[type="submit"],
+.cart-drawer .checkout-box .checkout-btn,
+.cart-drawer .checkout-box button {
+  width: 100%;
+  padding: 14px 16px;
+  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: #0d9488;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.cart-drawer .checkout-box button:hover:not(:disabled) {
+  background: #0f766e;
+}
+
+.cart-drawer .checkout-box button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
