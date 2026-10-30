@@ -53,10 +53,10 @@ export function SiteHeader({ compact = false }: { compact?: boolean }) {
         <BrandLockup />
 
         {!compact && (
-          <a
-            href="/signup"
-            className="inline-flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium px-5 py-2.5 rounded-full transition-colors"
-          >
+         <a
+  href="/signup"
+  className="inline-flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium px-5 py-2.5 rounded-full transition-colors"
+>
             Start free
             <ArrowUpRight size={16} />
           </a>
