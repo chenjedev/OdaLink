@@ -5,12 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../../lib/supabase";
 
 const PAYMENT_OPTIONS = [
-  { value: "mpesa", label: "M-Pesa", ussd: "*150*00#" },
-  { value: "airtel_money", label: "Airtel Money", ussd: "*150*60#" },
-  { value: "tigopesa", label: "Tigo Pesa", ussd: "*150*01#" },
-  { value: "halopesa", label: "HaloPesa", ussd: "*150*88#" },
-  { value: "selcom", label: "Selcom", ussd: "" },
-  { value: "bank", label: "Bank / Benki", ussd: "" },
+  { value: "mpesa", label: "M-Pesa", ussd: "*150*00#", color: "#e60000", mark: "M" },
+  { value: "airtel_money", label: "Airtel Money", ussd: "*150*60#", color: "#ed1c24", mark: "A" },
+  { value: "tigopesa", label: "Tigo Pesa", ussd: "*150*01#", color: "#0b3a8f", mark: "T" },
+  { value: "halopesa", label: "HaloPesa", ussd: "*150*88#", color: "#f58220", mark: "H" },
+  { value: "selcom", label: "Selcom", ussd: "", color: "#00a651", mark: "S" },
+  { value: "bank", label: "Bank / Benki", ussd: "", color: "#1f2937", mark: "B" },
 ];
 
 function toWhatsAppNumber(phone) {
@@ -21,20 +21,66 @@ function toWhatsAppNumber(phone) {
   return digits;
 }
 
-function DetailRow({ label, value, big, copied, onCopy, copyLabel }) {
+/* ---------- Small inline icons ---------- */
+
+function BackIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M19 12H5" />
+      <path d="M12 19l-7-7 7-7" />
+    </svg>
+  );
+}
+
+function CopyIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="9" y="9" width="12" height="12" rx="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0f766e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  );
+}
+
+function PhoneIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8.1 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z" />
+    </svg>
+  );
+}
+
+function MessageIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+
+function DetailRow({ label, value, copied, onCopy, copyLabel }) {
   return (
     <div style={styles.row}>
-      <div style={{ minWidth: 0 }}>
-        <span style={styles.rowLabel}>{label}</span>
-        <strong style={big ? styles.rowValueBig : styles.rowValue}>
-          {value || "—"}
-        </strong>
-      </div>
-
-      {onCopy && (
-        <button type="button" onClick={onCopy} style={styles.copyButton}>
-          {copied ? "✓" : copyLabel}
+      <span style={styles.rowLabel}>{label}</span>
+      <span style={styles.rowValue}>{value || "—"}</span>
+      {onCopy ? (
+        <button
+          type="button"
+          onClick={onCopy}
+          aria-label={copyLabel}
+          style={styles.iconButton}
+        >
+          {copied ? <CheckIcon /> : <CopyIcon />}
         </button>
+      ) : (
+        <span style={styles.iconSpacer} />
       )}
     </div>
   );
@@ -50,6 +96,7 @@ export default function InstructionsPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [copiedKey, setCopiedKey] = useState("");
+  const [showSms, setShowSms] = useState(false);
   const [confirmation, setConfirmation] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -128,9 +175,13 @@ export default function InstructionsPage() {
     (item) => item.value === payment?.method
   );
   const paymentLabel = paymentInfo?.label || payment?.method || "Payment";
+  const brandColor = paymentInfo?.color || "#475569";
+  const brandMark =
+    paymentInfo?.mark || (paymentLabel.charAt(0) || "P").toUpperCase();
   const ussd = paymentInfo?.ussd || "";
   const total = Number(checkout?.cartTotal || 0);
   const isBank = payment?.method === "bank";
+  const sellerNumber = toWhatsAppNumber(checkout?.shopPhone);
 
   async function copyText(value, key) {
     if (!value) return;
@@ -150,22 +201,10 @@ export default function InstructionsPage() {
     }
   }
 
-  async function handleSendConfirmation() {
+  async function handleIHavePaid() {
     if (sending || success || !checkout || !payment) return;
 
     setError("");
-
-    if (confirmation.trim().length < 5) {
-      setError(
-        t(
-          "Paste the payment confirmation message first.",
-          "Bandika ujumbe wa uthibitisho wa malipo kwanza."
-        )
-      );
-      return;
-    }
-
-    const sellerNumber = toWhatsAppNumber(checkout.shopPhone);
 
     if (!sellerNumber) {
       setError(
@@ -190,7 +229,7 @@ export default function InstructionsPage() {
         quantity: Number(item.quantity),
       }));
 
-      // Saved as pending: the customer's SMS is not proof of payment
+      // Saved as pending: "I have paid" is not proof of payment
       // until the seller checks it.
       const { data: order, error: insertError } = await supabase
         .from("orders")
@@ -214,6 +253,8 @@ export default function InstructionsPage() {
           ).toLocaleString()} TZS`
       );
 
+      const sms = confirmation.trim();
+
       const message = [
         `Habari ${checkout.shopName || ""}, nimelipa kupitia ${paymentLabel}.`,
         "",
@@ -229,9 +270,9 @@ export default function InstructionsPage() {
         `Jina la akaunti: ${payment.account_name || "-"}`,
         `Namba ya malipo: ${payment.account_number || "-"}`,
         ...(payment.bank_name ? [`Benki: ${payment.bank_name}`] : []),
-        "",
-        "UJUMBE WA UTHIBITISHO WA MALIPO:",
-        confirmation.trim(),
+        ...(sms
+          ? ["", "UJUMBE WA UTHIBITISHO WA MALIPO:", sms]
+          : []),
         "",
         "Tafadhali hakiki malipo yangu na uthibitishe oda. Oda yangu inasubiri uthibitisho.",
       ].join("\n");
@@ -282,7 +323,7 @@ export default function InstructionsPage() {
       <main style={styles.page}>
         <div style={styles.card}>
           <div style={styles.successIcon}>✓</div>
-          <h1 style={styles.heading}>
+          <h1 style={styles.successHeading}>
             {t("Order received!", "Oda yako imepokelewa!")}
           </h1>
           <p style={styles.bodyText}>
@@ -337,21 +378,77 @@ export default function InstructionsPage() {
   return (
     <main style={styles.page}>
       <div style={styles.card}>
+        {/* Back + provider */}
         <button
           type="button"
           onClick={() => router.back()}
           style={styles.back}
         >
-          ← {paymentLabel}
+          <BackIcon />
+          <span>{paymentLabel}</span>
         </button>
 
-        {/* Where to pay */}
-        <div style={styles.detailsBox}>
+        {/* Amount + provider logo */}
+        <div style={styles.hero}>
+          <div style={{ minWidth: 0 }}>
+            <h1 style={styles.amount}>TSh {total.toLocaleString()}</h1>
+            <p style={styles.subtitle}>
+              {t(
+                "Please follow instructions to pay",
+                "Tafadhali fuata maelekezo ili ulipe"
+              )}
+            </p>
+          </div>
+
+          <span style={{ ...styles.logo, background: brandColor }}>
+            {brandMark}
+          </span>
+        </div>
+
+        {/* One short paragraph */}
+        {ussd ? (
+          <p style={styles.instructions}>
+            {t("Dial", "Piga")}{" "}
+            <a
+              href={`tel:${ussd.replace(/#/g, "%23")}`}
+              style={styles.ussdLink}
+            >
+              {ussd}
+            </a>
+            ,{" "}
+            {t(
+              "choose 'Send money' or 'Merchant Payment', enter the number and the amount, then confirm with your PIN.",
+              "chagua 'Tuma pesa' au 'Malipo ya Biashara', weka namba na kiasi, kisha thibitisha kwa PIN."
+            )}
+          </p>
+        ) : (
+          <p style={styles.instructions}>
+            {t(
+              "Send the amount below to the details shown, then tap “I have paid”.",
+              "Tuma kiasi kilichoonyeshwa kwenye taarifa zilizo hapa chini, kisha bonyeza “Nimelipa”."
+            )}
+          </p>
+        )}
+
+        {ussd && (
+          <a
+            href={`tel:${ussd.replace(/#/g, "%23")}`}
+            style={styles.payButton}
+          >
+            <PhoneIcon />
+            {t("Pay", "Lipa")}
+          </a>
+        )}
+
+        <div style={styles.divider} />
+
+        {/* Details (Amount instead of Reference) */}
+        <div>
           <DetailRow
             label={
               isBank
                 ? t("Account number", "Namba ya akaunti")
-                : t("Pay to number", "Namba ya kulipa")
+                : t("Phone number", "Namba ya simu")
             }
             value={payment.account_number}
             copied={copiedKey === "number"}
@@ -364,73 +461,34 @@ export default function InstructionsPage() {
           )}
 
           <DetailRow
-            label={t("Name", "Jina")}
-            value={payment.account_name}
-          />
-
-          <DetailRow
-            big
             label={t("Amount", "Kiasi")}
             value={`TSh ${total.toLocaleString()}`}
             copied={copiedKey === "amount"}
             copyLabel={t("Copy", "Nakili")}
             onCopy={() => copyText(String(total), "amount")}
           />
+
+          <DetailRow
+            label={t("Payee name", "Jina la mpokeaji")}
+            value={payment.account_name}
+            copied={copiedKey === "name"}
+            copyLabel={t("Copy", "Nakili")}
+            onCopy={() => copyText(payment.account_name, "name")}
+          />
         </div>
 
-        {/* How to pay */}
-        {ussd ? (
-          <>
-            <a
-              href={`tel:${ussd.replace(/#/g, "%23")}`}
-              style={styles.dialButton}
-            >
-              {t("Dial", "Piga")} {ussd}
-            </a>
-
-            <ol style={styles.steps}>
-              <li>
-                {t("Choose", "Chagua")}{" "}
-                <strong>{t("Send Money", "Tuma Pesa")}</strong>{" "}
-                {t("or", "au")}{" "}
-                <strong>{t("Merchant Payment", "Malipo ya Biashara")}</strong>.
-              </li>
-              <li>
-                {t(
-                  "Enter the number and amount above, then confirm with your PIN.",
-                  "Weka namba na kiasi kilicho juu, kisha thibitisha kwa PIN."
-                )}
-              </li>
-            </ol>
-          </>
-        ) : (
-          <p style={styles.stepsText}>
-            {t(
-              "Send the amount to the details above.",
-              "Tuma kiasi kwenye taarifa zilizo juu."
-            )}
-          </p>
+        {sellerNumber && (
+          <a
+            href={`https://wa.me/${sellerNumber}`}
+            target="_blank"
+            rel="noreferrer"
+            style={styles.help}
+          >
+            {t("Get help?", "Unahitaji msaada?")}
+          </a>
         )}
 
-        {/* After paying */}
-        <label style={styles.label} htmlFor="confirmation">
-          {t(
-            "After paying, paste the confirmation SMS:",
-            "Ukishalipa, bandika SMS ya uthibitisho:"
-          )}
-        </label>
-        <textarea
-          id="confirmation"
-          value={confirmation}
-          onChange={(event) => setConfirmation(event.target.value)}
-          placeholder={t(
-            "Payment confirmation message",
-            "Ujumbe wa uthibitisho wa malipo"
-          )}
-          rows={3}
-          style={styles.textarea}
-        />
-
+        {/* Actions: in the page, never hidden behind a fixed bar */}
         {error && (
           <p role="alert" style={styles.error}>
             {error}
@@ -439,7 +497,7 @@ export default function InstructionsPage() {
 
         <button
           type="button"
-          onClick={handleSendConfirmation}
+          onClick={handleIHavePaid}
           disabled={sending}
           style={{
             ...styles.primaryButton,
@@ -450,6 +508,28 @@ export default function InstructionsPage() {
             ? t("Saving order...", "Inahifadhi oda...")
             : t("I have paid", "Nimelipa")}
         </button>
+
+        {!showSms ? (
+          <button
+            type="button"
+            onClick={() => setShowSms(true)}
+            style={styles.outlineButton}
+          >
+            <MessageIcon />
+            {t("Add payment SMS (optional)", "Ongeza SMS ya malipo (si lazima)")}
+          </button>
+        ) : (
+          <textarea
+            value={confirmation}
+            onChange={(event) => setConfirmation(event.target.value)}
+            placeholder={t(
+              "Paste the payment confirmation SMS here",
+              "Bandika SMS ya uthibitisho wa malipo hapa"
+            )}
+            rows={3}
+            style={styles.textarea}
+          />
+        )}
 
         <p style={styles.note}>
           {t(
@@ -478,158 +558,213 @@ const styles = {
     maxWidth: 480,
     minWidth: 0,
     margin: "0 auto",
-    padding: 18,
+    padding: 22,
     background: "#ffffff",
     border: "1px solid #e5e7eb",
-    borderRadius: 16,
+    borderRadius: 28,
     boxSizing: "border-box",
     textAlign: "left",
   },
   back: {
-    display: "inline-block",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 14,
     padding: "4px 0",
-    marginBottom: 14,
+    marginBottom: 18,
     color: "#0f172a",
     background: "transparent",
     border: 0,
     fontSize: 18,
-    fontWeight: 700,
+    fontWeight: 500,
     cursor: "pointer",
   },
-  detailsBox: {
-    border: "1px solid #e5e7eb",
-    borderRadius: 14,
-    padding: "4px 14px",
-  },
-  row: {
+  hero: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 12,
-    padding: "12px 0",
-    borderBottom: "1px solid #f1f5f9",
   },
-  rowLabel: {
-    display: "block",
-    marginBottom: 2,
-    color: "#6b7280",
-    fontSize: 13,
+  amount: {
+    margin: 0,
+    fontSize: 36,
+    lineHeight: 1.15,
+    fontWeight: 800,
+    color: "#0f172a",
+    overflowWrap: "anywhere",
   },
-  rowValue: {
-    display: "block",
+  subtitle: {
+    margin: "10px 0 0",
     fontSize: 17,
-    overflowWrap: "anywhere",
+    lineHeight: 1.4,
+    color: "#334155",
   },
-  rowValueBig: {
-    display: "block",
-    fontSize: 24,
-    overflowWrap: "anywhere",
-  },
-  copyButton: {
+  logo: {
     flex: "none",
-    minWidth: 72,
-    padding: "10px 14px",
-    color: "#0f766e",
-    background: "#ffffff",
-    border: "1px solid #0f766e",
-    borderRadius: 10,
-    fontSize: 15,
-    fontWeight: 700,
-    cursor: "pointer",
-  },
-  dialButton: {
-    display: "block",
-    width: "100%",
-    marginTop: 14,
-    padding: 14,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 68,
+    height: 68,
+    borderRadius: "50%",
     color: "#ffffff",
-    background: "#0f766e",
-    borderRadius: 12,
+    fontSize: 30,
+    fontWeight: 800,
+  },
+  instructions: {
+    margin: "26px 0 18px",
+    fontSize: 17,
+    lineHeight: 1.6,
+    color: "#64748b",
+  },
+  ussdLink: {
+    color: "#475569",
+    textDecoration: "underline",
+  },
+  payButton: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    width: "100%",
+    padding: 16,
+    color: "#0f172a",
+    background: "#ffffff",
+    border: "1.5px solid #e2e8f0",
+    borderRadius: 999,
     boxSizing: "border-box",
-    fontSize: 16,
-    fontWeight: 700,
-    textAlign: "center",
+    fontSize: 18,
+    fontWeight: 600,
     textDecoration: "none",
   },
-  steps: {
-    margin: "14px 0 0",
-    paddingLeft: 22,
-    fontSize: 15,
-    lineHeight: 1.7,
-    color: "#374151",
+  divider: {
+    height: 1,
+    margin: "22px 0 6px",
+    background: "#e2e8f0",
   },
-  stepsText: {
-    margin: "14px 0 0",
-    fontSize: 15,
-    lineHeight: 1.7,
-    color: "#374151",
+  row: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    padding: "16px 0",
   },
-  label: {
+  rowLabel: {
+    flex: "none",
+    color: "#64748b",
+    fontSize: 17,
+  },
+  rowValue: {
+    flex: 1,
+    minWidth: 0,
+    textAlign: "right",
+    color: "#0f172a",
+    fontSize: 17,
+    fontWeight: 500,
+    overflowWrap: "anywhere",
+  },
+  iconButton: {
+    flex: "none",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 36,
+    height: 36,
+    padding: 0,
+    color: "#475569",
+    background: "transparent",
+    border: 0,
+    cursor: "pointer",
+  },
+  iconSpacer: {
+    flex: "none",
+    width: 36,
+    height: 36,
+  },
+  help: {
     display: "block",
-    margin: "20px 0 8px",
-    fontSize: 15,
-    fontWeight: 700,
-  },
-  textarea: {
-    display: "block",
-    width: "100%",
-    minHeight: 84,
-    padding: 12,
-    border: "1px solid #d1d5db",
-    borderRadius: 12,
-    boxSizing: "border-box",
-    background: "#ffffff",
-    color: "#111827",
-    fontSize: 15,
-    lineHeight: 1.5,
-    resize: "vertical",
+    margin: "18px 0 22px",
+    color: "#64748b",
+    fontSize: 16,
+    textAlign: "center",
+    textDecoration: "underline",
   },
   primaryButton: {
     display: "block",
     width: "100%",
     marginTop: 14,
-    padding: 15,
+    padding: 16,
     color: "#ffffff",
     background: "#0f766e",
     border: 0,
-    borderRadius: 12,
+    borderRadius: 16,
     boxSizing: "border-box",
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: 700,
     textAlign: "center",
     textDecoration: "none",
+    cursor: "pointer",
+  },
+  outlineButton: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    width: "100%",
+    marginTop: 12,
+    padding: 15,
+    color: "#0f172a",
+    background: "#ffffff",
+    border: "1.5px solid #e2e8f0",
+    borderRadius: 16,
+    boxSizing: "border-box",
+    fontSize: 16,
+    fontWeight: 600,
     cursor: "pointer",
   },
   secondaryButton: {
     display: "block",
     width: "100%",
     marginTop: 10,
-    padding: 13,
+    padding: 14,
     color: "#111827",
     background: "#ffffff",
-    border: "1px solid #d1d5db",
-    borderRadius: 12,
+    border: "1.5px solid #e2e8f0",
+    borderRadius: 16,
     boxSizing: "border-box",
-    fontSize: 15,
+    fontSize: 16,
     cursor: "pointer",
   },
+  textarea: {
+    display: "block",
+    width: "100%",
+    minHeight: 84,
+    marginTop: 12,
+    padding: 12,
+    border: "1.5px solid #e2e8f0",
+    borderRadius: 16,
+    boxSizing: "border-box",
+    background: "#ffffff",
+    color: "#111827",
+    fontSize: 16,
+    lineHeight: 1.5,
+    resize: "vertical",
+  },
   note: {
-    margin: "12px 0 0",
-    color: "#6b7280",
+    margin: "14px 0 0",
+    color: "#94a3b8",
     fontSize: 13,
     lineHeight: 1.6,
     textAlign: "center",
   },
-  heading: {
+  successHeading: {
     margin: "14px 0 8px",
     fontSize: 22,
     lineHeight: 1.35,
   },
   bodyText: {
     margin: "0 0 4px",
-    fontSize: 15,
+    fontSize: 16,
     lineHeight: 1.7,
-    color: "#374151",
+    color: "#475569",
   },
   successIcon: {
     display: "flex",
@@ -649,6 +784,7 @@ const styles = {
     color: "#dc2626",
     fontSize: 14,
     lineHeight: 1.6,
+    textAlign: "center",
     overflowWrap: "anywhere",
   },
 };
