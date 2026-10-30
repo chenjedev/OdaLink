@@ -28,7 +28,6 @@ const styles = `
   align-items: flex-start;
   box-sizing: border-box;
   width: 100%;
-  min-height: 60svh;
   padding: 32px 16px 56px;
 }
 
@@ -486,7 +485,7 @@ export default function ResetPasswordPage() {
         </section>
       </main>
 
-      <SiteFooter />
+      <SiteFooter compact />
     </div>
   );
 }
