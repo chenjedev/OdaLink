@@ -61,7 +61,8 @@ type Props = {
   onAdded: () => void; // called after add, edit or delete so the list reloads
 };
 
-const styles = `
+// Styles for the "saved" sheet (scoped with the ap- prefix)
+const successStyles = `
 .ap-overlay {
   position: fixed;
   inset: 0;
@@ -70,37 +71,37 @@ const styles = `
   align-items: flex-end;
   justify-content: center;
   background: rgba(15, 23, 42, 0.55);
-  padding: 0;
 }
-.ap-dialog {
+.ap-sheet {
   width: 100%;
   max-width: 480px;
   max-height: 92vh;
   max-height: 92dvh;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
-  background: #fff;
+  padding: 18px 16px calc(20px + env(safe-area-inset-bottom, 0px));
   border-radius: 20px 20px 0 0;
-  padding: 20px 18px calc(24px + env(safe-area-inset-bottom, 0px));
+  background: #ffffff;
   color: #0f172a;
 }
 @media (min-width: 640px) {
   .ap-overlay { align-items: center; padding: 16px; }
-  .ap-dialog { border-radius: 18px; padding: 24px; }
+  .ap-sheet { border-radius: 18px; }
 }
-.ap-header {
+.ap-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 18px;
+  gap: 10px;
+  margin-bottom: 14px;
 }
-.ap-header h2 { margin: 0; font-size: 20px; font-weight: 700; }
-.ap-close {
+.ap-head h2 { margin: 0; font-size: 18px; font-weight: 700; }
+.ap-sheet .ap-close {
   flex: none;
   width: 36px;
   height: 36px;
+  min-height: 0;
+  padding: 0;
   border: 0;
   border-radius: 10px;
   background: #f1f5f9;
@@ -108,110 +109,86 @@ const styles = `
   font-size: 16px;
   cursor: pointer;
 }
-.ap-field { margin-bottom: 16px; }
-.ap-field label {
-  display: block;
+.ap-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   margin-bottom: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #334155;
-}
-.ap-field input[type="text"],
-.ap-field input[type="number"] {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px 14px;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  background: #fff;
-  font-size: 16px;
-  color: #0f172a;
-  outline: none;
-}
-.ap-field input:focus {
-  border-color: #0d9488;
-  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
-}
-.ap-field input[type="file"] {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 10px;
-  border: 1px dashed #cbd5e1;
-  border-radius: 10px;
-  background: #f8fafc;
-  font-size: 14px;
-}
-.ap-preview {
-  display: block;
-  margin-top: 10px;
-  width: 100%;
-  max-height: 200px;
-  object-fit: contain;
-  border-radius: 10px;
-  background: #f8fafc;
-}
-.ap-link-danger {
-  display: block;
-  margin-top: 8px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: #dc2626;
-  font-weight: 600;
-  cursor: pointer;
-}
-.ap-error { margin: 0 0 14px; color: #dc2626; font-size: 14px; }
-.ap-save {
-  width: 100%;
-  padding: 14px;
-  border: 0;
-  border-radius: 12px;
-  background: #0f766e;
-  color: #fff;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.ap-save:disabled { background: #94c8c1; cursor: not-allowed; }
-.ap-delete {
-  width: 100%;
-  margin-top: 10px;
   padding: 12px;
-  border: 1px solid #dc2626;
-  border-radius: 12px;
-  background: #fff;
-  color: #dc2626;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
 }
-.ap-delete:disabled { opacity: 0.6; }
+.ap-thumb {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #f1f5f9;
+  color: #94a3b8;
+  font-size: 24px;
+  font-weight: 700;
+}
+.ap-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ap-summary-text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+.ap-summary-text strong { font-size: 16px; overflow-wrap: anywhere; }
+.ap-summary-text span { font-size: 14px; color: #64748b; }
 .ap-row {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 12px 4px;
+  border-bottom: 1px solid #eef2f6;
   font-size: 15px;
 }
 .ap-row span { color: #64748b; }
-.ap-row strong { text-align: right; overflow-wrap: anywhere; }
+.ap-sheet .ap-primary {
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+  padding: 14px;
+  border: 0;
+  border-radius: 14px;
+  background: #0f766e;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ap-sheet .ap-secondary {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 13px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
 `;
 
-export default function AddProduct({
-  shopId,
-  product,
-  onClose,
-  onAdded,
-}: Props) {
+export default function AddProduct({ shopId, product, onClose, onAdded }: Props) {
   const editing = !!product;
 
   const [name, setName] = useState(product?.name ?? "");
   const [category, setCategory] = useState(product?.category ?? "");
   const [price, setPrice] = useState(product ? String(product.price) : "");
-  const [stock, setStock] = useState(
-    product ? String(product.stock ?? 0) : ""
-  );
+  const [stock, setStock] = useState(product ? String(product.stock ?? 0) : "");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState(""); // preview of a newly picked photo
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(
@@ -219,6 +196,7 @@ export default function AddProduct({
   ); // photo shown now
   const originalImageUrl = product?.image_url ?? null; // photo saved in the database
   const [inputKey, setInputKey] = useState(0); // used to clear the file input
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -238,15 +216,6 @@ export default function AddProduct({
       if (preview) URL.revokeObjectURL(preview);
     };
   }, [preview]);
-
-  // Stop the page behind the modal from scrolling
-  useEffect(() => {
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previous;
-    };
-  }, []);
 
   function handleImageChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -279,6 +248,21 @@ export default function AddProduct({
     setPreview("");
     setExistingImageUrl(null);
     setInputKey((k) => k + 1);
+  }
+
+  // After a successful add: refresh the list behind and start a blank form
+  function addAnother() {
+    onAdded();
+    setName("");
+    setCategory("");
+    setPrice("");
+    setStock("");
+    setImageFile(null);
+    setPreview("");
+    setExistingImageUrl(null);
+    setInputKey((k) => k + 1);
+    setError("");
+    setIsSuccess(false);
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -338,8 +322,7 @@ export default function AddProduct({
 
         if (updateError) saveError = updateError.message;
         else if (!data || data.length === 0)
-          saveError =
-            "Nothing was updated. Check the update policy on products.";
+          saveError = "Nothing was updated. Check the update policy on products.";
       } else {
         const { error: insertError } = await supabase
           .from("products")
@@ -409,17 +392,23 @@ export default function AddProduct({
     onClose();
   }
 
-  function finish() {
-    onAdded();
-    onClose();
-  }
-
   if (isSuccess) {
+    const finish = () => {
+      onAdded();
+      onClose();
+    };
+
     return (
-      <div className="ap-overlay">
-        <style>{styles}</style>
-        <div className="ap-dialog" role="dialog" aria-modal="true">
-          <div className="ap-header">
+      <div className="ap-overlay" onClick={finish}>
+        <style>{successStyles}</style>
+
+        <div
+          className="ap-sheet"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="ap-head">
             <h2>{editing ? "Product updated" : "Product added"}</h2>
             <button
               type="button"
@@ -431,60 +420,62 @@ export default function AddProduct({
             </button>
           </div>
 
-          {displayImage && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img className="ap-preview" src={displayImage} alt={name} />
-          )}
+          <div className="ap-summary">
+            <div className="ap-thumb">
+              {displayImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={displayImage} alt={name} />
+              ) : (
+                <span>{name.charAt(0).toUpperCase()}</span>
+              )}
+            </div>
+
+            <div className="ap-summary-text">
+              <strong>{name}</strong>
+              <span>{category || "No category"}</span>
+            </div>
+          </div>
 
           <div className="ap-row">
-            <span>Name</span>
-            <strong>{name}</strong>
-          </div>
-          <div className="ap-row">
-            <span>Category</span>
-            <strong>{category || "—"}</strong>
-          </div>
-          <div className="ap-row">
             <span>Price</span>
-            <strong>{Number(price).toLocaleString()} TZS</strong>
+            <strong>TZS {Number(price).toLocaleString()}</strong>
           </div>
+
           <div className="ap-row">
             <span>Stock</span>
             <strong>{stock}</strong>
           </div>
 
-          <button
-            type="button"
-            className="ap-save"
-            style={{ marginTop: 20 }}
-            onClick={finish}
-          >
+          <button type="button" className="ap-primary" onClick={finish}>
             Done
           </button>
+
+          {!editing && (
+            <button
+              type="button"
+              className="ap-secondary"
+              onClick={addAnother}
+            >
+              Add another product
+            </button>
+          )}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="ap-overlay">
-      <style>{styles}</style>
-
-      <div className="ap-dialog" role="dialog" aria-modal="true">
-        <form onSubmit={handleSubmit}>
-          <div className="ap-header">
+    <div className="modal-overlay">
+      <div className="add-prod-page">
+        <form className="register-form" onSubmit={handleSubmit}>
+          <div className="add-prod-header">
             <h2>{editing ? "Edit Product" : "Add Product"}</h2>
-            <button
-              type="button"
-              className="ap-close"
-              onClick={onClose}
-              aria-label="Close"
-            >
-              ✕
+            <button type="button" className="cancel-btn" onClick={onClose}>
+              x
             </button>
           </div>
 
-          <div className="ap-field">
+          <div className="form-group">
             <label>Name</label>
             <input
               type="text"
@@ -495,7 +486,7 @@ export default function AddProduct({
             />
           </div>
 
-          <div className="ap-field">
+          <div className="form-group">
             <label>Category</label>
             <input
               type="text"
@@ -505,11 +496,10 @@ export default function AddProduct({
             />
           </div>
 
-          <div className="ap-field">
+          <div className="form-group">
             <label>Price (TZS)</label>
             <input
               type="number"
-              inputMode="numeric"
               placeholder="eg. 25000"
               value={price}
               min={1}
@@ -518,11 +508,10 @@ export default function AddProduct({
             />
           </div>
 
-          <div className="ap-field">
+          <div className="form-group">
             <label>Stock</label>
             <input
               type="number"
-              inputMode="numeric"
               placeholder="eg. 20"
               value={stock}
               min={0}
@@ -531,7 +520,7 @@ export default function AddProduct({
             />
           </div>
 
-          <div className="ap-field">
+          <div className="form-group">
             <label>Photo (optional)</label>
             <input
               key={inputKey}
@@ -543,11 +532,30 @@ export default function AddProduct({
             {displayImage && (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img className="ap-preview" src={displayImage} alt="Preview" />
+                <img
+                  src={displayImage}
+                  alt="Preview"
+                  style={{
+                    marginTop: 8,
+                    maxWidth: "100%",
+                    maxHeight: 160,
+                    objectFit: "contain",
+                    borderRadius: 8,
+                  }}
+                />
                 <button
                   type="button"
-                  className="ap-link-danger"
                   onClick={removePhoto}
+                  style={{
+                    display: "block",
+                    marginTop: 6,
+                    background: "none",
+                    border: "none",
+                    color: "#dc2626",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    padding: 0,
+                  }}
                 >
                   Remove photo
                 </button>
@@ -555,25 +563,38 @@ export default function AddProduct({
             )}
           </div>
 
-          {error && <p className="ap-error">{error}</p>}
+          {error && <p className="form-error">{error}</p>}
 
-          <button
-            type="submit"
-            className="ap-save"
-            disabled={isInvalid || loading}
-          >
-            {loading ? "Saving..." : editing ? "Save changes" : "Save"}
-          </button>
+          <div className="form-group">
+            <button
+              type="submit"
+              className="save-btn"
+              disabled={isInvalid || loading}
+            >
+              {loading ? "Saving..." : editing ? "Save changes" : "Save"}
+            </button>
+          </div>
 
           {editing && (
-            <button
-              type="button"
-              className="ap-delete"
-              onClick={handleDelete}
-              disabled={loading}
-            >
-              Delete product
-            </button>
+            <div className="form-group">
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={loading}
+                style={{
+                  width: "100%",
+                  background: "none",
+                  border: "1px solid #dc2626",
+                  color: "#dc2626",
+                  borderRadius: 8,
+                  padding: "10px 14px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Delete product
+              </button>
+            </div>
           )}
         </form>
       </div>
