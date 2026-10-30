@@ -135,7 +135,7 @@ function ProductList({ products = [], shopSlug, shopId, shopName, shopPhone }) {
 
   return (
     <div className="store-page">
-      {/* Top bar */}
+      {/* Header */}
       <header className="store-header">
         <div className="store-header-inner">
           <div className="store-brand">
@@ -285,81 +285,116 @@ function ProductList({ products = [], shopSlug, shopId, shopName, shopPhone }) {
             </div>
 
             <div className="cart-drawer-body">
-              {cart.length === 0 && (
-                <p className="cart-empty">
-                  {t("Cart is empty", "Kikapu hakina bidhaa")}
-                </p>
-              )}
-
-              {cart.map((item) => {
-                const max =
-                  typeof item.stock === "number" ? item.stock : Infinity;
-
-                return (
-                  <div key={item.id} className="cart-row">
-                    {item.image_url ? (
-                      <Image
-                        src={item.image_url}
-                        alt={item.name}
-                        width={48}
-                        height={48}
-                      />
-                    ) : (
-                      <div className="cart-img-placeholder" />
-                    )}
-
-                    <div className="cart-info">
-                      <span className="cart-name">{item.name}</span>
-                      <span className="cart-line-price">
-                        {(item.price * item.quantity).toLocaleString()} TZS
-                      </span>
-                    </div>
-
-                    <div className="qty-controls">
-                      <button
-                        type="button"
-                        onClick={() => changeQuantity(item.id, -1)}
-                        disabled={item.quantity <= 1}
-                      >
-                        −
-                      </button>
-                      <span>{item.quantity}</span>
-                      <button
-                        type="button"
-                        onClick={() => changeQuantity(item.id, 1)}
-                        disabled={item.quantity >= max}
-                      >
-                        +
-                      </button>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="cart-delete"
-                      onClick={() => handleRemoveFromCart(item.id)}
+              {cart.length === 0 ? (
+                /* ========== EMPTY STATE ========== */
+                <div className="cart-empty-state">
+                  <div className="cart-empty-icon">
+                    <svg
+                      width="48"
+                      height="48"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                     >
-                      ✕
-                    </button>
+                      <circle cx="9" cy="20" r="1.5" />
+                      <circle cx="18" cy="20" r="1.5" />
+                      <path d="M2 3h3l2.6 12.4a2 2 0 0 0 2 1.6h8.3a2 2 0 0 0 2-1.5L21 8H6" />
+                    </svg>
                   </div>
-                );
-              })}
+                  <p className="cart-empty-title">
+                    {t("Your cart is empty", "Kikapu chako hakina bidhaa")}
+                  </p>
+                  <p className="cart-empty-text">
+                    {t(
+                      "Add some products to get started",
+                      "Ongeza bidhaa ili uanze"
+                    )}
+                  </p>
+                  <button
+                    type="button"
+                    className="cart-continue-btn"
+                    onClick={() => setCartOpen(false)}
+                  >
+                    {t("Continue Shopping", "Endelea Kununua")}
+                  </button>
+                </div>
+              ) : (
+                /* ========== CART HAS ITEMS ========== */
+                <>
+                  {cart.map((item) => {
+                    const max =
+                      typeof item.stock === "number" ? item.stock : Infinity;
 
-              {cart.length > 0 && (
-                <p className="cart-total">
-                  {t("Total:", "Jumla:")}{" "}
-                  {totalCartPrice.toLocaleString()} TZS
-                </p>
+                    return (
+                      <div key={item.id} className="cart-row">
+                        {item.image_url ? (
+                          <Image
+                            src={item.image_url}
+                            alt={item.name}
+                            width={48}
+                            height={48}
+                          />
+                        ) : (
+                          <div className="cart-img-placeholder" />
+                        )}
+
+                        <div className="cart-info">
+                          <span className="cart-name">{item.name}</span>
+                          <span className="cart-line-price">
+                            {(item.price * item.quantity).toLocaleString()} TZS
+                          </span>
+                        </div>
+
+                        <div className="qty-controls">
+                          <button
+                            type="button"
+                            onClick={() => changeQuantity(item.id, -1)}
+                            disabled={item.quantity <= 1}
+                          >
+                            −
+                          </button>
+                          <span>{item.quantity}</span>
+                          <button
+                            type="button"
+                            onClick={() => changeQuantity(item.id, 1)}
+                            disabled={item.quantity >= max}
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="cart-delete"
+                          onClick={() => handleRemoveFromCart(item.id)}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    );
+                  })}
+
+                  <div className="cart-footer">
+                    <p className="cart-total">
+                      {t("Total:", "Jumla:")}{" "}
+                      <strong>{totalCartPrice.toLocaleString()} TZS</strong>
+                    </p>
+
+                    <CheckoutForm
+                      cart={cart}
+                      cartTotal={totalCartPrice}
+                      shopId={shopId}
+                      shopName={shopName}
+                      shopPhone={shopPhone}
+                      shopSlug={shopSlug}
+                      lang={lang}
+                    />
+                  </div>
+                </>
               )}
-
-              <CheckoutForm
-                cart={cart}
-                cartTotal={totalCartPrice}
-                shopId={shopId}
-                shopName={shopName}
-                shopPhone={shopPhone}
-                shopSlug={shopSlug}
-                lang={lang}
-              />
             </div>
           </div>
         </div>
