@@ -268,12 +268,11 @@ function ProductList({ products = [], shopSlug, shopId, shopName, shopPhone }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="cart-drawer-header">
-              <h3>
-                {t(
-                  `Your cart (${cartCount})`,
-                  `Kikapu chako (${cartCount})`
-                )}
-              </h3>
+           <h3>
+  {cartCount > 0
+    ? t(`Your cart (${cartCount})`, `Kikapu chako (${cartCount})`)
+    : t("Your cart", "Kikapu chako")}
+</h3>
               <button
                 type="button"
                 className="cart-close"
