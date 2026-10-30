@@ -25,7 +25,7 @@ function toWhatsAppNumber(phone) {
 
 function BackIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M19 12H5" />
       <path d="M12 19l-7-7 7-7" />
     </svg>
@@ -34,7 +34,7 @@ function BackIcon() {
 
 function CopyIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <rect x="9" y="9" width="12" height="12" rx="2" />
       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
     </svg>
@@ -43,7 +43,7 @@ function CopyIcon() {
 
 function CheckIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0f766e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0f766e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M20 6 9 17l-5-5" />
     </svg>
   );
@@ -51,7 +51,7 @@ function CheckIcon() {
 
 function PhoneIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8.1 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z" />
     </svg>
   );
@@ -59,7 +59,7 @@ function PhoneIcon() {
 
 function MessageIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
     </svg>
   );
@@ -417,7 +417,7 @@ export default function InstructionsPage() {
             </a>
             ,{" "}
             {t(
-              "choose 'Send money' or 'Merchant Payment', enter the number and the amount, then confirm with your PIN.",
+              "choose 'Send money' or 'Merchant Payment', enter the number and amount, then confirm with PIN.",
               "chagua 'Tuma pesa' au 'Malipo ya Biashara', weka namba na kiasi, kisha thibitisha kwa PIN."
             )}
           </p>
@@ -546,7 +546,7 @@ const styles = {
   page: {
     width: "100%",
     minHeight: "100vh",
-    padding: "16px 12px 40px",
+    padding: "12px 12px 32px",
     background: "#f8fafc",
     color: "#111827",
     boxSizing: "border-box",
@@ -555,26 +555,26 @@ const styles = {
   card: {
     display: "block",
     width: "100%",
-    maxWidth: 480,
+    maxWidth: 440,
     minWidth: 0,
     margin: "0 auto",
-    padding: 22,
+    padding: 18,
     background: "#ffffff",
     border: "1px solid #e5e7eb",
-    borderRadius: 28,
+    borderRadius: 24,
     boxSizing: "border-box",
     textAlign: "left",
   },
   back: {
     display: "inline-flex",
     alignItems: "center",
-    gap: 14,
-    padding: "4px 0",
-    marginBottom: 18,
+    gap: 10,
+    padding: "2px 0",
+    marginBottom: 12,
     color: "#0f172a",
     background: "transparent",
     border: 0,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 500,
     cursor: "pointer",
   },
@@ -586,34 +586,34 @@ const styles = {
   },
   amount: {
     margin: 0,
-    fontSize: 36,
+    fontSize: 28,
     lineHeight: 1.15,
     fontWeight: 800,
     color: "#0f172a",
     overflowWrap: "anywhere",
   },
   subtitle: {
-    margin: "10px 0 0",
-    fontSize: 17,
+    margin: "6px 0 0",
+    fontSize: 14,
     lineHeight: 1.4,
-    color: "#334155",
+    color: "#475569",
   },
   logo: {
     flex: "none",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    width: 68,
-    height: 68,
+    width: 52,
+    height: 52,
     borderRadius: "50%",
     color: "#ffffff",
-    fontSize: 30,
+    fontSize: 22,
     fontWeight: 800,
   },
   instructions: {
-    margin: "26px 0 18px",
-    fontSize: 17,
-    lineHeight: 1.6,
+    margin: "14px 0 12px",
+    fontSize: 14,
+    lineHeight: 1.55,
     color: "#64748b",
   },
   ussdLink: {
@@ -624,40 +624,40 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    gap: 12,
+    gap: 8,
     width: "100%",
-    padding: 16,
+    padding: 12,
     color: "#0f172a",
     background: "#ffffff",
     border: "1.5px solid #e2e8f0",
     borderRadius: 999,
     boxSizing: "border-box",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 600,
     textDecoration: "none",
   },
   divider: {
     height: 1,
-    margin: "22px 0 6px",
+    margin: "14px 0 2px",
     background: "#e2e8f0",
   },
   row: {
     display: "flex",
     alignItems: "center",
-    gap: 12,
-    padding: "16px 0",
+    gap: 10,
+    padding: "8px 0",
   },
   rowLabel: {
     flex: "none",
     color: "#64748b",
-    fontSize: 17,
+    fontSize: 14,
   },
   rowValue: {
     flex: 1,
     minWidth: 0,
     textAlign: "right",
     color: "#0f172a",
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: 500,
     overflowWrap: "anywhere",
   },
@@ -666,8 +666,9 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
+    minHeight: 0,
     padding: 0,
     color: "#475569",
     background: "transparent",
@@ -676,28 +677,28 @@ const styles = {
   },
   iconSpacer: {
     flex: "none",
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
   },
   help: {
     display: "block",
-    margin: "18px 0 22px",
+    margin: "8px 0 12px",
     color: "#64748b",
-    fontSize: 16,
+    fontSize: 14,
     textAlign: "center",
     textDecoration: "underline",
   },
   primaryButton: {
     display: "block",
     width: "100%",
-    marginTop: 14,
-    padding: 16,
+    marginTop: 10,
+    padding: 13,
     color: "#ffffff",
     background: "#0f766e",
     border: 0,
-    borderRadius: 16,
+    borderRadius: 14,
     boxSizing: "border-box",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 700,
     textAlign: "center",
     textDecoration: "none",
@@ -707,16 +708,16 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
+    gap: 8,
     width: "100%",
-    marginTop: 12,
-    padding: 15,
+    marginTop: 10,
+    padding: 12,
     color: "#0f172a",
     background: "#ffffff",
     border: "1.5px solid #e2e8f0",
-    borderRadius: 16,
+    borderRadius: 14,
     boxSizing: "border-box",
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 600,
     cursor: "pointer",
   },
@@ -724,66 +725,66 @@ const styles = {
     display: "block",
     width: "100%",
     marginTop: 10,
-    padding: 14,
+    padding: 12,
     color: "#111827",
     background: "#ffffff",
     border: "1.5px solid #e2e8f0",
-    borderRadius: 16,
+    borderRadius: 14,
     boxSizing: "border-box",
-    fontSize: 16,
+    fontSize: 15,
     cursor: "pointer",
   },
   textarea: {
     display: "block",
     width: "100%",
-    minHeight: 84,
-    marginTop: 12,
+    minHeight: 72,
+    marginTop: 10,
     padding: 12,
     border: "1.5px solid #e2e8f0",
-    borderRadius: 16,
+    borderRadius: 14,
     boxSizing: "border-box",
     background: "#ffffff",
     color: "#111827",
-    fontSize: 16,
+    fontSize: 14,
     lineHeight: 1.5,
     resize: "vertical",
   },
   note: {
-    margin: "14px 0 0",
+    margin: "10px 0 0",
     color: "#94a3b8",
-    fontSize: 13,
-    lineHeight: 1.6,
+    fontSize: 12,
+    lineHeight: 1.5,
     textAlign: "center",
   },
   successHeading: {
     margin: "14px 0 8px",
-    fontSize: 22,
+    fontSize: 20,
     lineHeight: 1.35,
   },
   bodyText: {
     margin: "0 0 4px",
-    fontSize: 16,
-    lineHeight: 1.7,
+    fontSize: 15,
+    lineHeight: 1.6,
     color: "#475569",
   },
   successIcon: {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    width: 54,
-    height: 54,
+    width: 48,
+    height: 48,
     borderRadius: "50%",
     background: "#d1fae5",
     color: "#047857",
-    fontSize: 30,
+    fontSize: 26,
     fontWeight: 700,
   },
   error: {
     display: "block",
-    marginTop: 12,
+    marginTop: 10,
     color: "#dc2626",
-    fontSize: 14,
-    lineHeight: 1.6,
+    fontSize: 13,
+    lineHeight: 1.5,
     textAlign: "center",
     overflowWrap: "anywhere",
   },
