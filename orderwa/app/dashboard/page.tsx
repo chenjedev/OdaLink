@@ -336,6 +336,8 @@ export default function DashboardPage() {
   const [lang, setLang] = useState<Lang>("en");
   const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
   const [ordersFilter, setOrdersFilter] = useState("all");
+  const [ordersDate, setOrdersDate] = useState("");
+  const [productsFilter, setProductsFilter] = useState<"all" | "low">("all");
   const [notice, setNotice] = useState("");
 
   const t = (en: string, sw: string) => (lang === "en" ? en : sw);
@@ -476,9 +478,23 @@ export default function DashboardPage() {
     )
   );
 
-  function openOrders(status = "all") {
+  // Products with 4 or fewer in stock count as low (same rule as the product list)
+  const lowStockCount = products.filter(
+    (product) => (product.stock ?? 0) <= 4
+  ).length;
+
+  // Today as YYYY-MM-DD in the phone's local time
+  const todayStr = new Date().toLocaleDateString("en-CA");
+
+  function openOrders(status = "all", date = "") {
     setOrdersFilter(status);
+    setOrdersDate(date);
     setActiveTab("orders");
+  }
+
+  function openProducts(filter: "all" | "low" = "all") {
+    setProductsFilter(filter);
+    setActiveTab("products");
   }
 
   function statusText(status: string) {
@@ -633,6 +649,8 @@ export default function DashboardPage() {
               }`}
               onClick={() => {
                 setOrdersFilter("all");
+                setOrdersDate("");
+                setProductsFilter("all");
                 setActiveTab(tab.id);
               }}
             >
@@ -687,17 +705,26 @@ export default function DashboardPage() {
                 label={t("Orders today", "Oda za leo")}
                 value={String(todayOrders.length)}
                 note={formatTzs(sumTotals(todayOrders))}
-                onClick={() => openOrders("all")}
+                onClick={() => openOrders("all", todayStr)}
               />
 
               <StatCard
                 icon={<Package size={18} />}
                 label={t("Products", "Bidhaa")}
                 value={String(products.length)}
-                note={`${t("Stock worth", "Thamani ya stoo")} ${formatTzs(
-                  stockWorth
-                )}`}
-                onClick={() => setActiveTab("products")}
+                note={
+                  lowStockCount > 0
+                    ? `${lowStockCount} ${t(
+                        "low on stock",
+                        "zina stoo ndogo"
+                      )}`
+                    : `${t("Stock worth", "Thamani ya stoo")} ${formatTzs(
+                        stockWorth
+                      )}`
+                }
+                onClick={() =>
+                  openProducts(lowStockCount > 0 ? "low" : "all")
+                }
               />
 
               <StatCard
@@ -759,10 +786,11 @@ export default function DashboardPage() {
         {activeTab === "orders" && shop && (
           <div style={{ paddingBottom: 96 }}>
             <OrdersPanel
-              key={ordersFilter}
+              key={`${ordersFilter}-${ordersDate}`}
               orders={orders}
               lang={lang}
               initialStatus={ordersFilter}
+              initialDate={ordersDate}
               onStatusChanged={(id, status) =>
                 setOrders((prev) =>
                   prev.map((o) => (o.id === id ? { ...o, status } : o))
@@ -774,7 +802,7 @@ export default function DashboardPage() {
 
         {activeTab === "products" && shop && (
           <section className="dashboard-panel">
-            <ProductPage />
+            <ProductPage key={productsFilter} initialFilter={productsFilter} />
           </section>
         )}
 
