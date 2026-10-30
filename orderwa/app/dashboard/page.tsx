@@ -492,7 +492,18 @@ export default function DashboardPage() {
     setActiveTab("orders");
   }
 
+  // Next.js pages cannot take custom props, so the filter is handed over
+  // to the products page through sessionStorage.
+  function rememberProductsFilter(filter: "all" | "low") {
+    try {
+      sessionStorage.setItem("odProductsFilter", filter);
+    } catch {
+      // storage unavailable: products simply open unfiltered
+    }
+  }
+
   function openProducts(filter: "all" | "low" = "all") {
+    rememberProductsFilter(filter);
     setProductsFilter(filter);
     setActiveTab("products");
   }
@@ -650,6 +661,7 @@ export default function DashboardPage() {
               onClick={() => {
                 setOrdersFilter("all");
                 setOrdersDate("");
+                rememberProductsFilter("all");
                 setProductsFilter("all");
                 setActiveTab(tab.id);
               }}
@@ -802,7 +814,7 @@ export default function DashboardPage() {
 
         {activeTab === "products" && shop && (
           <section className="dashboard-panel">
-            <ProductPage key={productsFilter} initialFilter={productsFilter} />
+            <ProductPage key={productsFilter} />
           </section>
         )}
 
