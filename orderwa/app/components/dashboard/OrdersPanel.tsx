@@ -287,17 +287,19 @@ export default function OrdersPanel({
   lang,
   onStatusChanged,
   initialStatus = "all",
+  initialDate = "",
 }: {
   orders: Order[];
   lang: Lang;
   onStatusChanged: (id: number | string, status: string) => void;
   initialStatus?: string;
+  initialDate?: string; // YYYY-MM-DD, filters to that single day
 }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState(initialStatus);
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [showDates, setShowDates] = useState(false);
+  const [from, setFrom] = useState(initialDate);
+  const [to, setTo] = useState(initialDate);
+  const [showDates, setShowDates] = useState(Boolean(initialDate));
   const [openId, setOpenId] = useState<number | string | null>(null);
   const [error, setError] = useState("");
 
