@@ -4324,3 +4324,51 @@ body .add-product-btn:hover:not(:disabled) {
   border-radius: 8px;
   cursor: pointer;
 }
+/* Empty cart state - improved */
+.cart-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px 32px;
+  text-align: center;
+}
+
+.cart-empty-icon {
+  width: 80px;
+  height: 80px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 16px;
+  border-radius: 50%;
+  background: #f0fdfa;
+  color: #0d9488;
+}
+
+.cart-empty-title {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.cart-empty-text {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.cart-continue-btn {
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: #0d9488;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.cart-continue-btn:hover {
+  background: #0f766e;
+}
