@@ -125,7 +125,7 @@ export function SiteFooter({ compact = false }: { compact?: boolean }) {
         <div className="border-t border-slate-200 mb-4"></div>
 
         {/* Bottom */}
-        <div className="flex flex-col gap-1 items-center text-slate-400 text-sm">
+        <div className="flex flex-col gap-1 items-center text-slate-400 text-sm text-center">
           <span>© {year} OdaLink</span>
           <span>Made for small businesses that sell through conversation.</span>
         </div>
