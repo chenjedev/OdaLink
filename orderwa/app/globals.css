@@ -142,10 +142,10 @@
   --oda-surface: #ffffff;
   --oda-surface-soft: #f2f7f8;
   --oda-ink: #192734;
-  --oda-muted: #667085;
+  --oda-muted: #475569;
   --oda-line: #e2e8ee;
-  --oda-green: #087f76;
-  --oda-green-deep: #066b64;
+  --oda-green: #066b64;
+  --oda-green-deep: #055a54;
   --oda-lime: #dff3ef;
   --oda-green-wash: #eaf7f5;
   --oda-shadow: 0 24px 70px rgb(16 34 45 / 11%);
@@ -990,9 +990,8 @@ body {
   margin: 0 auto 42px;
   text-align: center;
 }
-
 .section-kicker {
-  color: #548062;
+  color: #0f766e;
 }
 
 .section-intro h2,
@@ -1059,7 +1058,7 @@ body {
 
 .feature-label {
   margin-top: 23px;
-  color: #708275;
+  color: #475569;
   font-size: 8px;
 }
 
@@ -1139,13 +1138,12 @@ body {
 .step-topline {
   justify-content: space-between;
 }
-
 .step-number {
-  color: #6b8970;
+  color: #475569;
   font-size: 12px;
   font-weight: 750;
   letter-spacing: 0.07em;
-}
+} 
 
 .step-icon {
   width: 39px;
@@ -3654,7 +3652,7 @@ button[type="submit"]:hover:not(:disabled) {
 /* FOOTER */
 .footer {
   text-align: center;
-  color: #9ca3af;
+  color: #475569;
   font-size: 0.9rem;
 }
 
@@ -3699,10 +3697,9 @@ button[type="submit"]:hover:not(:disabled) {
 .footer-links a:hover {
   color: #0d9488;
 }
-
 .footer-copy {
   margin: 0;
-  color: #9ca3af;
+  color: #475569;
   font-size: 0.85rem;
 }
 
