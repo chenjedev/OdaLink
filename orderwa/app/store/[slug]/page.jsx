@@ -7,7 +7,6 @@ export const dynamic = 'force-dynamic'
 export default async function ShopStorePage({ params }) {
   const { slug } = await params
 
-  // 1. Find the shop by its slug
   const { data: shop, error: shopError } = await supabase
     .from('shops')
     .select('id, name, slug, phone')
@@ -17,7 +16,6 @@ export default async function ShopStorePage({ params }) {
   if (shopError) console.error('Load shop failed:', shopError.message)
   if (!shop) notFound()
 
-  // 2. Load only this shop's active products (deleted ones are hidden)
   const { data: products, error: productsError } = await supabase
     .from('products')
     .select('*')
@@ -32,8 +30,7 @@ export default async function ShopStorePage({ params }) {
       shopSlug={shop.slug}
       shopId={shop.id}
       shopName={shop.name}
-      shopPhone={shop.phone}     
-      
+      shopPhone={shop.phone}
     />
   )
 }
