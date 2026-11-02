@@ -22,10 +22,12 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
+// CHANGE 1: Shop now has phone (the WhatsApp number)
 type Shop = {
   id: string;
   name: string;
   slug: string;
+  phone: string | null;
 };
 
 type Product = {
@@ -90,6 +92,9 @@ const layoutFix = `
 }
 .oda-dashboard .dashboard-tabs::-webkit-scrollbar { display: none; }
 .oda-dashboard .dashboard-tab { flex: none; white-space: nowrap; }
+
+/* Tabs locked until the shop details are filled in */
+.oda-dashboard .dashboard-tab.is-locked { opacity: 0.45; }
 
 /* Products page brings its own margins and a padded table (products.css).
    Inside the dashboard panel, remove them so nothing is squeezed. */
@@ -347,6 +352,12 @@ export default function DashboardPage() {
     ? `https://odalink.vercel.app/store/${shop.slug}`
     : "";
 
+  // CHANGE 3: a shop is "not set up" until it has a name and a WhatsApp number.
+  // This is calculated on every render, so it flips to false by itself
+  // as soon as setShop() receives the saved details.
+  const needsSetup =
+    !!shop && (!shop.name?.trim() || !shop.phone?.trim());
+
   useEffect(() => {
     function syncLanguage(event?: Event) {
       const customEvent = event as CustomEvent<Lang> | undefined;
@@ -393,9 +404,10 @@ export default function DashboardPage() {
 
         if (!mounted) return;
 
+        // CHANGE 2a: also read "phone"
         const { data: shopData, error: shopError } = await supabase
           .from("shops")
-          .select("id, name, slug")
+          .select("id, name, slug, phone")
           .eq("owner_id", user.id)
           .maybeSingle();
 
@@ -403,6 +415,11 @@ export default function DashboardPage() {
         if (!mounted) return;
 
         setShop(shopData as Shop | null);
+
+        // CHANGE 2b: new user with an incomplete shop -> open Settings first
+        if (shopData && (!shopData.name?.trim() || !shopData.phone?.trim())) {
+          setActiveTab("settings");
+        }
 
         if (shopData) {
           const [productsResult, ordersResult] = await Promise.all([
@@ -635,7 +652,7 @@ export default function DashboardPage() {
             <span>odalink</span>
           </Link>
 
-          {shop && (
+          {shop && !needsSetup && (
             <a
               href={shopUrl}
               target="_blank"
@@ -651,25 +668,31 @@ export default function DashboardPage() {
 
       <div className="dashboard-tabs-wrapper">
         <div className="dashboard-tabs">
-          {dashboardTabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              className={`dashboard-tab${
-                activeTab === tab.id ? " is-active" : ""
-              }`}
-              onClick={() => {
-                setOrdersFilter("all");
-                setOrdersDate("");
-                rememberProductsFilter("all");
-                setProductsFilter("all");
-                setActiveTab(tab.id);
-              }}
-            >
-              {tab.icon}
-              <span>{tab.label}</span>
-            </button>
-          ))}
+          {dashboardTabs.map((tab) => {
+            // CHANGE 4: while setup is missing, only Settings can be opened
+            const locked = needsSetup && tab.id !== "settings";
+
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                className={`dashboard-tab${
+                  activeTab === tab.id ? " is-active" : ""
+                }${locked ? " is-locked" : ""}`}
+                onClick={() => {
+                  if (locked) return;
+                  setOrdersFilter("all");
+                  setOrdersDate("");
+                  rememberProductsFilter("all");
+                  setProductsFilter("all");
+                  setActiveTab(tab.id);
+                }}
+              >
+                {tab.icon}
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -680,6 +703,16 @@ export default function DashboardPage() {
               <p>{pageDescription[activeTab]}</p>
             </div>
           </div>
+        )}
+
+        {/* CHANGE 5: banner shown only while the shop is incomplete */}
+        {needsSetup && (
+          <p className="dashboard-live-message" role="status">
+            {t(
+              "Welcome! Add your shop name and WhatsApp number below to start.",
+              "Karibu! Weka jina la duka na namba ya WhatsApp hapo chini ili kuanza."
+            )}
+          </p>
         )}
 
         {notice && (
@@ -820,45 +853,54 @@ export default function DashboardPage() {
 
         {activeTab === "settings" && shop && (
           <div className="dashboard-panel-stack">
-            <section className="dashboard-panel mb-5">
-              <p className="dashboard-section-kicker">
-                {t("YOUR SHOP LINK", "LINK YA DUKA LAKO")}
-              </p>
+            {/* The shop link only makes sense once the shop is set up */}
+            {!needsSetup && (
+              <section className="dashboard-panel mb-5">
+                <p className="dashboard-section-kicker">
+                  {t("YOUR SHOP LINK", "LINK YA DUKA LAKO")}
+                </p>
 
-              <div className="flex flex-col gap-3">
-                <a
-                  href={shopUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="break-all font-semibold text-teal-700 underline"
-                >
-                  {shopUrl}
-                </a>
-
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    className="dashboard-primary-button"
-                    onClick={() => void copyShopLink()}
+                <div className="flex flex-col gap-3">
+                  <a
+                    href={shopUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="break-all font-semibold text-teal-700 underline"
                   >
-                    <Copy size={16} />
-                    {t("Copy Link", "Nakili Link")}
-                  </button>
+                    {shopUrl}
+                  </a>
 
-                  <button
-                    type="button"
-                    className="dashboard-primary-button"
-                    onClick={() => void shareShopLink()}
-                  >
-                    <Share2 size={16} />
-                    {t("Share Link", "Shiriki Link")}
-                  </button>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className="dashboard-primary-button"
+                      onClick={() => void copyShopLink()}
+                    >
+                      <Copy size={16} />
+                      {t("Copy Link", "Nakili Link")}
+                    </button>
+
+                    <button
+                      type="button"
+                      className="dashboard-primary-button"
+                      onClick={() => void shareShopLink()}
+                    >
+                      <Share2 size={16} />
+                      {t("Share Link", "Shiriki Link")}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </section>
+              </section>
+            )}
 
             <section className="dashboard-panel">
-              <ShopSettings />
+              {/* CHANGE 6: when Settings saves, update the shop here too */}
+              <ShopSettings
+                onShopSaved={(saved) => {
+                  setShop(saved);
+                  setNotice("");
+                }}
+              />
             </section>
           </div>
         )}
@@ -866,3 +908,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
