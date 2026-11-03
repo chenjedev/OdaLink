@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState } from 'react'
@@ -10,7 +9,6 @@ import {
   EyeOff,
   LockKeyhole,
   Mail,
-  Phone,
   ShieldCheck,
   UserRound,
   AlertCircle,
@@ -21,6 +19,62 @@ import { supabase } from '../../lib/supabase'
 
 const cleanEmail = (email) => email.trim().toLowerCase()
 
+// CHANGE 1: inline styles for the Google button and the "or" divider,
+// so we do not have to touch your CSS file.
+const googleButtonStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 10,
+  width: '100%',
+  padding: '12px 16px',
+  border: '1px solid #d1d5db',
+  borderRadius: 12,
+  background: '#fff',
+  color: '#111827',
+  fontSize: 15,
+  fontWeight: 600,
+  cursor: 'pointer',
+}
+
+const dividerStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 12,
+  margin: '16px 0',
+  color: '#94a3b8',
+  fontSize: 13,
+}
+
+const dividerLineStyle = {
+  flex: 1,
+  height: 1,
+  background: '#e2e8f0',
+}
+
+function GoogleLogo() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+      <path
+        fill="#EA4335"
+        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+      />
+      <path
+        fill="#4285F4"
+        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+      />
+      <path
+        fill="#34A853"
+        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+      />
+    </svg>
+  )
+}
+
 export default function AuthForm({ initialMode = 'signup', lang = 'en' }) {
   const router = useRouter()
 
@@ -29,9 +83,9 @@ export default function AuthForm({ initialMode = 'signup', lang = 'en' }) {
   )
   const [language, setLanguage] = useState(lang === 'sw' ? 'sw' : 'en')
 
+  // CHANGE 2: signup only needs email and password now.
+  // Shop name and WhatsApp number are filled in later, in Settings.
   const [values, setValues] = useState({
-    name: '',
-    phone: '',
     email: '',
     password: '',
   })
@@ -47,19 +101,9 @@ export default function AuthForm({ initialMode = 'signup', lang = 'en' }) {
   const emailIsValid =
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())
 
-  const phoneDigits = values.phone.replace(/\D/g, '').length
-  const phoneIsValid = phoneDigits >= 10 && phoneDigits <= 15
   const passwordIsValid = values.password.length >= 6
 
   const missingRequirements = [
-    {
-      label: t('name', 'jina'),
-      complete: values.name.trim().length > 0,
-    },
-    {
-      label: t('a valid phone number', 'namba sahihi ya simu'),
-      complete: phoneIsValid,
-    },
     {
       label: t('a valid email', 'barua pepe sahihi'),
       complete: emailIsValid,
@@ -143,6 +187,41 @@ export default function AuthForm({ initialMode = 'signup', lang = 'en' }) {
     )
   }
 
+  // CHANGE 3: Google sign-in. The browser leaves for Google and comes back
+  // through Supabase to /dashboard. This works for both login and signup:
+  // a new Google user gets an account (and an empty shop) automatically.
+  async function handleGoogle() {
+    if (isSubmitting) return
+
+    setFeedback('')
+    setIsSubmitting(true)
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      })
+
+      if (error) {
+        showError(friendlyError(error.message))
+        setIsSubmitting(false)
+      }
+      // On success the page navigates away to Google, so we keep the
+      // buttons disabled and do not reset isSubmitting here.
+    } catch (error) {
+      console.error('Google sign-in error:', error)
+      showError(
+        t(
+          'Unable to start Google sign-in. Check your connection and try again.',
+          'Imeshindikana kuanza kuingia na Google. Kagua intaneti kisha ujaribu tena.'
+        )
+      )
+      setIsSubmitting(false)
+    }
+  }
+
   async function handleSubmit(event) {
     event.preventDefault()
 
@@ -165,15 +244,11 @@ export default function AuthForm({ initialMode = 'signup', lang = 'en' }) {
 
     try {
       if (mode === 'signup') {
+        // CHANGE 4: no name/phone sent any more. The database trigger
+        // creates an empty shop, and Settings asks for the details.
         const { data, error } = await supabase.auth.signUp({
           email: cleanEmail(values.email),
           password: values.password,
-          options: {
-            data: {
-              name: values.name.trim(),
-              phone: values.phone.trim(),
-            },
-          },
         })
 
         if (error) {
@@ -323,8 +398,6 @@ export default function AuthForm({ initialMode = 'signup', lang = 'en' }) {
         <span className="auth-card-label">
           ODALINK SELLER ACCOUNT
         </span>
-
-     
       </div>
 
       <h1 id="auth-title" className="auth-title">
@@ -335,47 +408,30 @@ export default function AuthForm({ initialMode = 'signup', lang = 'en' }) {
         {description}
       </p>
 
+      {/* CHANGE 5: Google button + divider, shown on login and signup only */}
+      {mode !== 'reset' && (
+        <>
+          <button
+            type="button"
+            style={googleButtonStyle}
+            onClick={handleGoogle}
+            disabled={isSubmitting}
+          >
+            <GoogleLogo />
+            {t('Continue with Google', 'Endelea na Google')}
+          </button>
+
+          <div style={dividerStyle} aria-hidden="true">
+            <span style={dividerLineStyle} />
+            {t('or use email', 'au tumia email')}
+            <span style={dividerLineStyle} />
+          </div>
+        </>
+      )}
+
       <form className="auth-form" onSubmit={handleSubmit} noValidate>
         {mode === 'signup' && (
-          <div className="auth-field-grid">
-            <div className="auth-field">
-              <label className="auth-label" htmlFor="auth-name">
-                <UserRound aria-hidden="true" />
-                {t('Name', 'Jina')}
-              </label>
-
-              <input
-                className="auth-input"
-                id="auth-name"
-                name="name"
-                autoComplete="name"
-                placeholder={t('eg. John Doe', 'mf. John Doe')}
-                value={values.name}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="auth-field">
-              <label className="auth-label" htmlFor="auth-phone">
-                <Phone aria-hidden="true" />
-                {t('Phone', 'Namba ya Simu')}
-              </label>
-
-              <input
-                className="auth-input"
-                id="auth-phone"
-                name="phone"
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                placeholder="eg. 0712345678"
-                value={values.phone}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
+          <div className="auth-field-grid auth-field-grid-single">
             <div className="auth-field auth-field-wide">
               <label className="auth-label" htmlFor="auth-email-signup">
                 <Mail aria-hidden="true" />
@@ -542,8 +598,6 @@ export default function AuthForm({ initialMode = 'signup', lang = 'en' }) {
           </p>
         )}
       </form>
-
-     
 
       {mode === 'reset' ? (
         <button
