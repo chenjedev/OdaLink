@@ -43,6 +43,62 @@ const inputStyle = {
   fontSize: "15px",
 };
 
+// CHANGE 3: slug helpers --------------------------------------------------
+// Names a shop may NOT use as its web address, because they are (or may
+// become) real pages of OdaLink.
+const RESERVED_SLUGS = [
+  "login",
+  "signup",
+  "dashboard",
+  "privacy",
+  "store",
+  "api",
+  "admin",
+  "settings",
+  "reset-password",
+  "terms",
+  "about",
+  "help",
+];
+
+// "Mdudu Fashion!" -> "mdudu-fashion"
+function slugify(name: string) {
+  const base = name
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 30)
+    .replace(/-+$/g, "");
+
+  if (!base) return "shop";
+  if (RESERVED_SLUGS.includes(base)) return `${base}-shop`;
+  return base;
+}
+
+// Tries "mdudu-fashion", then "mdudu-fashion-2", "-3", ... until a free one.
+async function makeUniqueSlug(name: string) {
+  const base = slugify(name);
+
+  for (let i = 1; i <= 20; i++) {
+    const candidate = i === 1 ? base : `${base}-${i}`;
+
+    const { data, error } = await supabase
+      .from("shops")
+      .select("id")
+      .eq("slug", candidate)
+      .maybeSingle();
+
+    if (error) break;
+    if (!data) return candidate;
+  }
+
+  // Last resort: random ending
+  return `${base}-${Math.random().toString(36).slice(2, 6)}`;
+}
+// -------------------------------------------------------------------------
+
 const styles = `
 .sp-head {
   display: flex;
@@ -540,11 +596,20 @@ export default function ShopSettings({
 
     setSaving(true);
 
+    // CHANGE 4: build the slug from the shop name, but ONLY the first time
+    // (when the shop had no name yet). After that the slug never changes,
+    // so links people already shared keep working.
+    const isFirstSetup = !shop.name?.trim();
+    const newSlug = isFirstSetup
+      ? await makeUniqueSlug(name.trim())
+      : shop.slug;
+
     const { data, error: updateError } = await supabase
       .from("shops")
       .update({
         name: name.trim(),
         phone: phone.trim(),
+        slug: newSlug,
       })
       .eq("id", shop.id)
       .select("id, name, slug, phone");
@@ -1159,3 +1224,4 @@ export default function ShopSettings({
     </div>
   );
 }
+
